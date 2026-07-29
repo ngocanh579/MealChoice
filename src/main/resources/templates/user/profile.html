@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông Tin Cá Nhân - MealChoice</title>
+    <link rel="stylesheet" href="/css/user-profile.css">
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>🙋‍♂️ Thông Tin Cá Nhân</h1>
+            <p>Quản lý thông tin tài khoản và địa chỉ giao hàng của bạn</p>
+        </div>
+        <button class="btn btn-danger" onclick="logout()">
+            🚪 Đăng xuất
+        </button>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
+    <!-- Profile Information Card -->
+    <div class="card">
+        <div class="card-header">
+            <h2>📝 Thông Tin Tài Khoản</h2>
+            <button class="btn btn-primary" onclick="editProfile()">
+                ✏️ Chỉnh sửa
+            </button>
+        </div>
+
+        <form id="profileForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">
+                        Họ và Tên <span style="color: red;">*</span>
+                    </label>
+                    <input type="text" id="name" name="name" required disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">
+                        Email
+                        <span class="readonly-badge">Không thể sửa</span>
+                    </label>
+                    <input type="email" id="email" name="email" disabled>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="phoneNumber">
+                        Số điện thoại
+                        <span class="readonly-badge">Không thể sửa</span>
+                    </label>
+                    <input type="tel" id="phoneNumber" name="phoneNumber" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="dateOfBirth">Ngày sinh</label>
+                    <input type="date" id="dateOfBirth" name="dateOfBirth" disabled>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="gender">Giới tính</label>
+                <select id="gender" name="gender" disabled>
+                    <option value="">-- Chọn giới tính --</option>
+                    <option value="MALE">Nam</option>
+                    <option value="FEMALE">Nữ</option>
+                    <option value="OTHER">Khác</option>
+                </select>
+            </div>
+
+            <div id="profileActions" style="display: none;">
+                <button type="submit" class="btn btn-success">
+                    💾 Lưu thay đổi
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
+                    ❌ Hủy
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Addresses Card -->
+    <div class="card">
+        <div class="card-header">
+            <h2>📍 Địa Chỉ Giao Hàng</h2>
+            <button class="btn btn-success" onclick="openAddressModal()">
+                ➕ Thêm địa chỉ mới
+            </button>
+        </div>
+
+        <div id="addressList" class="address-list">
+            <!-- Addresses will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Address Modal -->
+<div id="addressModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">➕ Thêm Địa Chỉ Mới</h3>
+            <button class="close-modal" onclick="closeAddressModal()">&times;</button>
+        </div>
+
+        <form id="addressForm">
+            <input type="hidden" id="addressId" name="id">
+
+            <h4 style="margin-bottom: 15px; color: #667eea;">📞 Thông tin liên hệ</h4>
+
+            <div class="form-group">
+                <label for="contactName">
+                    Tên người nhận <span style="color: red;">*</span>
+                </label>
+                <input type="text" id="contactName" name="contactName" required
+                       placeholder="Ví dụ: Nguyễn Văn A">
+            </div>
+
+            <div class="form-group">
+                <label for="contactPhone">
+                    Số điện thoại <span style="color: red;">*</span>
+                </label>
+                <input type="tel" id="contactPhone" name="contactPhone" required
+                       placeholder="Ví dụ: 0912345678" pattern="^(0|\+84)[0-9]{9}$">
+            </div>
+
+            <h4 style="margin: 25px 0 15px; color: #667eea;">🏠 Địa chỉ</h4>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="city">
+                        Tỉnh/Thành phố <span style="color: red;">*</span>
+                    </label>
+                    <input type="text" id="city" name="city" required
+                           placeholder="Ví dụ: Hồ Chí Minh">
+                </div>
+
+                <div class="form-group">
+                    <label for="district">
+                        Quận/Huyện <span style="color: red;">*</span>
+                    </label>
+                    <input type="text" id="district" name="district" required
+                           placeholder="Ví dụ: Quận 1">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="ward">
+                    Phường/Xã <span style="color: red;">*</span>
+                </label>
+                <input type="text" id="ward" name="ward" required
+                       placeholder="Ví dụ: Phường Bến Nghé">
+            </div>
+
+            <div class="form-group">
+                <label for="street">
+                    Tên đường, Tòa nhà, Số nhà <span style="color: red;">*</span>
+                </label>
+                <input type="text" id="street" name="street" required
+                       placeholder="Ví dụ: 123 Nguyễn Huệ, Tòa nhà ABC">
+            </div>
+
+            <div class="form-group">
+                <label for="note">Ghi chú (không bắt buộc)</label>
+                <input type="text" id="note" name="note"
+                       placeholder="Ví dụ: Gọi trước 30 phút">
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="isDefault" name="isDefault">
+                    <span>Đặt làm địa chỉ mặc định</span>
+                </label>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeAddressModal()">
+                    Hủy
+                </button>
+                <button type="submit" class="btn btn-success">
+                    💾 Lưu địa chỉ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Loading Spinner -->
+<div id="loading" class="loading">
+    <div class="spinner"></div>
+</div>
+
+<script src="/js/user-profile.js"></script>
+</body>
+</html>
