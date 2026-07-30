@@ -1,5 +1,7 @@
 package vn.codegyme.meal_choice.entity;
 
-public class Role {
-    
+public enum Role {
+    ADMIN,
+    MERCHANT,
+    USER
 }

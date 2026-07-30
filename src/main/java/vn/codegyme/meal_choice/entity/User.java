@@ -40,6 +40,16 @@ public class User {
     @Column()
     private String avatarUrl;
 
+    @Column()
+    private LocalDateTime dob;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role;
+
+    @Column(nullable = false)
+    private boolean isActive = true;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
