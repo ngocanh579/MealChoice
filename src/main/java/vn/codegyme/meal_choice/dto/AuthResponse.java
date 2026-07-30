@@ -26,4 +26,6 @@ public class AuthResponse {
     private String phoneNumber;
 
     private String gender;
+
+    private String avatarUrl;
 }
