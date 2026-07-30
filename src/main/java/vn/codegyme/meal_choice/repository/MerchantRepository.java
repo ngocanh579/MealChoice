@@ -1,5 +1,9 @@
 package vn.codegyme.meal_choice.repository;
 
-public class MerchantRepository {
-    
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import vn.codegyme.meal_choice.entity.Merchant;
+
+@Repository
+public interface MerchantRepository extends JpaRepository<Merchant, Long> {
 }
