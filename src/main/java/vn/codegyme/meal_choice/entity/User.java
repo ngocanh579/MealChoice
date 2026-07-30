@@ -1,5 +1,38 @@
 package vn.codegyme.meal_choice.entity;
 
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.UUID;
+
+@Entity
+@Table (name="users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
-    
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(unique = true, nullable = true)
+    private String email;
+
+    @Column(nullable = false,length = 16)
+    private String password;
+
+    @Column(nullable = false, length = 32)
+    private String displayName;
+
+    @Column(unique = true, nullable = false,length = 20)
+    private String phoneNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private Gender gender;
 }
