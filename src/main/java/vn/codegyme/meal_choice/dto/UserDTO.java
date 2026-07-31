@@ -12,12 +12,15 @@ public class UserDTO {
 
     private Long id;
 
+    @NotBlank(message = "Họ và tên không được để trống")
     @Size(min = 2, max = 100, message = "Tên phải từ 2 đến 100 ký tự")
     private String name;
 
+    @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không hợp lệ")
     private String email; // Read-only sau khi tạo
 
+    @NotBlank(message = "Số điện thoại không được để trống")
     @Pattern(regexp = "^(0|\\+84)[0-9]{9}$", message = "Số điện thoại không hợp lệ")
     private String phoneNumber; // Read-only sau khi tạo
 

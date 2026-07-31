@@ -48,8 +48,14 @@ async function logout() {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    document.getElementById('profileForm').addEventListener('submit', handleProfileSubmit);
-    document.getElementById('addressForm').addEventListener('submit', handleAddressSubmit);
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', handleProfileSubmit);
+    }
+    const addressForm = document.getElementById('addressForm');
+    if (addressForm) {
+        addressForm.addEventListener('submit', handleAddressSubmit);
+    }
 }
 
 // ==================== PROFILE FUNCTIONS ====================
@@ -110,9 +116,11 @@ async function handleProfileSubmit(e) {
 
     const formData = {
         name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        phoneNumber: document.getElementById('phoneNumber').value,
         dateOfBirth: document.getElementById('dateOfBirth').value || null,
         gender: document.getElementById('gender').value || null,
-        addresses: currentUser.addresses // Keep existing addresses
+        addresses: currentUser ? currentUser.addresses : [] // Keep existing addresses
     };
 
     showLoading(true);
@@ -131,7 +139,7 @@ async function handleProfileSubmit(e) {
             currentUser = result.data;
             displayProfile(currentUser);
             cancelEdit();
-            showAlert('success', '✅ Cập nhật thông tin thành công!');
+            showAlert('success', 'Cập nhật thông tin cá nhân thành công!');
         } else {
             showAlert('error', result.message || 'Cập nhật thất bại');
         }
@@ -148,41 +156,56 @@ async function handleProfileSubmit(e) {
 // Display addresses
 function displayAddresses(addresses) {
     const container = document.getElementById('addressList');
+    if (!container) return;
 
     if (!addresses || addresses.length === 0) {
         container.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #999;">
-                <p style="font-size: 48px;">📭</p>
-                <p>Chưa có địa chỉ giao hàng nào</p>
-                <p style="font-size: 14px; margin-top: 10px;">Hãy thêm địa chỉ để đặt hàng dễ dàng hơn!</p>
+            <div class="col-12 text-center py-5 text-muted">
+                <div class="display-6 mb-2">📭</div>
+                <h6 class="fw-bold mb-1">Chưa có địa chỉ giao hàng nào</h6>
+                <p class="small text-secondary mb-0">Hãy thêm địa chỉ để đặt hàng dễ dàng hơn!</p>
             </div>
         `;
         return;
     }
 
     container.innerHTML = addresses.map(addr => `
-        <div class="address-item ${addr.isDefault ? 'default' : ''}">
-            ${addr.isDefault ? '<span class="default-badge">⭐ Mặc định</span>' : ''}
-            
-            <div class="address-info">
-                <h4>👤 ${addr.contactName} - 📞 ${addr.contactPhone}</h4>
-                <p><strong>📍 Địa chỉ:</strong> ${addr.street}</p>
-                <p>${addr.ward}, ${addr.district}, ${addr.city}</p>
-                ${addr.note ? `<p><strong>📝 Ghi chú:</strong> ${addr.note}</p>` : ''}
-            </div>
+        <div class="col-md-6 col-12">
+            <div class="card h-100 p-3 rounded-4 border ${addr.isDefault ? 'border-danger border-2 bg-light-subtle shadow-sm' : 'border-light-subtle shadow-sm'}">
+                <div class="card-body p-2 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold text-dark mb-0">
+                                <i class="bi bi-person-fill text-danger me-1"></i>${addr.contactName}
+                            </h6>
+                            ${addr.isDefault ? '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Mặc định</span>' : ''}
+                        </div>
+                        <p class="text-secondary small mb-2">
+                            <i class="bi bi-telephone-fill me-1"></i><strong>${addr.contactPhone}</strong>
+                        </p>
+                        <p class="text-dark small mb-1">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i><strong>Địa chỉ:</strong> ${addr.street}
+                        </p>
+                        <p class="text-muted small mb-2 ms-4">
+                            ${addr.ward}, ${addr.district}, ${addr.city}
+                        </p>
+                        ${addr.note ? `<p class="text-secondary small mb-2 bg-white p-2 rounded-3 border"><i class="bi bi-sticky me-1 text-warning"></i><strong>Ghi chú:</strong> ${addr.note}</p>` : ''}
+                    </div>
 
-            <div class="address-actions">
-                ${!addr.isDefault ? `
-                    <button class="btn btn-sm btn-success" onclick="setDefaultAddress(${addr.id})">
-                        ⭐ Đặt làm mặc định
-                    </button>
-                ` : ''}
-                <button class="btn btn-sm btn-primary" onclick="editAddress(${addr.id})">
-                    ✏️ Sửa
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteAddress(${addr.id})">
-                    🗑️ Xóa
-                </button>
+                    <div class="d-flex justify-content-end align-items-center gap-2 pt-3 border-top mt-2">
+                        ${!addr.isDefault ? `
+                            <button class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="setDefaultAddress(${addr.id})">
+                                <i class="bi bi-star me-1"></i> Mặc định
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="editAddress(${addr.id})">
+                            <i class="bi bi-pencil me-1"></i> Sửa
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="deleteAddress(${addr.id})">
+                            <i class="bi bi-trash me-1"></i> Xóa
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     `).join('');
@@ -190,36 +213,57 @@ function displayAddresses(addresses) {
 
 // Open address modal
 function openAddressModal(addressId = null) {
-    const modal = document.getElementById('addressModal');
+    const modalEl = document.getElementById('addressModal');
+    if (!modalEl) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     const form = document.getElementById('addressForm');
 
     form.reset();
     document.getElementById('addressId').value = ''; // Reset hidden ID input
 
+    const contactNameInput = document.getElementById('contactName');
+    const contactPhoneInput = document.getElementById('contactPhone');
+    const contactNotice = document.getElementById('contactNotice');
+
     if (addressId) {
-        const address = currentUser.addresses.find(a => a.id === addressId);
+        const address = currentUser && currentUser.addresses ? currentUser.addresses.find(a => a.id === addressId) : null;
         if (address) {
-            document.getElementById('modalTitle').textContent = '✏️ Chỉnh Sửa Địa Chỉ';
+            document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil me-2 text-danger"></i>Chỉnh Sửa Địa Chỉ';
             document.getElementById('addressId').value = address.id;
-            document.getElementById('contactName').value = address.contactName;
-            document.getElementById('contactPhone').value = address.contactPhone;
+            contactNameInput.value = address.contactName;
+            contactPhoneInput.value = address.contactPhone;
+
+            // QUY TẮC GEMINI.MD: Cho phép sửa địa chỉ, KHÔNG cho phép sửa liên hệ khi chỉnh sửa
+            contactNameInput.disabled = true;
+            contactPhoneInput.disabled = true;
+            if (contactNotice) contactNotice.classList.remove('d-none');
+
             document.getElementById('city').value = address.city;
             document.getElementById('district').value = address.district;
             document.getElementById('ward').value = address.ward;
             document.getElementById('street').value = address.street;
             document.getElementById('note').value = address.note || '';
-            document.getElementById('isDefault').checked = address.isDefault;
+            document.getElementById('isDefault').checked = Boolean(address.isDefault);
         }
     } else {
-        document.getElementById('modalTitle').textContent = '➕ Thêm Địa Chỉ Mới';
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-house-add me-2 text-danger"></i>Thêm Địa Chỉ Mới';
+        // Cho phép nhập liên hệ khi tạo địa chỉ mới
+        contactNameInput.disabled = false;
+        contactPhoneInput.disabled = false;
+        if (contactNotice) contactNotice.classList.add('d-none');
     }
 
-    modal.classList.add('active');
+    modal.show();
 }
 
 // Close address modal
 function closeAddressModal() {
-    document.getElementById('addressModal').classList.remove('active');
+    const modalEl = document.getElementById('addressModal');
+    if (!modalEl) return;
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) {
+        modal.hide();
+    }
 }
 
 // Edit address
@@ -265,7 +309,7 @@ async function handleAddressSubmit(e) {
             currentUser = result.data;
             displayAddresses(currentUser.addresses);
             closeAddressModal();
-            showAlert('success', isEdit ? '✅ Cập nhật địa chỉ thành công!' : '✅ Lưu địa chỉ mới thành công!');
+            showAlert('success', isEdit ? 'Cập nhật địa chỉ thành công!' : 'Lưu địa chỉ mới thành công!');
         } else {
             showAlert('error', result.message || 'Lưu địa chỉ thất bại');
         }
@@ -294,7 +338,7 @@ async function deleteAddress(addressId) {
         if (result.success) {
             currentUser = result.data;
             displayAddresses(currentUser.addresses);
-            showAlert('success', '✅ Xóa địa chỉ thành công!');
+            showAlert('success', 'Xóa địa chỉ thành công!');
         } else {
             showAlert('error', result.message || 'Xóa địa chỉ thất bại');
         }
@@ -319,7 +363,7 @@ async function setDefaultAddress(addressId) {
         if (result.success) {
             currentUser = result.data;
             displayAddresses(currentUser.addresses);
-            showAlert('success', '✅ Đã đặt địa chỉ mặc định!');
+            showAlert('success', 'Đã đặt địa chỉ mặc định!');
         } else {
             showAlert('error', result.message || 'Thất bại');
         }
@@ -336,11 +380,15 @@ async function setDefaultAddress(addressId) {
 // Show alert
 function showAlert(type, message) {
     const container = document.getElementById('alertContainer');
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+    if (!container) return;
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
 
     container.innerHTML = `
-        <div class="alert ${alertClass}">
-            ${type === 'success' ? '✅' : '❌'} ${message}
+        <div class="alert ${alertClass} alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center mb-4" role="alert">
+            <i class="bi ${icon} fs-5 me-2"></i>
+            <div>${message}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     `;
 
@@ -352,9 +400,13 @@ function showAlert(type, message) {
 // Show/hide loading
 function showLoading(show) {
     const loading = document.getElementById('loading');
-    if (show) {
-        loading.classList.add('active');
-    } else {
-        loading.classList.remove('active');
+    if (loading) {
+        if (show) {
+            loading.classList.remove('d-none');
+            loading.classList.add('d-flex');
+        } else {
+            loading.classList.remove('d-flex');
+            loading.classList.add('d-none');
+        }
     }
 }

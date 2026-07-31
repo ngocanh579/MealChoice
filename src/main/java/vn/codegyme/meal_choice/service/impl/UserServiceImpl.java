@@ -89,9 +89,7 @@ public class UserServiceImpl implements UserService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
 
-        // Cập nhật thông tin
-        address.setContactName(addressDTO.getContactName());
-        address.setContactPhone(addressDTO.getContactPhone());
+        // Cập nhật thông tin địa chỉ (Giữ nguyên liên hệ contactName & contactPhone theo yêu cầu GEMINI.md)
         address.setCity(addressDTO.getCity());
         address.setDistrict(addressDTO.getDistrict());
         address.setWard(addressDTO.getWard());
