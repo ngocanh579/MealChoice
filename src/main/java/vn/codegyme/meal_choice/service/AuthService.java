@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vn.codegyme.meal_choice.dto.AuthResponse;
 import vn.codegyme.meal_choice.dto.RegisterRequest;
+import vn.codegyme.meal_choice.entity.Role;
 import vn.codegyme.meal_choice.entity.User;
 import vn.codegyme.meal_choice.repository.UserRepository;
 
@@ -23,11 +24,23 @@ public class AuthService {
             throw new RuntimeException("Email đã tồn tại");
         }
 
+        // Check phone number if it exists
+        if (userRepository.existsByPhoneNumber(registerRequest.getPhoneNumber())){
+            throw new RuntimeException("Số điện thoại đã tồn tại");
+        }
+
+        // Check duplicate password
+        if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())){
+            throw new RuntimeException("Mật khẩu xác nhận không khớp");
+        }
+
         // Create a new user with hash password
         User user = new User();
         user.setEmail(registerRequest.getEmail());
-        user.setPassword(registerRequest.getPassword());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setPhoneNumber(registerRequest.getPhoneNumber());
         user.setDisplayName(registerRequest.getDisplayName());
+        user.setRole(Role.USER);
 
         // Save in database
         userRepository.save(user);
@@ -36,15 +49,15 @@ public class AuthService {
         String accessToken = jwtService.generateAccessToken(user.getEmail());
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
-        return new AuthResponse(
-                accessToken,
-                refreshToken,
-                user.getId(),
-                user.getEmail(),
-                user.getDisplayName(),
-                user.getPhoneNumber(),
-                user.getGender(),
-                user.getAvatarUrl()
-        );
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setAccessToken(accessToken);
+        authResponse.setRefreshToken(refreshToken);
+        authResponse.setId(user.getId());
+        authResponse.setEmail(user.getEmail());
+        authResponse.setDisplayName(user.getDisplayName());
+        authResponse.setAvatarUrl(user.getAvatarUrl());
+        authResponse.setRole(user.getRole().name());
+
+        return authResponse;
     }
 }
