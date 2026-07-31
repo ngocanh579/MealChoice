@@ -16,9 +16,10 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")
+    @Size(min = 8, max = 16, message = "Mật khẩu phải có từ 8-16 ký tự")
     @Pattern(
-            regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$",
-            message = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm cả chữ và số"
+            regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$",
+            message = "Mật khẩu phải bao gồm cả chữ và số"
     )
     private String password;
 
@@ -28,4 +29,11 @@ public class RegisterRequest {
     @NotBlank(message = "Tên hiển thị không được để trống")
     @Size(max = 30, message = "Tên hiển thị không được vượt quá 30 kí tự")
     private String displayName;
+
+    @NotBlank(message = "Số điện thoại không được để trống")
+    @Pattern(
+            regexp = "^(0|\\+84)[3|5|7|8|9][0-9]{8}$",
+            message = "Số điện thoại không đúng định dạng Việt Nam"
+    )
+    private String phoneNumber;
 }
