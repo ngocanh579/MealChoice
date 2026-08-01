@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Cửa Hàng - Admin Portal</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-green: #10b981;
+            --accent-green-hover: #059669;
+            --accent-red: #ef4444;
+            --accent-red-hover: #dc2626;
+            --btn-secondary: rgba(255, 255, 255, 0.1);
+            --btn-secondary-hover: rgba(255, 255, 255, 0.2);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .title-area h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title-area p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-active {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-active::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px var(--accent-green);
+        }
+
+        .status-locked {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-locked::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-red);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px var(--accent-red);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-bottom: 35px;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            padding: 16px 20px;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .detail-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px);
+        }
+
+        .label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .value {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .btn {
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+        }
+
+        .btn-secondary {
+            background-color: var(--btn-secondary);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--btn-secondary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-lock {
+            background-color: var(--accent-red);
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-lock:hover {
+            background-color: var(--accent-red-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-unlock {
+            background-color: var(--accent-green);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-unlock:hover {
+            background-color: var(--accent-green-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+        }
+
+        form {
+            display: inline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="title-area">
+            <h1>Chi Tiết Đối Tác</h1>
+            <p>Mã đối tác: #<span th:text="${merchant.id}">1</span></p>
+        </div>
+        <div>
+            <span th:if="${merchant.isActive}" class="status-badge status-active">Hoạt Động</span>
+            <span th:unless="${merchant.isActive}" class="status-badge status-locked">Đang Khóa</span>
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">Tên Cửa Hàng</div>
+            <div class="value" th:text="${merchant.name}">Cơm Tấm Bụi Sài Gòn</div>
+        </div>
+
+        <div class="detail-item">
+            <div class="label">Số Điện Thoại</div>
+            <div class="value" th:text="${merchant.phone}">0987654321</div>
+        </div>
+
+        <div class="detail-item">
+            <div class="label">Địa Chỉ Email</div>
+            <div class="value" th:text="${merchant.email}">contact@buisaigon.com</div>
+        </div>
+
+        <div class="detail-item">
+            <div class="label">Địa Chỉ Cửa Hàng</div>
+            <div class="value" th:text="${merchant.address}">123 Nguyễn Trãi, Quận 1, TP. HCM</div>
+        </div>
+
+        <div class="detail-item">
+            <div class="label">Mô Tả Cửa Hàng</div>
+            <div class="value" th:text="${merchant.description}">Chuyên cung cấp các món cơm tấm sườn bì chả thơm ngon chuẩn vị.</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <!-- Quay lại danh sách merchant (nhiệm vụ của Văn Hưng) -->
+        <a href="/admin/merchants" class="btn btn-secondary">Quay Lại</a>
+
+        <!-- Nút khóa/mở khóa của Minh Đức -->
+        <form th:action="@{/admin/merchants/{id}/toggle-lock(id=${merchant.id})}" method="post">
+            <button th:if="${merchant.isActive}" type="submit" class="btn btn-lock">Khóa Cửa Hàng</button>
+            <button th:unless="${merchant.isActive}" type="submit" class="btn btn-unlock">Mở Khóa Cửa Hàng</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
