@@ -9,25 +9,23 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import vn.codegyme.meal_choice.entity.User;
-import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.service.JwtService;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final UserRepository userRepository;
+    private final CustomUserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
+
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -36,31 +34,29 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
-        String extractEmail = jwtService.extractEmail(token);
-        if (extractEmail == null) {
-            filterChain.doFilter(request, response);
-            return;
+        try {
+            String email = jwtService.extractEmail(token);
+
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(email);
+
+                if (jwtService.isTokenValid(token, email)) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+        } catch (Exception e) {
+            // Token sai, hết hạn, user không tồn tại,... đều rơi vào đây
+            // KHÔNG throw ra ngoài -> chỉ đơn giản không set Authentication
+            // -> SecurityConfig sẽ tự trả về 401 cho request này
+            SecurityContextHolder.clearContext();
         }
 
-        User user = userRepository.findByEmail(extractEmail).orElse(null);
-        if (user == null) {
-            filterChain.doFilter(request, response);
-            return;
-        };
-
-        if (!jwtService.isTokenValid(token, extractEmail)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(
-                        user,
-                        null,
-                        List.of()
-                );
-
-        SecurityContextHolder.getContext().setAuthentication(authToken);
         filterChain.doFilter(request, response);
     }
 }
