@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vn.codegyme.meal_choice.dto.AuthResponse;
+import vn.codegyme.meal_choice.dto.LoginRequest;
 import vn.codegyme.meal_choice.dto.RegisterRequest;
 import vn.codegyme.meal_choice.entity.Role;
 import vn.codegyme.meal_choice.entity.User;
@@ -56,6 +57,30 @@ public class AuthService {
         authResponse.setEmail(user.getEmail());
         authResponse.setDisplayName(user.getDisplayName());
         authResponse.setPhoneNumber(user.getPhoneNumber());
+        authResponse.setAvatarUrl(user.getAvatarUrl());
+        authResponse.setRole(user.getRole().name());
+
+        return authResponse;
+    }
+
+    public AuthResponse login (LoginRequest loginRequest){
+
+        User user = userRepository.findByEmail(loginRequest.getEmail())
+            .orElseThrow(() -> new RuntimeException("Email hoặc mật khẩu không đúng"));
+
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
+            throw new RuntimeException("Email hoặc mật khẩu không đúng");
+        }
+
+        String accessToken = jwtService.generateAccessToken(user.getEmail());
+        String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setAccessToken(accessToken);
+        authResponse.setRefreshToken(refreshToken);
+        authResponse.setId(user.getId());
+        authResponse.setEmail(user.getEmail());
+        authResponse.setDisplayName(user.getDisplayName());
         authResponse.setAvatarUrl(user.getAvatarUrl());
         authResponse.setRole(user.getRole().name());
 
