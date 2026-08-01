@@ -2,9 +2,11 @@ package vn.codegyme.meal_choice.service;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.codegyme.meal_choice.dto.MerchantRegisterRequest;
+import vn.codegyme.meal_choice.dto.MerchantUpdateRequest;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.Role;
 import vn.codegyme.meal_choice.entity.User;
@@ -19,6 +21,8 @@ public class MerchantService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final MerchantRepository merchantRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Transactional
     public void registerMerchant(MerchantRegisterRequest request){
@@ -40,7 +44,9 @@ public class MerchantService {
         user.setName(request.getOwnerName());
         user.setEmail(request.getEmail());
         user.setPhoneNumber(request.getPhone());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        // Tạm thời active tài khoản ngay.
+        // TODO: Đổi thành false khi hoàn thiện chức năng kích hoạt qua email.
         user.setIsActive(true);
 
         // lấy role_Merchant
@@ -63,6 +69,24 @@ public class MerchantService {
         merchant.setUser(user);
 
         merchant.setMerchantStatus("PENDING");
+        merchantRepository.save(merchant);
+        emailService.sendMerchantRegisterEmail(
+                request.getEmail(),
+                request.getRestaurantName()
+        );
+    }
+
+    public void updateMerchant(Long merchantId, MerchantUpdateRequest request) {
+
+        Merchant merchant = merchantRepository.findById(merchantId)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy Merchant"));
+
+        merchant.setRestaurantName(request.getRestaurantName());
+        merchant.setAddress(request.getAddress());
+        merchant.setOpenTime(request.getOpenTime());
+        merchant.setCloseTime(request.getCloseTime());
+
         merchantRepository.save(merchant);
     }
     
