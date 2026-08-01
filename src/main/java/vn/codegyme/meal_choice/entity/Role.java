@@ -6,17 +6,24 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name="roles")
+@Table(name = "roles")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Role {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, unique = true)
+    @Column(
+            name = "name",
+            nullable = false,
+            unique = true,
+            length = 50
+    )
     private RoleName name;
 
     public enum RoleName {
@@ -24,5 +31,4 @@ public class Role {
         ROLE_MERCHANT,
         ROLE_ADMIN
     }
-    
 }
