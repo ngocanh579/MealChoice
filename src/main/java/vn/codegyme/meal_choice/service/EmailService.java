@@ -1,5 +1,8 @@
 package vn.codegyme.meal_choice.service;
 
-public class EmailService {
-    
+import vn.codegyme.meal_choice.entity.User;
+
+public interface EmailService {
+
+    void sendVerificationEmail(User user, String verificationLink);
 }
