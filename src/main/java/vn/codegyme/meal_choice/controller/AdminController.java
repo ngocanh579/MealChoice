@@ -1,5 +1,0 @@
-package vn.codegyme.meal_choice.controller;
-
-public class AdminController {
-    
-}
