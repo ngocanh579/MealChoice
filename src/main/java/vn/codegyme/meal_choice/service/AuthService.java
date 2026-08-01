@@ -81,6 +81,7 @@ public class AuthService {
         authResponse.setId(user.getId());
         authResponse.setEmail(user.getEmail());
         authResponse.setDisplayName(user.getDisplayName());
+        authResponse.setPhoneNumber(user.getPhoneNumber());
         authResponse.setAvatarUrl(user.getAvatarUrl());
         authResponse.setRole(user.getRole().name());
 
