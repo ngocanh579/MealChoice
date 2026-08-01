@@ -1,78 +1,257 @@
-drop database meal_choice ;
-create database meal_choice;
-use meal_choice ;
+DROP DATABASE IF EXISTS meal_choice;
+CREATE DATABASE meal_choice;
+USE meal_choice;
 
-create table roles (
-                       id bigint primary key auto_increment,
-                       name varchar(50) unique not null
-);
-
-create table users (
-                       id bigint primary key auto_increment,
-                       name varchar(100),
-                       email varchar(100) unique not null ,
-                       phone_number varchar(20) unique not null,
-                       password varchar(255) not null ,
-                       date_of_birth date,
-                       gender varchar(20),
-                       is_active boolean default true
-);
-
-create table user_roles (
-                            user_id bigint,
-                            role_id bigint,
-                            primary key(user_id, role_id),
-                            foreign key(user_id) references users(id),
-                            foreign key(role_id) references roles(id)
-);
-
-create table merchants (
-                           id bigint primary key auto_increment,
-                           user_id bigint unique,
-                           restaurant_name varchar(150) not null,
-                           email varchar(100) unique not null,
-                           phone varchar(20)  unique not null,
-                           address varchar(255) not null,
-                           open_time time,
-                           close_time time,
-                           merchant_status varchar(30) default 'PENDING',
-                           foreign key (user_id) references users(id)
-);
 -- Roles
-INSERT INTO roles (name) VALUES
-                             ('ROLE_ADMIN'),
-                             ('ROLE_USER'),
-                             ('ROLE_MERCHANT');
+CREATE TABLE roles (
+                       id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                       name VARCHAR(50) UNIQUE NOT NULL
+);
+
 -- Users
-INSERT INTO users
-(name, email, phone_number, password, date_of_birth, gender, is_active)
-VALUES
-    ('Admin','admin@mealchoice.com','0900000001','hash','1990-01-01','MALE',true),
-    ('Nguyen Van An','an@gmail.com','0900000002','hash','2000-05-10','MALE',true),
-    ('Tran Thi Binh','binh@gmail.com','0900000003','hash','2001-08-15','FEMALE',true),
-    ('Le Van Nam','nam@merchant.com','0900000004','hash','1995-03-20','MALE',true),
-    ('Pham Thi Hoa','hoa@merchant.com','0900000005','hash','1996-11-25','FEMALE',true),
-    ('Nguyen Van Minh','minh@merchant.com','0900000006','hash','1994-02-02','MALE',true),
-    ('Do Thi Lan','lan@merchant.com','0900000007','hash','1997-06-06','FEMALE',true),
-    ('Hoang Duc','duc@merchant.com','0900000008','hash','1993-09-09','MALE',true);
+CREATE TABLE users (
+                       id BINARY(16) PRIMARY KEY,
+                       user_email VARCHAR(255) UNIQUE,
+                       user_password VARCHAR(60) NOT NULL,
+                       user_display_name VARCHAR(32) NOT NULL,
+                       user_phone_number VARCHAR(20) UNIQUE NOT NULL,
+                       user_gender VARCHAR(20),
+                       user_avatar_url VARCHAR(255),
+                       user_dob DATETIME,
+                       user_is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                       user_created_at DATETIME NOT NULL
+);
 
 -- User Roles
-INSERT INTO user_roles(user_id, role_id) VALUES
-                                             (1,1),
-                                             (2,2),
-                                             (3,2),
-                                             (4,2),(4,3),
-                                             (5,2),(5,3),
-                                             (6,2),(6,3),
-                                             (7,2),(7,3),
-                                             (8,2),(8,3);
+CREATE TABLE user_roles (
+                            user_id BINARY(16),
+                            role_id BIGINT,
+                            PRIMARY KEY (user_id, role_id),
+                            FOREIGN KEY (user_id) REFERENCES users(id),
+                            FOREIGN KEY (role_id) REFERENCES roles(id)
+);
 
 -- Merchants
-INSERT INTO merchants
-(user_id, restaurant_name, email, phone, address, open_time, close_time, merchant_status)
+CREATE TABLE merchants (
+                           id BINARY(16) PRIMARY KEY,
+                           user_id BINARY(16) UNIQUE,
+
+                           merchant_restaurant_name VARCHAR(150) NOT NULL,
+                           merchant_email VARCHAR(255) UNIQUE NOT NULL,
+                           merchant_phone VARCHAR(20) UNIQUE NOT NULL,
+                           merchant_address VARCHAR(255) NOT NULL,
+                           merchant_open_time TIME,
+                           merchant_close_time TIME,
+                           merchant_status VARCHAR(30) DEFAULT 'PENDING',
+
+                           FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+TRUNCATE TABLE user_roles;
+TRUNCATE TABLE merchants;
+TRUNCATE TABLE users;
+TRUNCATE TABLE roles;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+INSERT INTO roles (id, name) VALUES
+                                 (1, 'ROLE_ADMIN'),
+                                 (2, 'ROLE_USER'),
+                                 (3, 'ROLE_MERCHANT');
+
+INSERT INTO users
+(
+    id,
+    user_email,
+    user_password,
+    user_display_name,
+    user_phone_number,
+    user_gender,
+    user_avatar_url,
+    user_dob,
+    user_is_active,
+    user_created_at
+)
 VALUES
-    (4,'Quan Com Ga Nam','nam@merchant.com','0900000004','Ha Noi','08:00:00','22:00:00','APPROVED'),
-    (5,'Bep Nha Hoa','hoa@merchant.com','0900000005','Ho Chi Minh','09:00:00','21:30:00','PENDING'),
-    (6,'Pizza Y Ngon','minh@merchant.com','0900000006','Da Nang','10:00:00','23:00:00','APPROVED'),
-    (7,'Tra Sua Moc','lan@merchant.com','0900000007','Hai Phong','08:30:00','22:30:00','REJECTED'),
-    (8,'Bun Cha Ha Thanh','duc@merchant.com','0900000008','Ha Noi','07:00:00','20:00:00','BLOCKED');
+    (
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000001'),
+        'admin@mealchoice.com',
+        'hash',
+        'Admin',
+        '0900000001',
+        'MALE',
+        NULL,
+        '1990-01-01 00:00:00',
+        TRUE,
+        NOW()
+    ),
+    (
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000002'),
+        'an@gmail.com',
+        'hash',
+        'Nguyen Van An',
+        '0900000002',
+        'MALE',
+        NULL,
+        '2000-05-10 00:00:00',
+        TRUE,
+        NOW()
+    ),
+    (
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000003'),
+        'binh@gmail.com',
+        'hash',
+        'Tran Thi Binh',
+        '0900000003',
+        'FEMALE',
+        NULL,
+        '2001-08-15 00:00:00',
+        TRUE,
+        NOW()
+    ),
+    (
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000004'),
+        'nam@merchant.com',
+        'hash',
+        'Le Van Nam',
+        '0900000004',
+        'MALE',
+        NULL,
+        '1995-03-20 00:00:00',
+        TRUE,
+        NOW()
+    ),
+    (
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000005'),
+        'hoa@merchant.com',
+        'hash',
+        'Pham Thi Hoa',
+        '0900000005',
+        'FEMALE',
+        NULL,
+        '1996-11-25 00:00:00',
+        TRUE,
+        NOW()
+    ),
+    (
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000006'),
+        'minh@merchant.com',
+        'hash',
+        'Nguyen Van Minh',
+        '0900000006',
+        'MALE',
+        NULL,
+        '1994-02-02 00:00:00',
+        TRUE,
+        NOW()
+    ),
+    (
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000007'),
+        'lan@merchant.com',
+        'hash',
+        'Do Thi Lan',
+        '0900000007',
+        'FEMALE',
+        NULL,
+        '1997-06-06 00:00:00',
+        TRUE,
+        NOW()
+    ),
+    (
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000008'),
+        'duc@merchant.com',
+        'hash',
+        'Hoang Duc',
+        '0900000008',
+        'MALE',
+        NULL,
+        '1993-09-09 00:00:00',
+        TRUE,
+        NOW()
+    );
+
+INSERT INTO user_roles (user_id, role_id) VALUES
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000001'), 1),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000002'), 2),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000003'), 2),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000004'), 2),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000004'), 3),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000005'), 2),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000005'), 3),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000006'), 2),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000006'), 3),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000007'), 2),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000007'), 3),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000008'), 2),
+                                              (UUID_TO_BIN('00000000-0000-0000-0000-000000000008'), 3);
+
+INSERT INTO merchants
+(
+    id,
+    user_id,
+    merchant_restaurant_name,
+    merchant_email,
+    merchant_phone,
+    merchant_address,
+    merchant_open_time,
+    merchant_close_time,
+    merchant_status
+)
+VALUES
+    (
+        UUID_TO_BIN('10000000-0000-0000-0000-000000000001'),
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000004'),
+        'Quan Com Ga Nam',
+        'nam@merchant.com',
+        '0900000004',
+        'Ha Noi',
+        '08:00:00',
+        '22:00:00',
+        'APPROVED'
+    ),
+    (
+        UUID_TO_BIN('10000000-0000-0000-0000-000000000002'),
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000005'),
+        'Bep Nha Hoa',
+        'hoa@merchant.com',
+        '0900000005',
+        'Ho Chi Minh',
+        '09:00:00',
+        '21:30:00',
+        'PENDING'
+    ),
+    (
+        UUID_TO_BIN('10000000-0000-0000-0000-000000000003'),
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000006'),
+        'Pizza Y Ngon',
+        'minh@merchant.com',
+        '0900000006',
+        'Da Nang',
+        '10:00:00',
+        '23:00:00',
+        'APPROVED'
+    ),
+    (
+        UUID_TO_BIN('10000000-0000-0000-0000-000000000004'),
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000007'),
+        'Tra Sua Moc',
+        'lan@merchant.com',
+        '0900000007',
+        'Hai Phong',
+        '08:30:00',
+        '22:30:00',
+        'REJECTED'
+    ),
+    (
+        UUID_TO_BIN('10000000-0000-0000-0000-000000000005'),
+        UUID_TO_BIN('00000000-0000-0000-0000-000000000008'),
+        'Bun Cha Ha Thanh',
+        'duc@merchant.com',
+        '0900000008',
+        'Ha Noi',
+        '07:00:00',
+        '20:00:00',
+        'BLOCKED'
+    );
