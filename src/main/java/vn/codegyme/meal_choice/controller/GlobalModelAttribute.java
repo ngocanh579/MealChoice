@@ -1,6 +1,6 @@
 package vn.codegyme.meal_choice.controller;
 
-import com.truanayangi.config.AppProperties;
+import vn.codegyme.meal_choice.config.AppProperties;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
