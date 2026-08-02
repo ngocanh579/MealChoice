@@ -2,10 +2,14 @@ package vn.codegyme.meal_choice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -15,13 +19,15 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"password", "roles", "addresses"})
+@ToString(exclude = { "password", "roles", "addresses" })
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // Ép Hibernate lưu UUID thành kiểu VARCHAR(36)
+    @Column(length = 36)
     @EqualsAndHashCode.Include
-    private Long id;
+    private UUID id;
 
     @Column(nullable = false)
     private String name;
@@ -42,24 +48,17 @@ public class User {
 
     @Builder.Default
     @Column(nullable = false)
+    @ColumnDefault("true") // Sinh ra SQL DDL: DEFAULT true
     private Boolean isActive = true;
 
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Address> addresses = new HashSet<>();
-
-    public enum Gender {
-        MALE, FEMALE, OTHER
-    }
 
     public User(String name, String email, String phoneNumber, String password) {
         this.name = name;
@@ -71,14 +70,13 @@ public class User {
         this.addresses = new HashSet<>();
     }
 
-    // Email không được sửa sau khi tạo (chỉ dùng khi tạo mới)
+    // Email và Phone không được sửa sau khi đã tạo
     public void setEmail(String email) {
         if (this.id == null) {
             this.email = email;
         }
     }
 
-    // PhoneNumber không được sửa sau khi tạo (chỉ dùng khi tạo mới)
     public void setPhoneNumber(String phoneNumber) {
         if (this.id == null) {
             this.phoneNumber = phoneNumber;

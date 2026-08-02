@@ -13,7 +13,7 @@ public class AddressDTO {
     private String contactName; // Tên người nhận (*)
 
     @NotBlank(message = "Số điện thoại không được để trống")
-    @Pattern(regexp = "^(0|\\+84)[0-9]{9}$", message = "Số điện thoại không hợp lệ")
+    @Pattern(regexp = "^(0|\\+84)[0-9]{9,10}$", message = "Số điện thoại không hợp lệ (ví dụ: 0987654321)")
     private String contactPhone; // Số điện thoại người nhận (*)
 
     // ========== ĐỊA CHỈ ==========

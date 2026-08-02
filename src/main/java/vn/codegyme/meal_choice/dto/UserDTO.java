@@ -3,14 +3,16 @@ package vn.codegyme.meal_choice.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
+import vn.codegyme.meal_choice.entity.Gender;
 import vn.codegyme.meal_choice.entity.User;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 public class UserDTO {
 
-    private Long id;
+    private UUID id;
 
     @NotBlank(message = "Họ và tên không được để trống")
     @Size(min = 2, max = 100, message = "Tên phải từ 2 đến 100 ký tự")
@@ -27,10 +29,8 @@ public class UserDTO {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
 
-    private User.Gender gender;
+    private Gender gender;
 
-    @NotNull(message = "Địa chỉ giao hàng không được để trống")
-    @Size(min = 1, message = "Phải có ít nhất một địa chỉ giao hàng")
     private List<AddressDTO> addresses;
 
     private Boolean isActive;
@@ -40,8 +40,8 @@ public class UserDTO {
     public UserDTO() {
     }
 
-    public UserDTO(Long id, String name, String email, String phoneNumber,
-                   LocalDate dateOfBirth, User.Gender gender,
+    public UserDTO(UUID id, String name, String email, String phoneNumber,
+                   LocalDate dateOfBirth, Gender gender,
                    List<AddressDTO> addresses, Boolean isActive) {
         this.id = id;
         this.name = name;
@@ -55,11 +55,11 @@ public class UserDTO {
 
     // ================= GETTERS AND SETTERS =================
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -95,11 +95,11 @@ public class UserDTO {
         this.dateOfBirth = dateOfBirth;
     }
 
-    public User.Gender getGender() {
+    public Gender getGender() {
         return gender;
     }
 
-    public void setGender(User.Gender gender) {
+    public void setGender(Gender gender) {
         this.gender = gender;
     }
 
