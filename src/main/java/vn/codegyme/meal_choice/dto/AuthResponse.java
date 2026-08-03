@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Set;
 import java.util.UUID;
 
 @NoArgsConstructor
@@ -27,5 +28,5 @@ public class AuthResponse {
 
     private String avatarUrl;
 
-    private String role;
+    private Set<String> roles;
 }
