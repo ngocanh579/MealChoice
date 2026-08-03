@@ -239,9 +239,6 @@ function openAddressModal(addressId = null) {
     form.reset();
     document.getElementById('addressId').value = ''; // Reset hidden ID input
 
-    const modalAlert = document.getElementById('modalAlertContainer');
-    if (modalAlert) modalAlert.innerHTML = '';
-
     const contactNameInput = document.getElementById('contactName');
     const contactPhoneInput = document.getElementById('contactPhone');
     const contactNotice = document.getElementById('contactNotice');
@@ -299,13 +296,13 @@ async function handleAddressSubmit(e) {
     const addressId = document.getElementById('addressId').value;
 
     const formData = {
-        contactName: document.getElementById('contactName').value ? document.getElementById('contactName').value.trim() : '',
-        contactPhone: document.getElementById('contactPhone').value ? document.getElementById('contactPhone').value.trim() : '',
-        city: document.getElementById('city').value ? document.getElementById('city').value.trim() : '',
-        district: document.getElementById('district').value ? document.getElementById('district').value.trim() : '',
-        ward: document.getElementById('ward').value ? document.getElementById('ward').value.trim() : '',
-        street: document.getElementById('street').value ? document.getElementById('street').value.trim() : '',
-        note: document.getElementById('note').value ? document.getElementById('note').value.trim() : null,
+        contactName: document.getElementById('contactName').value,
+        contactPhone: document.getElementById('contactPhone').value,
+        city: document.getElementById('city').value,
+        district: document.getElementById('district').value,
+        ward: document.getElementById('ward').value,
+        street: document.getElementById('street').value,
+        note: document.getElementById('note').value || null,
         isDefault: document.getElementById('isDefault').checked
     };
 
@@ -332,11 +329,11 @@ async function handleAddressSubmit(e) {
             closeAddressModal();
             showAlert('success', isEdit ? 'Cập nhật địa chỉ thành công!' : 'Lưu địa chỉ mới thành công!');
         } else {
-            showAlert('error', result.message || 'Lưu địa chỉ thất bại', 'modalAlertContainer');
+            showAlert('error', result.message || 'Lưu địa chỉ thất bại');
         }
     } catch (error) {
         console.error('Error saving address:', error);
-        showAlert('error', 'Lỗi kết nối server', 'modalAlertContainer');
+        showAlert('error', 'Lỗi kết nối server');
     } finally {
         showLoading(false);
     }
@@ -399,14 +396,14 @@ async function setDefaultAddress(addressId) {
 // ==================== UTILITY FUNCTIONS ====================
 
 // Show alert
-function showAlert(type, message, containerId = 'alertContainer') {
-    const container = document.getElementById(containerId) || document.getElementById('alertContainer');
+function showAlert(type, message) {
+    const container = document.getElementById('alertContainer');
     if (!container) return;
     const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
     const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
 
     container.innerHTML = `
-        <div class="alert ${alertClass} alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center mb-3" role="alert">
+        <div class="alert ${alertClass} alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center mb-4" role="alert">
             <i class="bi ${icon} fs-5 me-2"></i>
             <div>${message}</div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -415,7 +412,7 @@ function showAlert(type, message, containerId = 'alertContainer') {
 
     setTimeout(() => {
         container.innerHTML = '';
-    }, 6000);
+    }, 5000);
 }
 
 // Show/hide loading

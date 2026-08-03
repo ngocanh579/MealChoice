@@ -14,7 +14,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
-//@PreAuthorize("hasRole('USER')") bỏ để test
 public class UserController {
 
     @Autowired
