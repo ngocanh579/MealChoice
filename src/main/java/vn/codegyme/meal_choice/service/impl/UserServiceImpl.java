@@ -15,6 +15,7 @@ import vn.codegyme.meal_choice.service.AuthService;
 import vn.codegyme.meal_choice.service.UserService;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,9 +39,10 @@ public class UserServiceImpl implements UserService {
         User user = getCurrentUser();
 
         // CHỈ cập nhật các trường được phép
-        user.setName(userDTO.getName());
-        user.setDateOfBirth(userDTO.getDateOfBirth());
+        user.setDisplayName(userDTO.getDisplayName());
+        user.setDob(userDTO.getDob());
         user.setGender(userDTO.getGender());
+        user.setAvatarUrl(userDTO.getAvatarUrl());
 
         // Cập nhật địa chỉ nếu có truyền danh sách
         if (userDTO.getAddresses() != null && !userDTO.getAddresses().isEmpty()) {
@@ -89,7 +91,7 @@ public class UserServiceImpl implements UserService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
 
-        // Cập nhật thông tin địa chỉ (Giữ nguyên liên hệ contactName & contactPhone theo yêu cầu GEMINI.md)
+        // Cập nhật thông tin địa chỉ (Giữ nguyên liên hệ contactName & contactPhone)
         address.setCity(addressDTO.getCity());
         address.setDistrict(addressDTO.getDistrict());
         address.setWard(addressDTO.getWard());
@@ -134,7 +136,7 @@ public class UserServiceImpl implements UserService {
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder
                 .getRequestAttributes()).getRequest().getSession();
 
-        Long userId = authService.getCurrentUserId(session);
+        UUID userId = authService.getCurrentUserId(session);
 
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
@@ -162,10 +164,11 @@ public class UserServiceImpl implements UserService {
     private UserDTO convertToDTO(User user) {
         return new UserDTO(
                 user.getId(),
-                user.getName(),
+                user.getDisplayName(),
                 user.getEmail(),
                 user.getPhoneNumber(),
-                user.getDateOfBirth(),
+                user.getAvatarUrl(),
+                user.getDob(),
                 user.getGender(),
                 user.getAddresses().stream()
                         .map(this::convertAddressToDTO)

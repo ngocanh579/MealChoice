@@ -84,18 +84,31 @@ async function loadProfile() {
 
 // Display profile data
 function displayProfile(user) {
-    document.getElementById('name').value = user.name || '';
+    const displayNameEl = document.getElementById('displayName');
+    if (displayNameEl) displayNameEl.value = user.displayName || user.name || '';
+
     document.getElementById('email').value = user.email || '';
     document.getElementById('phoneNumber').value = user.phoneNumber || '';
-    document.getElementById('dateOfBirth').value = user.dateOfBirth || '';
+
+    const dobEl = document.getElementById('dob');
+    if (dobEl) {
+        let dobValue = user.dob || user.dateOfBirth || '';
+        if (dobValue && dobValue.includes('T')) {
+            dobValue = dobValue.split('T')[0];
+        }
+        dobEl.value = dobValue;
+    }
+
     document.getElementById('gender').value = user.gender || '';
 }
 
 // Enable profile editing
 function editProfile() {
     isEditing = true;
-    document.getElementById('name').disabled = false;
-    document.getElementById('dateOfBirth').disabled = false;
+    const displayNameEl = document.getElementById('displayName');
+    if (displayNameEl) displayNameEl.disabled = false;
+    const dobEl = document.getElementById('dob');
+    if (dobEl) dobEl.disabled = false;
     document.getElementById('gender').disabled = false;
     document.getElementById('profileActions').style.display = 'block';
 }
@@ -103,8 +116,10 @@ function editProfile() {
 // Cancel profile editing
 function cancelEdit() {
     isEditing = false;
-    document.getElementById('name').disabled = true;
-    document.getElementById('dateOfBirth').disabled = true;
+    const displayNameEl = document.getElementById('displayName');
+    if (displayNameEl) displayNameEl.disabled = true;
+    const dobEl = document.getElementById('dob');
+    if (dobEl) dobEl.disabled = true;
     document.getElementById('gender').disabled = true;
     document.getElementById('profileActions').style.display = 'none';
     displayProfile(currentUser); // Reset to original data
@@ -114,11 +129,14 @@ function cancelEdit() {
 async function handleProfileSubmit(e) {
     e.preventDefault();
 
+    const displayNameVal = document.getElementById('displayName').value;
+    const dobVal = document.getElementById('dob').value;
+
     const formData = {
-        name: document.getElementById('name').value,
+        displayName: displayNameVal,
         email: document.getElementById('email').value,
         phoneNumber: document.getElementById('phoneNumber').value,
-        dateOfBirth: document.getElementById('dateOfBirth').value || null,
+        dob: dobVal ? dobVal + 'T00:00:00' : null,
         gender: document.getElementById('gender').value || null,
         addresses: currentUser ? currentUser.addresses : [] // Keep existing addresses
     };

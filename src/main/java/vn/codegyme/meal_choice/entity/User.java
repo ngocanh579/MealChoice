@@ -2,10 +2,12 @@ package vn.codegyme.meal_choice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -19,30 +21,37 @@ import java.util.Set;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // Ép Hibernate lưu UUID dưới dạng VARCHAR(36) trong MySQL
+    @Column(length = 36)
     @EqualsAndHashCode.Include
-    private Long id;
+    private UUID id;
 
-    @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false, unique = true, updatable = false)
+    @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false, unique = true, updatable = false)
-    private String phoneNumber;
-
-    @Column(nullable = false)
+    @Column(nullable = false, length = 60)
     private String password;
 
-    private LocalDate dateOfBirth;
+    @Column(nullable = false, length = 32)
+    private String displayName;
+
+    @Column(unique = true, nullable = false, length = 20)
+    private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private Gender gender;
 
+    @Column()
+    private String avatarUrl;
+
+    @Column()
+    private LocalDateTime dob;
+
     @Builder.Default
-    @Column(nullable = false)
-    private Boolean isActive = true;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Address> addresses = new ArrayList<>();
 
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
@@ -54,34 +63,15 @@ public class User {
     private Set<Role> roles = new HashSet<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Address> addresses = new HashSet<>();
+    @Column(nullable = false)
+    @ColumnDefault("true") // Sinh ra SQL DDL: DEFAULT true
+    private Boolean isActive = true;
 
-    public enum Gender {
-        MALE, FEMALE, OTHER
-    }
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    public User(String name, String email, String phoneNumber, String password) {
-        this.name = name;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.password = password;
-        this.isActive = true;
-        this.roles = new HashSet<>();
-        this.addresses = new HashSet<>();
-    }
-
-    // Email không được sửa sau khi tạo (chỉ dùng khi tạo mới)
-    public void setEmail(String email) {
-        if (this.id == null) {
-            this.email = email;
-        }
-    }
-
-    // PhoneNumber không được sửa sau khi tạo (chỉ dùng khi tạo mới)
-    public void setPhoneNumber(String phoneNumber) {
-        if (this.id == null) {
-            this.phoneNumber = phoneNumber;
-        }
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
     }
 }
