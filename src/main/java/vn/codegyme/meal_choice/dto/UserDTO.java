@@ -1,10 +1,12 @@
+
 package vn.codegyme.meal_choice.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import vn.codegyme.meal_choice.entity.Gender;
+import vn.codegyme.meal_choice.entity.User;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,8 +15,8 @@ public class UserDTO {
     private UUID id;
 
     @NotBlank(message = "Họ và tên không được để trống")
-    @Size(min = 2, max = 32, message = "Tên phải từ 2 đến 32 ký tự")
-    private String displayName;
+    @Size(min = 2, max = 100, message = "Tên phải từ 2 đến 100 ký tự")
+    private String name;
 
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không hợp lệ")
@@ -24,15 +26,11 @@ public class UserDTO {
     @Pattern(regexp = "^(0|\\+84)[0-9]{9}$", message = "Số điện thoại không hợp lệ")
     private String phoneNumber; // Read-only sau khi tạo
 
-    private String avatarUrl;
-
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime dob;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate dateOfBirth;
 
     private Gender gender;
 
-    @NotNull(message = "Địa chỉ giao hàng không được để trống")
-    @Size(min = 1, message = "Phải có ít nhất một địa chỉ giao hàng")
     private List<AddressDTO> addresses;
 
     private Boolean isActive;
@@ -42,15 +40,14 @@ public class UserDTO {
     public UserDTO() {
     }
 
-    public UserDTO(UUID id, String displayName, String email, String phoneNumber,
-                   String avatarUrl, LocalDateTime dob, Gender gender,
+    public UserDTO(UUID id, String name, String email, String phoneNumber,
+                   LocalDate dateOfBirth, Gender gender,
                    List<AddressDTO> addresses, Boolean isActive) {
         this.id = id;
-        this.displayName = displayName;
+        this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
-        this.avatarUrl = avatarUrl;
-        this.dob = dob;
+        this.dateOfBirth = dateOfBirth;
         this.gender = gender;
         this.addresses = addresses;
         this.isActive = isActive;
@@ -66,12 +63,12 @@ public class UserDTO {
         this.id = id;
     }
 
-    public String getDisplayName() {
-        return displayName;
+    public String getName() {
+        return name;
     }
 
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getEmail() {
@@ -90,20 +87,12 @@ public class UserDTO {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
     }
 
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
-    public LocalDateTime getDob() {
-        return dob;
-    }
-
-    public void setDob(LocalDateTime dob) {
-        this.dob = dob;
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 
     public Gender getGender() {

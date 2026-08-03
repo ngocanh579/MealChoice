@@ -10,12 +10,12 @@ import vn.codegyme.meal_choice.dto.AddressDTO;
 import vn.codegyme.meal_choice.dto.UserDTO;
 import vn.codegyme.meal_choice.entity.Address;
 import vn.codegyme.meal_choice.entity.User;
+import vn.codegyme.meal_choice.repository.AddressRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.service.AuthService;
 import vn.codegyme.meal_choice.service.UserService;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,9 +25,13 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private AddressRepository addressRepository;
+
+    @Autowired
     private AuthService authService;
 
     @Override
+    @Transactional(readOnly = true)
     public UserDTO getCurrentUserProfile() {
         User user = getCurrentUser();
         return convertToDTO(user);
@@ -39,10 +43,9 @@ public class UserServiceImpl implements UserService {
         User user = getCurrentUser();
 
         // CHỈ cập nhật các trường được phép
-        user.setDisplayName(userDTO.getDisplayName());
-        user.setDob(userDTO.getDob());
+        user.setName(userDTO.getName());
+        user.setDateOfBirth(userDTO.getDateOfBirth());
         user.setGender(userDTO.getGender());
-        user.setAvatarUrl(userDTO.getAvatarUrl());
 
         // Cập nhật địa chỉ nếu có truyền danh sách
         if (userDTO.getAddresses() != null && !userDTO.getAddresses().isEmpty()) {
@@ -58,6 +61,12 @@ public class UserServiceImpl implements UserService {
     public UserDTO addAddress(AddressDTO addressDTO) {
         User user = getCurrentUser();
 
+        boolean isDefault = (addressDTO.getIsDefault() != null && addressDTO.getIsDefault())
+                || user.getAddresses().isEmpty();
+        if (isDefault) {
+            user.getAddresses().forEach(a -> a.setIsDefault(false));
+        }
+
         Address address = new Address();
         address.setContactName(addressDTO.getContactName());
         address.setContactPhone(addressDTO.getContactPhone());
@@ -66,17 +75,13 @@ public class UserServiceImpl implements UserService {
         address.setWard(addressDTO.getWard());
         address.setStreet(addressDTO.getStreet());
         address.setNote(addressDTO.getNote());
-        address.setIsDefault(addressDTO.getIsDefault() != null && addressDTO.getIsDefault());
+        address.setIsDefault(isDefault);
         address.setUser(user);
 
-        // Nếu đặt làm mặc định, bỏ mặc định của các địa chỉ khác
-        if (address.getIsDefault()) {
-            user.getAddresses().forEach(a -> a.setIsDefault(false));
-        }
-
+        addressRepository.save(address);
         user.getAddresses().add(address);
-        User updatedUser = userRepository.save(user);
 
+        User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
 
@@ -106,6 +111,7 @@ public class UserServiceImpl implements UserService {
             address.setIsDefault(false);
         }
 
+        addressRepository.save(address);
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
@@ -115,6 +121,7 @@ public class UserServiceImpl implements UserService {
     public UserDTO deleteAddress(Long addressId) {
         User user = getCurrentUser();
         user.getAddresses().removeIf(address -> address.getId().equals(addressId));
+        addressRepository.deleteById(addressId);
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
@@ -136,7 +143,7 @@ public class UserServiceImpl implements UserService {
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder
                 .getRequestAttributes()).getRequest().getSession();
 
-        UUID userId = authService.getCurrentUserId(session);
+        java.util.UUID userId = authService.getCurrentUserId(session);
 
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
@@ -164,17 +171,15 @@ public class UserServiceImpl implements UserService {
     private UserDTO convertToDTO(User user) {
         return new UserDTO(
                 user.getId(),
-                user.getDisplayName(),
+                user.getName(),
                 user.getEmail(),
                 user.getPhoneNumber(),
-                user.getAvatarUrl(),
-                user.getDob(),
+                user.getDateOfBirth(),
                 user.getGender(),
                 user.getAddresses().stream()
                         .map(this::convertAddressToDTO)
                         .collect(Collectors.toList()),
-                user.getIsActive()
-        );
+                user.getIsActive());
     }
 
     private AddressDTO convertAddressToDTO(Address address) {
@@ -187,7 +192,6 @@ public class UserServiceImpl implements UserService {
                 address.getWard(),
                 address.getStreet(),
                 address.getNote(),
-                address.getIsDefault()
-        );
+                address.getIsDefault());
     }
 }
