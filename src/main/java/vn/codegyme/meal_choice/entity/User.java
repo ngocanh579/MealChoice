@@ -74,4 +74,17 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
+    // Email và Phone không được sửa sau khi đã tạo
+    public void setEmail(String email) {
+        if (this.id == null) {
+            this.email = email;
+        }
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        if (this.id == null) {
+            this.phoneNumber = phoneNumber;
+        }
+    }
 }
