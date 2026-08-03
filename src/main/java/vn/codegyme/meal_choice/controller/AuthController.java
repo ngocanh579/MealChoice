@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.codegyme.meal_choice.dto.AuthResponse;
 import vn.codegyme.meal_choice.dto.LoginRequest;
+import vn.codegyme.meal_choice.dto.LogoutRequest;
 import vn.codegyme.meal_choice.dto.RegisterRequest;
 import vn.codegyme.meal_choice.service.AuthService;
 
@@ -30,5 +31,11 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login (@Valid @RequestBody LoginRequest loginRequest){
         AuthResponse response = authService.login(loginRequest);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request) {
+        authService.logout(request.getRefreshToken());
+        return ResponseEntity.noContent().build();
     }
 }
