@@ -53,8 +53,8 @@ public class Address {
 //    @Column(nullable = false)
 //    private Double latitude;
 
-    @Column(nullable = false)
-    private Double longitude;
+//    @Column(nullable = false)
+//    private Double longitude;
 
     @Column(length = 200)
     private String deliveryNote;
