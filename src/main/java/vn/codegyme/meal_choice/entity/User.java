@@ -1,10 +1,11 @@
 package vn.codegyme.meal_choice.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -15,10 +16,14 @@ import java.util.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // Ép Hibernate lưu UUID thành kiểu VARCHAR(36)
+    @Column(length = 36)
+    @EqualsAndHashCode.Include
     private UUID id;
 
     @Column(unique = true, nullable = false)
@@ -54,7 +59,12 @@ public class User {
     )
     private Set<Role> roles = new HashSet<>();
 
+//    @Column(nullable = false)
+//    private Boolean isActive = true;
+
+    @Builder.Default
     @Column(nullable = false)
+    @ColumnDefault("true") // Sinh ra SQL DDL: DEFAULT true
     private Boolean isActive = true;
 
     @Column(nullable = false, updatable = false)
