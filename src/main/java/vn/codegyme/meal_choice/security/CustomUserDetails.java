@@ -9,26 +9,30 @@ import vn.codegyme.meal_choice.entity.User;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Getter
 public class CustomUserDetails implements UserDetails {
 
-    // Để lấy lại toàn bộ thông tin User gốc khi cần (VD: displayName, avatarUrl...)
     private final User user;
 
     public CustomUserDetails(User user) {
         this.user = user;
     }
 
-    // Để lấy lại UUID gốc khi cần dùng trong Controller/Service
     public UUID getId() {
         return user.getId();
     }
 
+    public User getUser() {
+        return user;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Spring Security yêu cầu prefix "ROLE_" để hasRole("XXX") hoạt động đúng
-        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+        return user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
+                .collect(Collectors.toList());
     }
 
     @Override
