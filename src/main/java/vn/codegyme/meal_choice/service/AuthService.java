@@ -13,6 +13,7 @@ import vn.codegyme.meal_choice.repository.RefreshTokenRepository;
 import vn.codegyme.meal_choice.repository.RoleRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -86,13 +87,19 @@ public class AuthService {
     private AuthResponse buildAuthResponse(User user){
 
         String accessToken = jwtService.generateAccessToken(user.getEmail());
-        String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+        String refreshTokenValue = jwtService.generateRefreshToken(user.getEmail());
 
         refreshTokenRepository.deleteByUser(user);
 
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken(refreshTokenValue);
+        refreshToken.setUser(user);
+        refreshToken.setExpiryDate(LocalDateTime.now().plusNanos(REFRESH_TOKEN_EXPIRATION_MS * 1_000_000));
+        refreshTokenRepository.save(refreshToken);
+
         AuthResponse authResponse = new AuthResponse();
         authResponse.setAccessToken(accessToken);
-        authResponse.setRefreshToken(refreshToken);
+        authResponse.setRefreshToken(refreshTokenValue);
         authResponse.setId(user.getId());
         authResponse.setEmail(user.getEmail());
         authResponse.setDisplayName(user.getDisplayName());
