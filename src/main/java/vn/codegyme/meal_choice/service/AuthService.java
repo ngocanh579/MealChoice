@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 import vn.codegyme.meal_choice.dto.AuthResponse;
 import vn.codegyme.meal_choice.dto.LoginRequest;
 import vn.codegyme.meal_choice.dto.RegisterRequest;
+import vn.codegyme.meal_choice.entity.RefreshToken;
 import vn.codegyme.meal_choice.entity.Role;
 import vn.codegyme.meal_choice.entity.User;
+import vn.codegyme.meal_choice.repository.RefreshTokenRepository;
 import vn.codegyme.meal_choice.repository.RoleRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
 
@@ -23,6 +25,9 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RoleRepository roleRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+
+    private static final long REFRESH_TOKEN_EXPIRATION_MS = 604800000L;
 
     public AuthResponse register(RegisterRequest registerRequest){
 
@@ -71,10 +76,19 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    public void logout(String refreshTokenValue) {
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
+                .orElseThrow(() -> new RuntimeException("Refresh token không hợp lệ"));
+
+        refreshTokenRepository.delete(refreshToken);
+    }
+
     private AuthResponse buildAuthResponse(User user){
 
         String accessToken = jwtService.generateAccessToken(user.getEmail());
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+
+        refreshTokenRepository.deleteByUser(user);
 
         AuthResponse authResponse = new AuthResponse();
         authResponse.setAccessToken(accessToken);
