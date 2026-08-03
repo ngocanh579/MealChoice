@@ -3,6 +3,7 @@ package vn.codegyme.meal_choice.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.codegyme.meal_choice.dto.AuthResponse;
 import vn.codegyme.meal_choice.dto.LoginRequest;
 import vn.codegyme.meal_choice.dto.RegisterRequest;
@@ -30,6 +31,7 @@ public class AuthService {
 
     private static final long REFRESH_TOKEN_EXPIRATION_MS = 604800000L;
 
+    @Transactional
     public AuthResponse register(RegisterRequest registerRequest){
 
         // Check email if it exists
@@ -65,6 +67,7 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    @Transactional
     public AuthResponse login (LoginRequest loginRequest){
 
         User user = userRepository.findByEmail(loginRequest.getEmail())
@@ -77,6 +80,7 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    @Transactional
     public void logout(String refreshTokenValue) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
                 .orElseThrow(() -> new RuntimeException("Refresh token không hợp lệ"));
