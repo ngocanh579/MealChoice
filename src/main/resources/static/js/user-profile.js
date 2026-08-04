@@ -4,6 +4,8 @@ const API_BASE = '/api/user';
 // Global state
 let currentUser = null;
 let isEditing = false;
+let initialProfileData = {};
+let initialAddressData = {};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -111,6 +113,18 @@ function editProfile() {
     if (dobEl) dobEl.disabled = false;
     document.getElementById('gender').disabled = false;
     document.getElementById('profileActions').style.display = 'block';
+
+    let dobValue = currentUser.dob || currentUser.dateOfBirth || '';
+    if (dobValue && dobValue.includes('T')) {
+        dobValue = dobValue.split('T')[0];
+    }
+
+    // Lưu dữ liệu ban đầu để so sánh dirty fields
+    initialProfileData = {
+        displayName: displayNameEl ? displayNameEl.value : '',
+        dob: dobValue,
+        gender: document.getElementById('gender').value || ''
+    };
 }
 
 // Cancel profile editing
@@ -125,30 +139,40 @@ function cancelEdit() {
     displayProfile(currentUser); // Reset to original data
 }
 
-// Handle profile form submit
+// Handle profile form submit (Partial Update via PATCH)
 async function handleProfileSubmit(e) {
     e.preventDefault();
 
-    const displayNameVal = document.getElementById('displayName').value;
-    const dobVal = document.getElementById('dob').value;
+    const currentDisplayName = document.getElementById('displayName').value;
+    const currentDob = document.getElementById('dob').value;
+    const currentGender = document.getElementById('gender').value || '';
 
-    const formData = {
-        displayName: displayNameVal,
-        email: document.getElementById('email').value,
-        phoneNumber: document.getElementById('phoneNumber').value,
-        dob: dobVal ? dobVal + 'T00:00:00' : null,
-        gender: document.getElementById('gender').value || null,
-        addresses: currentUser ? currentUser.addresses : [] // Keep existing addresses
-    };
+    // Chỉ đưa vào payload các trường có sự thay đổi (dirty fields)
+    const payload = {};
+    if (currentDisplayName !== initialProfileData.displayName) {
+        payload.displayName = currentDisplayName;
+    }
+    if (currentDob !== initialProfileData.dob) {
+        payload.dob = currentDob ? currentDob + 'T00:00:00' : null;
+    }
+    if (currentGender !== initialProfileData.gender) {
+        payload.gender = currentGender || null;
+    }
+
+    if (Object.keys(payload).length === 0) {
+        showAlert('info', 'Không có thông tin nào thay đổi');
+        cancelEdit();
+        return;
+    }
 
     showLoading(true);
     try {
         const response = await fetch(`${API_BASE}/profile`, {
-            method: 'PUT',
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(payload)
         });
 
         const result = await response.json();
@@ -262,6 +286,16 @@ function openAddressModal(addressId = null) {
             document.getElementById('street').value = address.street;
             document.getElementById('note').value = address.note || '';
             document.getElementById('isDefault').checked = Boolean(address.isDefault);
+
+            // Lưu dữ liệu ban đầu để so sánh khi sửa địa chỉ
+            initialAddressData = {
+                city: address.city || '',
+                district: address.district || '',
+                ward: address.ward || '',
+                street: address.street || '',
+                note: address.note || '',
+                isDefault: Boolean(address.isDefault)
+            };
         }
     } else {
         document.getElementById('modalTitle').innerHTML = '<i class="bi bi-house-add me-2 text-danger"></i>Thêm Địa Chỉ Mới';
@@ -269,6 +303,7 @@ function openAddressModal(addressId = null) {
         contactNameInput.disabled = false;
         contactPhoneInput.disabled = false;
         if (contactNotice) contactNotice.classList.add('d-none');
+        initialAddressData = {};
     }
 
     modal.show();
@@ -289,27 +324,55 @@ function editAddress(addressId) {
     openAddressModal(addressId);
 }
 
-// Handle address form submit (Xử lý cả Thêm và Sửa)
+// Handle address form submit (Thêm: POST đầy đủ, Sửa: PATCH partial update)
 async function handleAddressSubmit(e) {
     e.preventDefault();
 
     const addressId = document.getElementById('addressId').value;
-
-    const formData = {
-        contactName: document.getElementById('contactName').value,
-        contactPhone: document.getElementById('contactPhone').value,
-        city: document.getElementById('city').value,
-        district: document.getElementById('district').value,
-        ward: document.getElementById('ward').value,
-        street: document.getElementById('street').value,
-        note: document.getElementById('note').value || null,
-        isDefault: document.getElementById('isDefault').checked
-    };
-
-    // Xác định URL và HTTP Method dựa vào việc có addressId hay không
     const isEdit = Boolean(addressId);
-    const url = isEdit ? `${API_BASE}/address/${addressId}` : `${API_BASE}/address`;
-    const method = isEdit ? 'PUT' : 'POST';
+
+    let formData;
+    let url;
+    let method;
+
+    if (isEdit) {
+        url = `${API_BASE}/address/${addressId}`;
+        method = 'PATCH';
+
+        const currentCity = document.getElementById('city').value;
+        const currentDistrict = document.getElementById('district').value;
+        const currentWard = document.getElementById('ward').value;
+        const currentStreet = document.getElementById('street').value;
+        const currentNote = document.getElementById('note').value || '';
+        const currentIsDefault = document.getElementById('isDefault').checked;
+
+        formData = {};
+        if (currentCity !== initialAddressData.city) formData.city = currentCity;
+        if (currentDistrict !== initialAddressData.district) formData.district = currentDistrict;
+        if (currentWard !== initialAddressData.ward) formData.ward = currentWard;
+        if (currentStreet !== initialAddressData.street) formData.street = currentStreet;
+        if (currentNote !== initialAddressData.note) formData.note = currentNote;
+        if (currentIsDefault !== initialAddressData.isDefault) formData.isDefault = currentIsDefault;
+
+        if (Object.keys(formData).length === 0) {
+            showAlert('info', 'Không có thông tin địa chỉ nào thay đổi');
+            closeAddressModal();
+            return;
+        }
+    } else {
+        url = `${API_BASE}/address`;
+        method = 'POST';
+        formData = {
+            contactName: document.getElementById('contactName').value,
+            contactPhone: document.getElementById('contactPhone').value,
+            city: document.getElementById('city').value,
+            district: document.getElementById('district').value,
+            ward: document.getElementById('ward').value,
+            street: document.getElementById('street').value,
+            note: document.getElementById('note').value || null,
+            isDefault: document.getElementById('isDefault').checked
+        };
+    }
 
     showLoading(true);
     try {
@@ -399,8 +462,16 @@ async function setDefaultAddress(addressId) {
 function showAlert(type, message) {
     const container = document.getElementById('alertContainer');
     if (!container) return;
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-    const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+    let alertClass = 'alert-danger';
+    let icon = 'bi-exclamation-triangle-fill';
+
+    if (type === 'success') {
+        alertClass = 'alert-success';
+        icon = 'bi-check-circle-fill';
+    } else if (type === 'info') {
+        alertClass = 'alert-info';
+        icon = 'bi-info-circle-fill';
+    }
 
     container.innerHTML = `
         <div class="alert ${alertClass} alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center mb-4" role="alert">

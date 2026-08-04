@@ -1,37 +1,52 @@
 package vn.codegyme.meal_choice.service;
 
-import vn.codegyme.meal_choice.dto.AddressDTO;
-import vn.codegyme.meal_choice.dto.UserDTO;
+import vn.codegyme.meal_choice.dto.AddressResponseDTO;
+import vn.codegyme.meal_choice.dto.CreateAddressDTO;
+import vn.codegyme.meal_choice.dto.UpdateAddressDTO;
+import vn.codegyme.meal_choice.dto.UpdateProfileDTO;
+import vn.codegyme.meal_choice.dto.UserResponseDTO;
+
+import java.util.List;
 
 public interface UserService {
 
     /**
      * Lấy thông tin profile của user đang đăng nhập
      */
-    UserDTO getCurrentUserProfile();
+    UserResponseDTO getCurrentUserProfile();
 
     /**
      * Cập nhật profile (KHÔNG cho phép sửa email và phoneNumber)
      */
-    UserDTO updateProfile(UserDTO userDTO);
+    UserResponseDTO updateProfile(UpdateProfileDTO updateProfileDTO);
+
+    /**
+     * Lấy tất cả địa chỉ của user đang đăng nhập
+     */
+    List<AddressResponseDTO> getAllAddresses();
+
+    /**
+     * Lấy chi tiết địa chỉ theo ID
+     */
+    AddressResponseDTO getAddressById(Long addressId);
 
     /**
      * Thêm địa chỉ mới
      */
-    UserDTO addAddress(AddressDTO addressDTO);
+    UserResponseDTO addAddress(CreateAddressDTO createAddressDTO);
 
     /**
-     * Cập nhật địa chỉ đã có
+     * Cập nhật địa chỉ đã có (KHÔNG sửa thông tin liên hệ contactName & contactPhone)
      */
-    UserDTO updateAddress(Long addressId, AddressDTO addressDTO);
+    UserResponseDTO updateAddress(Long addressId, UpdateAddressDTO updateAddressDTO);
 
     /**
      * Xóa địa chỉ
      */
-    UserDTO deleteAddress(Long addressId);
+    UserResponseDTO deleteAddress(Long addressId);
 
     /**
      * Đặt địa chỉ mặc định
      */
-    UserDTO setDefaultAddress(Long addressId);
+    UserResponseDTO setDefaultAddress(Long addressId);
 }

@@ -1,28 +1,28 @@
 package vn.codegyme.meal_choice.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
-@Table(name = "users")
+@Table (name="users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"password", "roles", "addresses"})
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @JdbcTypeCode(SqlTypes.VARCHAR) // Ép Hibernate lưu UUID dưới dạng VARCHAR(36) trong MySQL
+    @JdbcTypeCode(SqlTypes.VARCHAR) // Ép Hibernate lưu UUID thành kiểu VARCHAR(36)
     @Column(length = 36)
     @EqualsAndHashCode.Include
     private UUID id;
@@ -30,13 +30,13 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false, length = 60)
+    @Column(nullable = false,length = 60)
     private String password;
 
     @Column(nullable = false, length = 32)
     private String displayName;
 
-    @Column(unique = true, nullable = false, length = 20)
+    @Column(unique = true, nullable = false,length = 20)
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
@@ -47,13 +47,11 @@ public class User {
     private String avatarUrl;
 
     @Column()
-    private LocalDateTime dob;
+    private LocalDate dob;
 
-    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 
-    @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -61,6 +59,9 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
+
+//    @Column(nullable = false)
+//    private Boolean isActive = true;
 
     @Builder.Default
     @Column(nullable = false)
@@ -73,18 +74,5 @@ public class User {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-    }
-
-    // Email và Phone không được sửa sau khi đã tạo
-    public void setEmail(String email) {
-        if (this.id == null) {
-            this.email = email;
-        }
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        if (this.id == null) {
-            this.phoneNumber = phoneNumber;
-        }
     }
 }

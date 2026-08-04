@@ -1,17 +1,18 @@
 package vn.codegyme.meal_choice.service.impl;
 
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-import vn.codegyme.meal_choice.dto.AddressDTO;
-import vn.codegyme.meal_choice.dto.UserDTO;
+import vn.codegyme.meal_choice.dto.AddressResponseDTO;
+import vn.codegyme.meal_choice.dto.CreateAddressDTO;
+import vn.codegyme.meal_choice.dto.UpdateAddressDTO;
+import vn.codegyme.meal_choice.dto.UpdateProfileDTO;
+import vn.codegyme.meal_choice.dto.UserResponseDTO;
 import vn.codegyme.meal_choice.entity.Address;
 import vn.codegyme.meal_choice.entity.User;
 import vn.codegyme.meal_choice.repository.UserRepository;
-import vn.codegyme.meal_choice.service.AuthService;
+import vn.codegyme.meal_choice.security.CustomUserDetails;
 import vn.codegyme.meal_choice.service.UserService;
 
 import java.util.List;
@@ -24,29 +25,32 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private AuthService authService;
-
     @Override
-    public UserDTO getCurrentUserProfile() {
+    public UserResponseDTO getCurrentUserProfile() {
         User user = getCurrentUser();
         return convertToDTO(user);
     }
 
     @Override
     @Transactional
-    public UserDTO updateProfile(UserDTO userDTO) {
+    public UserResponseDTO updateProfile(UpdateProfileDTO updateProfileDTO) {
         User user = getCurrentUser();
 
-        // CHỈ cập nhật các trường được phép
-        user.setDisplayName(userDTO.getDisplayName());
-        user.setDob(userDTO.getDob());
-        user.setGender(userDTO.getGender());
-        user.setAvatarUrl(userDTO.getAvatarUrl());
-
-        // Cập nhật địa chỉ nếu có truyền danh sách
-        if (userDTO.getAddresses() != null && !userDTO.getAddresses().isEmpty()) {
-            updateAddresses(user, userDTO.getAddresses());
+        // Partial update: CHỈ cập nhật các trường được gửi lên (khác null)
+        if (updateProfileDTO.getDisplayName() != null) {
+            if (updateProfileDTO.getDisplayName().trim().isEmpty()) {
+                throw new RuntimeException("Tên hiển thị không được để trống");
+            }
+            user.setDisplayName(updateProfileDTO.getDisplayName().trim());
+        }
+        if (updateProfileDTO.getDob() != null) {
+            user.setDob(updateProfileDTO.getDob());
+        }
+        if (updateProfileDTO.getGender() != null) {
+            user.setGender(updateProfileDTO.getGender());
+        }
+        if (updateProfileDTO.getAvatarUrl() != null) {
+            user.setAvatarUrl(updateProfileDTO.getAvatarUrl());
         }
 
         User updatedUser = userRepository.save(user);
@@ -54,19 +58,37 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<AddressResponseDTO> getAllAddresses() {
+        User user = getCurrentUser();
+        return user.getAddresses().stream()
+                .map(this::convertAddressToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public AddressResponseDTO getAddressById(Long addressId) {
+        User user = getCurrentUser();
+        Address address = user.getAddresses().stream()
+                .filter(a -> a.getId().equals(addressId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
+        return convertAddressToDTO(address);
+    }
+
+    @Override
     @Transactional
-    public UserDTO addAddress(AddressDTO addressDTO) {
+    public UserResponseDTO addAddress(CreateAddressDTO createAddressDTO) {
         User user = getCurrentUser();
 
         Address address = new Address();
-        address.setContactName(addressDTO.getContactName());
-        address.setContactPhone(addressDTO.getContactPhone());
-        address.setCity(addressDTO.getCity());
-        address.setDistrict(addressDTO.getDistrict());
-        address.setWard(addressDTO.getWard());
-        address.setStreet(addressDTO.getStreet());
-        address.setNote(addressDTO.getNote());
-        address.setIsDefault(addressDTO.getIsDefault() != null && addressDTO.getIsDefault());
+        address.setContactName(createAddressDTO.getContactName());
+        address.setContactPhone(createAddressDTO.getContactPhone());
+        address.setCity(createAddressDTO.getCity());
+        address.setDistrict(createAddressDTO.getDistrict());
+        address.setWard(createAddressDTO.getWard());
+        address.setStreet(createAddressDTO.getStreet());
+        address.setNote(createAddressDTO.getNote());
+        address.setIsDefault(createAddressDTO.getIsDefault() != null && createAddressDTO.getIsDefault());
         address.setUser(user);
 
         // Nếu đặt làm mặc định, bỏ mặc định của các địa chỉ khác
@@ -82,7 +104,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDTO updateAddress(Long addressId, AddressDTO addressDTO) {
+    public UserResponseDTO updateAddress(Long addressId, UpdateAddressDTO updateAddressDTO) {
         User user = getCurrentUser();
 
         // Tìm địa chỉ thuộc sở hữu của user hiện tại
@@ -91,19 +113,43 @@ public class UserServiceImpl implements UserService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
 
-        // Cập nhật thông tin địa chỉ (Giữ nguyên liên hệ contactName & contactPhone)
-        address.setCity(addressDTO.getCity());
-        address.setDistrict(addressDTO.getDistrict());
-        address.setWard(addressDTO.getWard());
-        address.setStreet(addressDTO.getStreet());
-        address.setNote(addressDTO.getNote());
+        // Partial update: CHỈ cập nhật các trường được gửi lên (khác null)
+        if (updateAddressDTO.getCity() != null) {
+            if (updateAddressDTO.getCity().trim().isEmpty()) {
+                throw new RuntimeException("Tỉnh/Thành phố không được để trống");
+            }
+            address.setCity(updateAddressDTO.getCity().trim());
+        }
+        if (updateAddressDTO.getDistrict() != null) {
+            if (updateAddressDTO.getDistrict().trim().isEmpty()) {
+                throw new RuntimeException("Quận/Huyện không được để trống");
+            }
+            address.setDistrict(updateAddressDTO.getDistrict().trim());
+        }
+        if (updateAddressDTO.getWard() != null) {
+            if (updateAddressDTO.getWard().trim().isEmpty()) {
+                throw new RuntimeException("Phường/Xã không được để trống");
+            }
+            address.setWard(updateAddressDTO.getWard().trim());
+        }
+        if (updateAddressDTO.getStreet() != null) {
+            if (updateAddressDTO.getStreet().trim().isEmpty()) {
+                throw new RuntimeException("Tên đường, Tòa nhà, Số nhà không được để trống");
+            }
+            address.setStreet(updateAddressDTO.getStreet().trim());
+        }
+        if (updateAddressDTO.getNote() != null) {
+            address.setNote(updateAddressDTO.getNote().trim());
+        }
 
         // Quản lý trạng thái mặc định
-        boolean isDefault = addressDTO.getIsDefault() != null && addressDTO.getIsDefault();
-        if (isDefault) {
-            user.getAddresses().forEach(a -> a.setIsDefault(a.getId().equals(addressId)));
-        } else {
-            address.setIsDefault(false);
+        if (updateAddressDTO.getIsDefault() != null) {
+            boolean isDefault = updateAddressDTO.getIsDefault();
+            if (isDefault) {
+                user.getAddresses().forEach(a -> a.setIsDefault(a.getId().equals(addressId)));
+            } else {
+                address.setIsDefault(false);
+            }
         }
 
         User updatedUser = userRepository.save(user);
@@ -112,7 +158,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDTO deleteAddress(Long addressId) {
+    public UserResponseDTO deleteAddress(Long addressId) {
         User user = getCurrentUser();
         user.getAddresses().removeIf(address -> address.getId().equals(addressId));
         User updatedUser = userRepository.save(user);
@@ -121,7 +167,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDTO setDefaultAddress(Long addressId) {
+    public UserResponseDTO setDefaultAddress(Long addressId) {
         User user = getCurrentUser();
         user.getAddresses().forEach(address -> {
             address.setIsDefault(address.getId().equals(addressId));
@@ -133,36 +179,19 @@ public class UserServiceImpl implements UserService {
     // === Helper Methods ===
 
     private User getCurrentUser() {
-        HttpSession session = ((ServletRequestAttributes) RequestContextHolder
-                .getRequestAttributes()).getRequest().getSession();
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
 
-        UUID userId = authService.getCurrentUserId(session);
+        UUID userId = userDetails.getId();
 
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
     }
 
-    private void updateAddresses(User user, List<AddressDTO> addressDTOs) {
-        user.getAddresses().clear();
-
-        addressDTOs.forEach(dto -> {
-            Address address = new Address();
-            address.setId(dto.getId());
-            address.setContactName(dto.getContactName());
-            address.setContactPhone(dto.getContactPhone());
-            address.setCity(dto.getCity());
-            address.setDistrict(dto.getDistrict());
-            address.setWard(dto.getWard());
-            address.setStreet(dto.getStreet());
-            address.setNote(dto.getNote());
-            address.setIsDefault(dto.getIsDefault() != null && dto.getIsDefault());
-            address.setUser(user);
-            user.getAddresses().add(address);
-        });
-    }
-
-    private UserDTO convertToDTO(User user) {
-        return new UserDTO(
+    private UserResponseDTO convertToDTO(User user) {
+        return new UserResponseDTO(
                 user.getId(),
                 user.getDisplayName(),
                 user.getEmail(),
@@ -177,8 +206,8 @@ public class UserServiceImpl implements UserService {
         );
     }
 
-    private AddressDTO convertAddressToDTO(Address address) {
-        return new AddressDTO(
+    private AddressResponseDTO convertAddressToDTO(Address address) {
+        return new AddressResponseDTO(
                 address.getId(),
                 address.getContactName(),
                 address.getContactPhone(),
