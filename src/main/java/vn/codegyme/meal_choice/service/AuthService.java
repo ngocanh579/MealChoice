@@ -88,6 +88,35 @@ public class AuthService {
         refreshTokenRepository.delete(refreshToken);
     }
 
+    @Transactional
+    public AuthResponse refreshToken(String refreshTokenValue) {
+        RefreshToken storedToken = refreshTokenRepository.findByToken(refreshTokenValue)
+                .orElseThrow(() -> new RuntimeException("Refresh token không hợp lệ"));
+
+        if (storedToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            refreshTokenRepository.delete(storedToken);
+            throw new RuntimeException("Refresh token đã hết hạn, vui lòng đăng nhập lại");
+        }
+
+        User user = storedToken.getUser();
+        String newAccessToken = jwtService.generateAccessToken(user.getEmail());
+
+        AuthResponse response = new AuthResponse();
+        response.setAccessToken(newAccessToken);
+        response.setRefreshToken(refreshTokenValue); // giữ nguyên, không cấp lại
+        response.setId(user.getId());
+        response.setEmail(user.getEmail());
+        response.setDisplayName(user.getDisplayName());
+        response.setPhoneNumber(user.getPhoneNumber());
+        response.setAvatarUrl(user.getAvatarUrl());
+        response.setRoles(
+                user.getRoles().stream()
+                        .map(role -> role.getName().name())
+                        .collect(Collectors.toSet())
+        );
+        return response;
+    }
+
     private AuthResponse buildAuthResponse(User user){
 
         String accessToken = jwtService.generateAccessToken(user.getEmail());
