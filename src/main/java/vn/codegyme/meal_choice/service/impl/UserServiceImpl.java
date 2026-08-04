@@ -145,13 +145,13 @@ public class UserServiceImpl implements UserService {
 
         // Quản lý trạng thái mặc định
         if (updateAddressDTO.getIsDefault() != null) {
-            boolean isDefault = updateAddressDTO.getIsDefault();
-            if (isDefault) {
+            if (updateAddressDTO.getIsDefault()) {
                 user.getAddresses().forEach(a -> a.setIsDefault(a.getId().equals(addressId)));
             } else {
                 address.setIsDefault(false);
             }
         }
+// Nếu getIsDefault() == null -> giữ nguyên trạng thái isDefault cũ, không đụng vào
 
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
@@ -177,14 +177,15 @@ public class UserServiceImpl implements UserService {
     public UserResponseDTO setDefaultAddress(Long addressId) {
         User user = getCurrentUser();
 
-        Address targetAddress = user.getAddresses().stream()
-                .filter(a -> a.getId().equals(addressId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
+        boolean exists = user.getAddresses().stream()
+                .anyMatch(a -> a.getId().equals(addressId));
+        if (!exists) {
+            throw new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn");
+        }
 
-        user.getAddresses().forEach(address -> {
-            address.setIsDefault(address.getId().equals(addressId));
-        });
+        user.getAddresses().forEach(address ->
+                address.setIsDefault(address.getId().equals(addressId))
+        );
 
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
@@ -211,7 +212,7 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 user.getPhoneNumber(),
                 user.getAvatarUrl(),
-                user.getDob() != null ? user.getDob().atStartOfDay() : null,
+                user.getDob() != null ? LocalDate.from(user.getDob().atStartOfDay()) : null,
                 user.getGender(),
                 user.getAddresses().stream()
                         .map(this::convertAddressToDTO)
