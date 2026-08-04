@@ -15,6 +15,7 @@ import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.security.CustomUserDetails;
 import vn.codegyme.meal_choice.service.UserService;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -144,13 +145,13 @@ public class UserServiceImpl implements UserService {
 
         // Quản lý trạng thái mặc định
         if (updateAddressDTO.getIsDefault() != null) {
-            boolean isDefault = updateAddressDTO.getIsDefault();
-            if (isDefault) {
+            if (updateAddressDTO.getIsDefault()) {
                 user.getAddresses().forEach(a -> a.setIsDefault(a.getId().equals(addressId)));
             } else {
                 address.setIsDefault(false);
             }
         }
+// Nếu getIsDefault() == null -> giữ nguyên trạng thái isDefault cũ, không đụng vào
 
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
@@ -160,7 +161,13 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDTO deleteAddress(Long addressId) {
         User user = getCurrentUser();
-        user.getAddresses().removeIf(address -> address.getId().equals(addressId));
+
+        Address address = user.getAddresses().stream()
+                .filter(a -> a.getId().equals(addressId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
+
+        user.getAddresses().remove(address);
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
@@ -169,9 +176,17 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDTO setDefaultAddress(Long addressId) {
         User user = getCurrentUser();
-        user.getAddresses().forEach(address -> {
-            address.setIsDefault(address.getId().equals(addressId));
-        });
+
+        boolean exists = user.getAddresses().stream()
+                .anyMatch(a -> a.getId().equals(addressId));
+        if (!exists) {
+            throw new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn");
+        }
+
+        user.getAddresses().forEach(address ->
+                address.setIsDefault(address.getId().equals(addressId))
+        );
+
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
@@ -197,13 +212,12 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 user.getPhoneNumber(),
                 user.getAvatarUrl(),
-                user.getDob(),
+                user.getDob() != null ? LocalDate.from(user.getDob().atStartOfDay()) : null,
                 user.getGender(),
                 user.getAddresses().stream()
                         .map(this::convertAddressToDTO)
                         .collect(Collectors.toList()),
-                user.getIsActive()
-        );
+                user.getIsActive());
     }
 
     private AddressResponseDTO convertAddressToDTO(Address address) {
@@ -216,7 +230,6 @@ public class UserServiceImpl implements UserService {
                 address.getWard(),
                 address.getStreet(),
                 address.getNote(),
-                address.getIsDefault()
-        );
+                address.getIsDefault());
     }
 }
