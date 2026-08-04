@@ -190,7 +190,7 @@
                                         <span class="input-group-text bg-light border-end-0 text-muted"><i
                                                 class="bi bi-telephone"></i></span>
                                         <input type="tel" class="form-control bg-light border-start-0" id="regPhone"
-                                            placeholder="0912345678" pattern="^(0|\+84)[3|5|7|8|9][0-9]{8}$" required>
+                                            placeholder="0912345678" pattern="^(0|\+84)[35789][0-9]{8}$" required>
                                     </div>
                                 </div>
 
@@ -278,6 +278,12 @@
                 const result = await response.json();
 
                 if (response.ok) {
+                    if (result.accessToken) {
+                        localStorage.setItem('accessToken', result.accessToken);
+                    }
+                    if (result.refreshToken) {
+                        localStorage.setItem('refreshToken', result.refreshToken);
+                    }
                     showAlert('success', 'Đăng nhập thành công! Đang chuyển hướng...');
                     // Chuyển hướng trình duyệt sang trang profile sau 1 giây
                     setTimeout(() => {
@@ -285,11 +291,11 @@
                     }, 1000);
                 } else {
                     const message = result.message || "Email hoặc mật khẩu không chính xác";
-                    showAlert('error', message);
+                    showAlert('error', "❌ " + message);
                 }
             } catch (error) {
                 console.error("Lỗi kết nối:", error);
-                showAlert('error', "Không thể kết nối đến máy chủ!");
+                showAlert('error', "❌ Không thể kết nối đến máy chủ!");
             }
         }
 
@@ -298,15 +304,40 @@
             e.preventDefault();
             hideAlert();
 
-            const displayName = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value;
-            const phoneNumber = document.getElementById('regPhone').value;
+            const displayName = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const phoneNumber = document.getElementById('regPhone').value.trim();
             const password = document.getElementById('regPassword').value;
             const confirmPassword = document.getElementById('regConfirmPassword').value;
 
-            // Validation mật khẩu phía Client
+            // 1. Kiểm tra Tên hiển thị
+            if (displayName.length < 2 || displayName.length > 30) {
+                showAlert('error', "⚠️ Tên hiển thị phải có độ dài từ 2 đến 30 ký tự!");
+                return;
+            }
+
+            // 2. Kiểm tra Số điện thoại
+            const phoneRegex = /^(0|\+84)[35789][0-9]{8}$/;
+            if (!phoneRegex.test(phoneNumber)) {
+                showAlert('error', "⚠️ Số điện thoại không hợp lệ! Vui lòng nhập số Việt Nam (ví dụ: 0912345678 hoặc +84912345678).");
+                return;
+            }
+
+            // 3. Kiểm tra Mật khẩu
+            if (password.length < 8 || password.length > 16) {
+                showAlert('error', "⚠️ Mật khẩu phải có độ dài từ 8 đến 16 ký tự!");
+                return;
+            }
+
+            const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).+$/;
+            if (!passwordRegex.test(password)) {
+                showAlert('error', "⚠️ Mật khẩu phải chứa cả chữ cái và chữ số (ví dụ: Pass1234)!");
+                return;
+            }
+
+            // 4. Kiểm tra Mật khẩu xác nhận
             if (password !== confirmPassword) {
-                showAlert('error', "Mật khẩu xác nhận không khớp!");
+                showAlert('error', "⚠️ Mật khẩu xác nhận không khớp với Mật khẩu đã nhập!");
                 return;
             }
 
@@ -328,7 +359,7 @@
                 const result = await response.json();
 
                 if (response.ok || response.status === 201) {
-                    showAlert('success', "Đăng ký thành công! Vui lòng đăng nhập.");
+                    showAlert('success', "🎉 Đăng ký thành công! Đang chuyển sang màn hình Đăng nhập...");
                     // Reset form đăng ký
                     document.getElementById('registerForm').reset();
                     // Tự động chuyển qua tab đăng nhập sau 1.5 giây
@@ -337,12 +368,12 @@
                         loginTab.show();
                     }, 1500);
                 } else {
-                    const message = result.message || "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin!";
-                    showAlert('error', message);
+                    const message = result.message || "Đăng ký thất bại. Vui lòng kiểm tra lại!";
+                    showAlert('error', "❌ " + message);
                 }
             } catch (error) {
                 console.error("Lỗi kết nối:", error);
-                showAlert('error', "Không thể kết nối đến máy chủ!");
+                showAlert('error', "❌ Không thể kết nối đến máy chủ!");
             }
         }
     </script>

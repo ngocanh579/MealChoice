@@ -68,7 +68,7 @@ public class User {
     @ColumnDefault("true") // Sinh ra SQL DDL: DEFAULT true
     private Boolean isActive = true;
 
-    @Column(nullable = false, updatable = false)
+    @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

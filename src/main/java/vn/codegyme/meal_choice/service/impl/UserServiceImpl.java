@@ -160,7 +160,13 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDTO deleteAddress(Long addressId) {
         User user = getCurrentUser();
-        user.getAddresses().removeIf(address -> address.getId().equals(addressId));
+
+        Address address = user.getAddresses().stream()
+                .filter(a -> a.getId().equals(addressId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
+
+        user.getAddresses().remove(address);
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
@@ -169,9 +175,16 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDTO setDefaultAddress(Long addressId) {
         User user = getCurrentUser();
+
+        Address targetAddress = user.getAddresses().stream()
+                .filter(a -> a.getId().equals(addressId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
+
         user.getAddresses().forEach(address -> {
             address.setIsDefault(address.getId().equals(addressId));
         });
+
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
@@ -197,13 +210,12 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 user.getPhoneNumber(),
                 user.getAvatarUrl(),
-                user.getDob(),
+                user.getDob() != null ? user.getDob().atStartOfDay() : null,
                 user.getGender(),
                 user.getAddresses().stream()
                         .map(this::convertAddressToDTO)
                         .collect(Collectors.toList()),
-                user.getIsActive()
-        );
+                user.getIsActive());
     }
 
     private AddressResponseDTO convertAddressToDTO(Address address) {
@@ -216,7 +228,6 @@ public class UserServiceImpl implements UserService {
                 address.getWard(),
                 address.getStreet(),
                 address.getNote(),
-                address.getIsDefault()
-        );
+                address.getIsDefault());
     }
 }

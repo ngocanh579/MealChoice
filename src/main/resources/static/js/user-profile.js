@@ -13,24 +13,24 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
+// Helper to get Auth Headers with JWT Bearer Token
+function getAuthHeaders(extraHeaders = {}) {
+    const token = localStorage.getItem('accessToken');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+        ...extraHeaders
+    };
+}
+
 // Check if user is logged in
-async function checkAuthentication() {
-    try {
-        const response = await fetch('/api/auth/check');
-        const result = await response.json();
-
-        if (!result.authenticated) {
-            // Chưa đăng nhập -> redirect về login
-            window.location.href = '/login';
-            return;
-        }
-
-        // Đã đăng nhập -> load profile
-        loadProfile();
-    } catch (error) {
-        console.error('Auth check error:', error);
+function checkAuthentication() {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
         window.location.href = '/login';
+        return;
     }
+    loadProfile();
 }
 
 // Logout function
@@ -40,11 +40,20 @@ async function logout() {
     }
 
     try {
-        await fetch('/api/auth/logout', { method: 'POST' });
-        window.location.href = '/login';
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (refreshToken) {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ refreshToken })
+            });
+        }
     } catch (error) {
         console.error('Logout error:', error);
-        alert('Lỗi khi đăng xuất');
+    } finally {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
     }
 }
 
@@ -66,7 +75,17 @@ function setupEventListeners() {
 async function loadProfile() {
     showLoading(true);
     try {
-        const response = await fetch(`${API_BASE}/profile`);
+        const response = await fetch(`${API_BASE}/profile`, {
+            headers: getAuthHeaders()
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/login';
+            return;
+        }
+
         const result = await response.json();
 
         if (result.success) {
@@ -74,7 +93,7 @@ async function loadProfile() {
             displayProfile(currentUser);
             displayAddresses(currentUser.addresses);
         } else {
-            showAlert('error', 'Không thể tải thông tin profile');
+            showAlert('error', result.message || 'Không thể tải thông tin profile');
         }
     } catch (error) {
         console.error('Error loading profile:', error);
@@ -169,9 +188,7 @@ async function handleProfileSubmit(e) {
     try {
         const response = await fetch(`${API_BASE}/profile`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(payload)
         });
 
@@ -378,9 +395,7 @@ async function handleAddressSubmit(e) {
     try {
         const response = await fetch(url, {
             method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(formData)
         });
 
@@ -411,7 +426,8 @@ async function deleteAddress(addressId) {
     showLoading(true);
     try {
         const response = await fetch(`${API_BASE}/address/${addressId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         });
 
         const result = await response.json();
@@ -436,7 +452,8 @@ async function setDefaultAddress(addressId) {
     showLoading(true);
     try {
         const response = await fetch(`${API_BASE}/address/${addressId}/set-default`, {
-            method: 'PATCH'
+            method: 'PATCH',
+            headers: getAuthHeaders()
         });
 
         const result = await response.json();

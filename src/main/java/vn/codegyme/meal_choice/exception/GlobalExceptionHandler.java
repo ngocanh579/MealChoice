@@ -20,11 +20,11 @@ public class GlobalExceptionHandler {
     // Handle validation error
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
-        // Get the readable error message only
         String message = e.getBindingResult()
                 .getFieldErrors()
-                .get(0)
-                .getDefaultMessage();
+                .stream()
+                .map(org.springframework.context.support.DefaultMessageSourceResolvable::getDefaultMessage)
+                .collect(java.util.stream.Collectors.joining("; "));
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
