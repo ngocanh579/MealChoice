@@ -134,11 +134,8 @@ async function handleProfileSubmit(e) {
 
     const formData = {
         displayName: displayNameVal,
-        email: document.getElementById('email').value,
-        phoneNumber: document.getElementById('phoneNumber').value,
         dob: dobVal ? dobVal + 'T00:00:00' : null,
-        gender: document.getElementById('gender').value || null,
-        addresses: currentUser ? currentUser.addresses : [] // Keep existing addresses
+        gender: document.getElementById('gender').value || null
     };
 
     showLoading(true);
@@ -294,20 +291,34 @@ async function handleAddressSubmit(e) {
     e.preventDefault();
 
     const addressId = document.getElementById('addressId').value;
-
-    const formData = {
-        contactName: document.getElementById('contactName').value,
-        contactPhone: document.getElementById('contactPhone').value,
-        city: document.getElementById('city').value,
-        district: document.getElementById('district').value,
-        ward: document.getElementById('ward').value,
-        street: document.getElementById('street').value,
-        note: document.getElementById('note').value || null,
-        isDefault: document.getElementById('isDefault').checked
-    };
-
-    // Xác định URL và HTTP Method dựa vào việc có addressId hay không
     const isEdit = Boolean(addressId);
+
+    // Chuẩn hóa DTO theo yêu cầu (CreateAddressDTO vs UpdateAddressDTO)
+    let formData;
+    if (isEdit) {
+        // UpdateAddressDTO: KHÔNG sửa liên hệ
+        formData = {
+            city: document.getElementById('city').value,
+            district: document.getElementById('district').value,
+            ward: document.getElementById('ward').value,
+            street: document.getElementById('street').value,
+            note: document.getElementById('note').value || null,
+            isDefault: document.getElementById('isDefault').checked
+        };
+    } else {
+        // CreateAddressDTO: Đầy đủ liên hệ + địa chỉ
+        formData = {
+            contactName: document.getElementById('contactName').value,
+            contactPhone: document.getElementById('contactPhone').value,
+            city: document.getElementById('city').value,
+            district: document.getElementById('district').value,
+            ward: document.getElementById('ward').value,
+            street: document.getElementById('street').value,
+            note: document.getElementById('note').value || null,
+            isDefault: document.getElementById('isDefault').checked
+        };
+    }
+
     const url = isEdit ? `${API_BASE}/address/${addressId}` : `${API_BASE}/address`;
     const method = isEdit ? 'PUT' : 'POST';
 

@@ -4,8 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.codegyme.meal_choice.dto.AddressDTO;
-import vn.codegyme.meal_choice.dto.UserDTO;
+import vn.codegyme.meal_choice.dto.AddressResponseDTO;
+import vn.codegyme.meal_choice.dto.CreateAddressDTO;
+import vn.codegyme.meal_choice.dto.UpdateAddressDTO;
+import vn.codegyme.meal_choice.dto.UpdateProfileDTO;
+import vn.codegyme.meal_choice.dto.UserResponseDTO;
 import vn.codegyme.meal_choice.entity.Address;
 import vn.codegyme.meal_choice.entity.User;
 import vn.codegyme.meal_choice.repository.UserRepository;
@@ -23,45 +26,58 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Override
-    public UserDTO getCurrentUserProfile() {
+    public UserResponseDTO getCurrentUserProfile() {
         User user = getCurrentUser();
         return convertToDTO(user);
     }
 
     @Override
     @Transactional
-    public UserDTO updateProfile(UserDTO userDTO) {
+    public UserResponseDTO updateProfile(UpdateProfileDTO updateProfileDTO) {
         User user = getCurrentUser();
 
         // CHỈ cập nhật các trường được phép
-        user.setDisplayName(userDTO.getDisplayName());
-        user.setDob(userDTO.getDob());
-        user.setGender(userDTO.getGender());
-        user.setAvatarUrl(userDTO.getAvatarUrl());
-
-        // Cập nhật địa chỉ nếu có truyền danh sách
-        if (userDTO.getAddresses() != null && !userDTO.getAddresses().isEmpty()) {
-            updateAddresses(user, userDTO.getAddresses());
-        }
+        user.setDisplayName(updateProfileDTO.getDisplayName());
+        user.setDob(updateProfileDTO.getDob());
+        user.setGender(updateProfileDTO.getGender());
+        user.setAvatarUrl(updateProfileDTO.getAvatarUrl());
 
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
 
     @Override
+    public List<AddressResponseDTO> getAllAddresses() {
+        User user = getCurrentUser();
+        return user.getAddresses().stream()
+                .map(this::convertAddressToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public AddressResponseDTO getAddressById(Long addressId) {
+        User user = getCurrentUser();
+        Address address = user.getAddresses().stream()
+                .filter(a -> a.getId().equals(addressId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
+        return convertAddressToDTO(address);
+    }
+
+    @Override
     @Transactional
-    public UserDTO addAddress(AddressDTO addressDTO) {
+    public UserResponseDTO addAddress(CreateAddressDTO createAddressDTO) {
         User user = getCurrentUser();
 
         Address address = new Address();
-        address.setContactName(addressDTO.getContactName());
-        address.setContactPhone(addressDTO.getContactPhone());
-        address.setCity(addressDTO.getCity());
-        address.setDistrict(addressDTO.getDistrict());
-        address.setWard(addressDTO.getWard());
-        address.setStreet(addressDTO.getStreet());
-        address.setNote(addressDTO.getNote());
-        address.setIsDefault(addressDTO.getIsDefault() != null && addressDTO.getIsDefault());
+        address.setContactName(createAddressDTO.getContactName());
+        address.setContactPhone(createAddressDTO.getContactPhone());
+        address.setCity(createAddressDTO.getCity());
+        address.setDistrict(createAddressDTO.getDistrict());
+        address.setWard(createAddressDTO.getWard());
+        address.setStreet(createAddressDTO.getStreet());
+        address.setNote(createAddressDTO.getNote());
+        address.setIsDefault(createAddressDTO.getIsDefault() != null && createAddressDTO.getIsDefault());
         address.setUser(user);
 
         // Nếu đặt làm mặc định, bỏ mặc định của các địa chỉ khác
@@ -77,7 +93,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDTO updateAddress(Long addressId, AddressDTO addressDTO) {
+    public UserResponseDTO updateAddress(Long addressId, UpdateAddressDTO updateAddressDTO) {
         User user = getCurrentUser();
 
         // Tìm địa chỉ thuộc sở hữu của user hiện tại
@@ -86,15 +102,15 @@ public class UserServiceImpl implements UserService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
 
-        // Cập nhật thông tin địa chỉ (Giữ nguyên liên hệ contactName & contactPhone)
-        address.setCity(addressDTO.getCity());
-        address.setDistrict(addressDTO.getDistrict());
-        address.setWard(addressDTO.getWard());
-        address.setStreet(addressDTO.getStreet());
-        address.setNote(addressDTO.getNote());
+        // Cập nhật thông tin địa chỉ (Giữ nguyên liên hệ contactName & contactPhone theo đúng yêu cầu đề bài)
+        address.setCity(updateAddressDTO.getCity());
+        address.setDistrict(updateAddressDTO.getDistrict());
+        address.setWard(updateAddressDTO.getWard());
+        address.setStreet(updateAddressDTO.getStreet());
+        address.setNote(updateAddressDTO.getNote());
 
         // Quản lý trạng thái mặc định
-        boolean isDefault = addressDTO.getIsDefault() != null && addressDTO.getIsDefault();
+        boolean isDefault = updateAddressDTO.getIsDefault() != null && updateAddressDTO.getIsDefault();
         if (isDefault) {
             user.getAddresses().forEach(a -> a.setIsDefault(a.getId().equals(addressId)));
         } else {
@@ -107,7 +123,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDTO deleteAddress(Long addressId) {
+    public UserResponseDTO deleteAddress(Long addressId) {
         User user = getCurrentUser();
         user.getAddresses().removeIf(address -> address.getId().equals(addressId));
         User updatedUser = userRepository.save(user);
@@ -116,7 +132,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDTO setDefaultAddress(Long addressId) {
+    public UserResponseDTO setDefaultAddress(Long addressId) {
         User user = getCurrentUser();
         user.getAddresses().forEach(address -> {
             address.setIsDefault(address.getId().equals(addressId));
@@ -139,27 +155,8 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
     }
 
-    private void updateAddresses(User user, List<AddressDTO> addressDTOs) {
-        user.getAddresses().clear();
-
-        addressDTOs.forEach(dto -> {
-            Address address = new Address();
-            address.setId(dto.getId());
-            address.setContactName(dto.getContactName());
-            address.setContactPhone(dto.getContactPhone());
-            address.setCity(dto.getCity());
-            address.setDistrict(dto.getDistrict());
-            address.setWard(dto.getWard());
-            address.setStreet(dto.getStreet());
-            address.setNote(dto.getNote());
-            address.setIsDefault(dto.getIsDefault() != null && dto.getIsDefault());
-            address.setUser(user);
-            user.getAddresses().add(address);
-        });
-    }
-
-    private UserDTO convertToDTO(User user) {
-        return new UserDTO(
+    private UserResponseDTO convertToDTO(User user) {
+        return new UserResponseDTO(
                 user.getId(),
                 user.getDisplayName(),
                 user.getEmail(),
@@ -174,8 +171,8 @@ public class UserServiceImpl implements UserService {
         );
     }
 
-    private AddressDTO convertAddressToDTO(Address address) {
-        return new AddressDTO(
+    private AddressResponseDTO convertAddressToDTO(Address address) {
+        return new AddressResponseDTO(
                 address.getId(),
                 address.getContactName(),
                 address.getContactPhone(),
