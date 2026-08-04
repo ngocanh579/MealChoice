@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import vn.codegyme.meal_choice.entity.Gender;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,8 +23,8 @@ public class UserResponseDTO {
     private String phoneNumber;
     private String avatarUrl;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime dob;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate dob;
 
     private Gender gender;
     private List<AddressResponseDTO> addresses;
