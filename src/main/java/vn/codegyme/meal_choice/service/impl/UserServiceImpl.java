@@ -36,11 +36,22 @@ public class UserServiceImpl implements UserService {
     public UserResponseDTO updateProfile(UpdateProfileDTO updateProfileDTO) {
         User user = getCurrentUser();
 
-        // CHỈ cập nhật các trường được phép
-        user.setDisplayName(updateProfileDTO.getDisplayName());
-        user.setDob(updateProfileDTO.getDob());
-        user.setGender(updateProfileDTO.getGender());
-        user.setAvatarUrl(updateProfileDTO.getAvatarUrl());
+        // Partial update: CHỈ cập nhật các trường được gửi lên (khác null)
+        if (updateProfileDTO.getDisplayName() != null) {
+            if (updateProfileDTO.getDisplayName().trim().isEmpty()) {
+                throw new RuntimeException("Tên hiển thị không được để trống");
+            }
+            user.setDisplayName(updateProfileDTO.getDisplayName().trim());
+        }
+        if (updateProfileDTO.getDob() != null) {
+            user.setDob(updateProfileDTO.getDob());
+        }
+        if (updateProfileDTO.getGender() != null) {
+            user.setGender(updateProfileDTO.getGender());
+        }
+        if (updateProfileDTO.getAvatarUrl() != null) {
+            user.setAvatarUrl(updateProfileDTO.getAvatarUrl());
+        }
 
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
@@ -102,19 +113,43 @@ public class UserServiceImpl implements UserService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
 
-        // Cập nhật thông tin địa chỉ (Giữ nguyên liên hệ contactName & contactPhone theo đúng yêu cầu đề bài)
-        address.setCity(updateAddressDTO.getCity());
-        address.setDistrict(updateAddressDTO.getDistrict());
-        address.setWard(updateAddressDTO.getWard());
-        address.setStreet(updateAddressDTO.getStreet());
-        address.setNote(updateAddressDTO.getNote());
+        // Partial update: CHỈ cập nhật các trường được gửi lên (khác null)
+        if (updateAddressDTO.getCity() != null) {
+            if (updateAddressDTO.getCity().trim().isEmpty()) {
+                throw new RuntimeException("Tỉnh/Thành phố không được để trống");
+            }
+            address.setCity(updateAddressDTO.getCity().trim());
+        }
+        if (updateAddressDTO.getDistrict() != null) {
+            if (updateAddressDTO.getDistrict().trim().isEmpty()) {
+                throw new RuntimeException("Quận/Huyện không được để trống");
+            }
+            address.setDistrict(updateAddressDTO.getDistrict().trim());
+        }
+        if (updateAddressDTO.getWard() != null) {
+            if (updateAddressDTO.getWard().trim().isEmpty()) {
+                throw new RuntimeException("Phường/Xã không được để trống");
+            }
+            address.setWard(updateAddressDTO.getWard().trim());
+        }
+        if (updateAddressDTO.getStreet() != null) {
+            if (updateAddressDTO.getStreet().trim().isEmpty()) {
+                throw new RuntimeException("Tên đường, Tòa nhà, Số nhà không được để trống");
+            }
+            address.setStreet(updateAddressDTO.getStreet().trim());
+        }
+        if (updateAddressDTO.getNote() != null) {
+            address.setNote(updateAddressDTO.getNote().trim());
+        }
 
         // Quản lý trạng thái mặc định
-        boolean isDefault = updateAddressDTO.getIsDefault() != null && updateAddressDTO.getIsDefault();
-        if (isDefault) {
-            user.getAddresses().forEach(a -> a.setIsDefault(a.getId().equals(addressId)));
-        } else {
-            address.setIsDefault(false);
+        if (updateAddressDTO.getIsDefault() != null) {
+            boolean isDefault = updateAddressDTO.getIsDefault();
+            if (isDefault) {
+                user.getAddresses().forEach(a -> a.setIsDefault(a.getId().equals(addressId)));
+            } else {
+                address.setIsDefault(false);
+            }
         }
 
         User updatedUser = userRepository.save(user);

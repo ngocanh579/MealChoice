@@ -12,16 +12,12 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UpdateAddressDTO {
 
-    @NotBlank(message = "Tỉnh/Thành phố không được để trống")
     private String city;
 
-    @NotBlank(message = "Quận/Huyện không được để trống")
     private String district;
 
-    @NotBlank(message = "Phường/Xã không được để trống")
     private String ward;
 
-    @NotBlank(message = "Tên đường, Tòa nhà, Số nhà không được để trống")
     private String street;
 
     private String note;

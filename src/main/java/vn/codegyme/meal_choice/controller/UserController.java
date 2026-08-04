@@ -39,10 +39,10 @@ public class UserController {
     }
 
     /**
-     * PUT /api/user/profile - Cập nhật profile
+     * PATCH /api/user/profile - Cập nhật partial profile
      * KHÔNG cho phép sửa email và phoneNumber
      */
-    @PutMapping("/profile")
+    @PatchMapping("/profile")
     public ResponseEntity<Map<String, Object>> updateProfile(@Valid @RequestBody UpdateProfileDTO updateProfileDTO) {
         UserResponseDTO updatedUser = userService.updateProfile(updateProfileDTO);
 
@@ -100,9 +100,9 @@ public class UserController {
     }
 
     /**
-     * PUT /api/user/address/{id} - Sửa địa chỉ đã có (KHÔNG cho phép sửa liên hệ contactName & contactPhone)
+     * PATCH /api/user/address/{id} - Sửa địa chỉ đã có (Partial update)
      */
-    @PutMapping("/address/{id}")
+    @PatchMapping("/address/{id}")
     public ResponseEntity<Map<String, Object>> updateAddress(
             @PathVariable Long id,
             @Valid @RequestBody UpdateAddressDTO updateAddressDTO) {

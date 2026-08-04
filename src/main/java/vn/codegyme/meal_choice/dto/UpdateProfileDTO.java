@@ -17,8 +17,7 @@ import java.time.LocalDate;
 @Builder
 public class UpdateProfileDTO {
 
-    @NotBlank(message = "Tên hiển thị không được để trống")
-    @Size(min = 2, max = 30, message = "Tên hiển thị không được vượt quá 30 kí tự")
+    @Size(min = 2, max = 30, message = "Tên hiển thị phải từ 2 đến 30 kí tự")
     private String displayName;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
