@@ -1,56 +1,61 @@
 package vn.codegyme.meal_choice.controller;
 
-import vn.codegyme.meal_choice.exception.ResourceNotFoundException;
-import vn.codegyme.meal_choice.service.AddressService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import vn.codegyme.meal_choice.exception.ResourceNotFoundException;
+import vn.codegyme.meal_choice.service.AddressService;
 
 @Controller
 @RequestMapping("/user/addresses")
+@RequiredArgsConstructor
 public class AddressController {
 
     private final AddressService addressService;
 
-    public AddressController(
-            AddressService addressService) {
-        this.addressService = addressService;
-    }
-
+    /**
+     * Hiển thị danh sách địa chỉ của người đang đăng nhập.
+     */
     @GetMapping
     public String showAddressList(
             Authentication authentication,
-            Model model) {
-
-        String email = authentication.getName();
+            Model model
+    ) {
+        String currentUserEmail = authentication.getName();
 
         model.addAttribute(
                 "addresses",
-                addressService.getAddressesByUserEmail(email)
+                addressService.getAddressesByUserEmail(
+                        currentUserEmail
+                )
         );
 
         return "user/address-list";
     }
 
+    /**
+     * Xóa địa chỉ.
+     */
     @PostMapping("/{addressId}/delete")
     public String deleteAddress(
             @PathVariable Long addressId,
             Authentication authentication,
-            RedirectAttributes redirectAttributes) {
-
-        String email = authentication.getName();
+            RedirectAttributes redirectAttributes
+    ) {
+        String currentUserEmail = authentication.getName();
 
         try {
             addressService.deleteAddress(
                     addressId,
-                    email
+                    currentUserEmail
             );
 
             redirectAttributes.addFlashAttribute(
                     "successMessage",
-                    "Đã xóa địa chỉ giao hàng."
+                    "Xóa địa chỉ giao hàng thành công."
             );
 
         } catch (ResourceNotFoundException exception) {

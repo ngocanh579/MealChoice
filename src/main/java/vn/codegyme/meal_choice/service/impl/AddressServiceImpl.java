@@ -1,32 +1,35 @@
 package vn.codegyme.meal_choice.service.impl;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.codegyme.meal_choice.entity.Address;
+import vn.codegyme.meal_choice.entity.User;
 import vn.codegyme.meal_choice.exception.ResourceNotFoundException;
 import vn.codegyme.meal_choice.repository.AddressRepository;
+import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.service.AddressService;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
-public class AddressServiceImpl
-        implements AddressService {
+@RequiredArgsConstructor
+public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
-
-    public AddressServiceImpl(
-            AddressRepository addressRepository) {
-        this.addressRepository = addressRepository;
-    }
+    private final UserRepository userRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<Address> getAddressesByUserEmail(
-            String email) {
+            String userEmail
+    ) {
+        User user = getUserByEmail(userEmail);
 
         return addressRepository
-                .findAllByUserEmailOrderByDefaultAddressDesc(
-                        email
+                .findByUserIdOrderByIsDefaultDescIdDesc(
+                        user.getId()
                 );
     }
 
@@ -34,51 +37,57 @@ public class AddressServiceImpl
     @Transactional
     public void deleteAddress(
             Long addressId,
-            String userEmail) {
+            String userEmail
+    ) {
+        User user = getUserByEmail(userEmail);
 
+        UUID userId = user.getId();
+
+        /*
+         * Chỉ lấy địa chỉ khi địa chỉ đó thuộc người đang đăng nhập.
+         */
         Address address = addressRepository
-                .findByIdAndUserEmail(
-                        addressId,
-                        userEmail
-                )
+                .findByIdAndUserId(addressId, userId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Không tìm thấy địa chỉ hoặc "
-                                        + "bạn không có quyền xóa địa chỉ này."
+                                "Không tìm thấy địa chỉ hoặc bạn không có quyền xóa địa chỉ này."
                         )
                 );
 
-        /*
-         * Có thể cho phép xóa địa chỉ mặc định.
-         * Sau khi xóa, hệ thống chọn địa chỉ còn lại
-         * làm mặc định.
-         */
-        boolean wasDefaultAddress =
-                address.isDefaultAddress();
+        boolean isDeletingDefaultAddress =
+                Boolean.TRUE.equals(address.getIsDefault());
 
         addressRepository.delete(address);
 
-        if (wasDefaultAddress) {
-            setAnotherAddressAsDefault(userEmail);
+        /*
+         * Thực hiện DELETE ngay trước khi truy vấn địa chỉ còn lại.
+         */
+        addressRepository.flush();
+
+        /*
+         * Nếu xóa địa chỉ mặc định thì chọn một địa chỉ khác
+         * làm mặc định.
+         */
+        if (isDeletingDefaultAddress) {
+            setAnotherAddressAsDefault(userId);
         }
     }
 
-    private void setAnotherAddressAsDefault(
-            String userEmail) {
+    private User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Không tìm thấy tài khoản người dùng."
+                        )
+                );
+    }
 
-        List<Address> remainingAddresses =
-                addressRepository
-                        .findAllByUserEmailOrderByDefaultAddressDesc(
-                                userEmail
-                        );
-
-        if (!remainingAddresses.isEmpty()) {
-            Address newDefaultAddress =
-                    remainingAddresses.get(0);
-
-            newDefaultAddress.setDefaultAddress(true);
-
-            addressRepository.save(newDefaultAddress);
-        }
+    private void setAnotherAddressAsDefault(UUID userId) {
+        addressRepository
+                .findFirstByUserIdOrderByIdAsc(userId)
+                .ifPresent(address -> {
+                    address.setIsDefault(true);
+                    addressRepository.save(address);
+                });
     }
 }

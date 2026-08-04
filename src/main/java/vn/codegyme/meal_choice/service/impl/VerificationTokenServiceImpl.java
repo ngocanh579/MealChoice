@@ -82,7 +82,7 @@ public class VerificationTokenServiceImpl
 
         User user = verificationToken.getUser();
 
-        if (user.isEnabled()) {
+        if (Boolean.TRUE.equals(user.getIsActive())) {
             return VerificationResult.USER_ALREADY_ENABLED;
         }
 
@@ -90,7 +90,7 @@ public class VerificationTokenServiceImpl
             return VerificationResult.TOKEN_EXPIRED;
         }
 
-        user.setEnabled(true);
+        user.setIsActive(true);
         userRepository.save(user);
 
         verificationToken.setUsed(true);

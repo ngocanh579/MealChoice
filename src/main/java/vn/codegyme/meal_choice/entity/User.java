@@ -1,66 +1,79 @@
 package vn.codegyme.meal_choice.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import vn.codegyme.meal_choice.enums.Gender;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Entity
-@Table(name = "users")
+@Table (name="users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // Ép Hibernate lưu UUID thành kiểu VARCHAR(36)
+    @Column(length = 36)
+    @EqualsAndHashCode.Include
+    private UUID id;
 
-    @Column(nullable = false)
-    private String fullName;
-
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false,length = 60)
     private String password;
 
+    @Column(nullable = false, length = 32)
+    private String displayName;
+
+    @Column(unique = true, nullable = false,length = 20)
+    private String phoneNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private Gender gender;
+
+    @Column()
+    private String avatarUrl;
+
+    @Column()
+    private LocalDate dob;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Address> addresses = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
+
+//    @Column(nullable = false)
+//    private Boolean isActive = true;
+
+    @Builder.Default
     @Column(nullable = false)
-    private boolean enabled = false;
+    @ColumnDefault("true") // Sinh ra SQL DDL: DEFAULT true
+    private Boolean isActive = true;
 
-    // Getter và Setter
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
     }
 }

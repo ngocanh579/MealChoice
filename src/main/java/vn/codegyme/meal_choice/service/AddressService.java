@@ -7,7 +7,16 @@ import java.util.List;
 
 public interface AddressService {
 
-    List<Address> getAddressesByUserEmail(String email);
+    /**
+     * Lấy danh sách địa chỉ của người đang đăng nhập.
+     */
+    List<Address> getAddressesByUserEmail(String userEmail);
 
-    void deleteAddress(Long addressId, String userEmail);
+    /**
+     * Xóa địa chỉ của người đang đăng nhập.
+     */
+    void deleteAddress(
+            Long addressId,
+            String userEmail
+    );
 }

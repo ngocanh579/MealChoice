@@ -6,78 +6,56 @@
     <title>Title</title>
 </head>
 <body>
-<footer th:fragment="footer"
-        class="bg-dark text-white mt-5 py-4">
-
+<footer th:fragment="footer" class="bg-dark text-light pt-5 pb-4 mt-5">
     <div class="container">
-        <div class="row">
-
-            <div class="col-md-4 mb-3">
-                <h5 th:text="${appInfo.name}">
-                    Trưa Nay Ăn Gì
+        <div class="row g-4">
+            <!-- Brand Info -->
+            <div class="col-lg-4 col-md-6">
+                <h5 class="fw-bold text-danger mb-3 d-flex align-items-center">
+                    <i class="bi bi-geo-alt-fill me-2"></i> Trưa nay ăn gì?
                 </h5>
-
-                <p class="mb-0">
-                    Nền tảng giúp người dùng tìm kiếm và đặt món ăn
-                    nhanh chóng, thuận tiện.
+                <p class="text-secondary small">
+                    Khám phá đồ ăn & thức uống tuyệt vời nhất gần bạn. Giao hàng nhanh chóng, phục vụ tận tâm.
                 </p>
+                <div class="d-flex gap-3 text-secondary fs-5 mt-3">
+                    <a href="#" class="text-secondary text-decoration-none"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="text-secondary text-decoration-none"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="text-secondary text-decoration-none"><i class="bi bi-twitter-x"></i></a>
+                </div>
             </div>
 
-            <div class="col-md-4 mb-3">
-                <h5>Thông tin liên hệ</h5>
-
-                <p class="mb-1">
-                    Email:
-                    <a class="text-white"
-                       th:href="'mailto:' + ${appInfo.email}"
-                       th:text="${appInfo.email}">
-                        support@truanayangi.vn
-                    </a>
-                </p>
-
-                <p class="mb-1">
-                    Điện thoại:
-                    <span th:text="${appInfo.phone}">
-                        6666 8888
-                    </span>
-                </p>
-
-                <p class="mb-0">
-                    Địa chỉ:
-                    <span th:text="${appInfo.address}">
-                        Hà Nội, Việt Nam
-                    </span>
-                </p>
+            <!-- Quick Links -->
+            <div class="col-lg-2 col-md-6">
+                <h6 class="fw-bold text-white mb-3">Về chúng tôi</h6>
+                <ul class="list-unstyled text-secondary small d-flex flex-column gap-2">
+                    <li><a href="#" class="text-secondary text-decoration-none">Giới thiệu</a></li>
+                    <li><a href="#" class="text-secondary text-decoration-none">Blog</a></li>
+                    <li><a href="#" class="text-secondary text-decoration-none">Tuyển dụng</a></li>
+                </ul>
             </div>
 
-            <div class="col-md-4 mb-3">
-                <h5>Quản trị hệ thống</h5>
-
-                <a th:href="@{/admin/dashboard}"
-                   class="text-white text-decoration-none">
-                    Trang quản trị
-                </a>
+            <!-- Categories -->
+            <div class="col-lg-3 col-md-6">
+                <h6 class="fw-bold text-white mb-3">Danh mục nổi bật</h6>
+                <ul class="list-unstyled text-secondary small d-flex flex-column gap-2">
+                    <li><a href="#" class="text-secondary text-decoration-none">Món Việt</a></li>
+                    <li><a href="#" class="text-secondary text-decoration-none">Món Á - Âu</a></li>
+                    <li><a href="#" class="text-secondary text-decoration-none">Trà sữa & Đồ uống</a></li>
+                </ul>
             </div>
 
+            <!-- Contact -->
+            <div class="col-lg-3 col-md-6">
+                <h6 class="fw-bold text-white mb-3">Hỗ trợ</h6>
+                <p class="text-secondary small mb-1"><i class="bi bi-envelope me-2"></i>support@mealchoice.com</p>
+                <p class="text-secondary small"><i class="bi bi-telephone me-2"></i>1900 123 456</p>
+            </div>
         </div>
-
-        <hr>
-
-        <div class="text-center">
-            <span>&copy;</span>
-
-            <span th:text="${currentYear}">
-                2026
-            </span>
-
-            <span th:text="${appInfo.company}">
-                Nhóm phát triển Trưa Nay Ăn Gì
-            </span>
-
-            <span>. All rights reserved.</span>
+        <hr class="border-secondary my-4">
+        <div class="text-center text-secondary small">
+            © 2026 MealChoice. All rights reserved.
         </div>
     </div>
-
 </footer>
 </body>
 </html>

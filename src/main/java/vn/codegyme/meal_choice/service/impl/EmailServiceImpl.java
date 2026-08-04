@@ -28,7 +28,7 @@ public class EmailServiceImpl implements EmailService {
         );
 
         message.setText(
-                "Xin chào " + user.getFullName() + ",\n\n"
+                "Xin chào " + user.getDisplayName() + ",\n\n"
                         + "Cảm ơn bạn đã đăng ký tài khoản.\n"
                         + "Vui lòng nhấn vào liên kết dưới đây để kích hoạt tài khoản:\n\n"
                         + verificationLink
