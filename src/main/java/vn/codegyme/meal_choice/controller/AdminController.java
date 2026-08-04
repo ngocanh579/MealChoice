@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import vn.codegyme.meal_choice.entity.Merchant;
+import vn.codegyme.meal_choice.dto.MerchantDTO;
 import vn.codegyme.meal_choice.service.AdminService;
 
 @Controller
@@ -16,7 +16,7 @@ public class AdminController {
 
     @GetMapping("/merchants/{id}")
     public String viewMerchantDetail(@PathVariable Long id, Model model) {
-        Merchant merchant = adminService.getMerchantById(id);
+        MerchantDTO merchant = adminService.getMerchantById(id);
         model.addAttribute("merchant", merchant);
         return "admin/merchant-detail";
     }

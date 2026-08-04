@@ -1,8 +1,8 @@
 package vn.codegyme.meal_choice.service;
 
-import vn.codegyme.meal_choice.entity.Merchant;
+import vn.codegyme.meal_choice.dto.MerchantDTO;
 
 public interface AdminService {
-    Merchant getMerchantById(Long id);
+    MerchantDTO getMerchantById(Long id);
     void toggleMerchantLockStatus(Long id);
 }
