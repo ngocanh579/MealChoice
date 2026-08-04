@@ -25,16 +25,4 @@ public class MerchantController {
 
         return ResponseEntity.ok("Đăng ký thành công");
     }
-
-    @PutMapping("/{merchantId}")
-    public ResponseEntity<String> updateMerchant(
-            @PathVariable UUID merchantId,
-            @Valid @RequestBody MerchantUpdateRequest request) {
-
-        merchantService.updateMerchant(merchantId, request);
-
-        return ResponseEntity.ok(
-                "Cập nhật thông tin cửa hàng thành công"
-        );
-    }
 }
