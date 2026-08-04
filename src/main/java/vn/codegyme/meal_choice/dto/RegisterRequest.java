@@ -27,7 +27,7 @@ public class RegisterRequest {
     private String confirmPassword;
 
     @NotBlank(message = "Tên hiển thị không được để trống")
-    @Size(max = 30, message = "Tên hiển thị không được vượt quá 30 kí tự")
+    @Size(min = 2, max = 30, message = "Tên hiển thị không được vượt quá 30 kí tự")
     private String displayName;
 
     @NotBlank(message = "Số điện thoại không được để trống")

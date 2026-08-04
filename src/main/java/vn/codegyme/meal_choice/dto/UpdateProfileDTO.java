@@ -9,7 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import vn.codegyme.meal_choice.entity.Gender;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -17,12 +17,12 @@ import java.time.LocalDateTime;
 @Builder
 public class UpdateProfileDTO {
 
-    @NotBlank(message = "Tên không được để trống")
-    @Size(min = 2, max = 32, message = "Tên phải từ 2 đến 32 ký tự")
+    @NotBlank(message = "Tên hiển thị không được để trống")
+    @Size(min = 2, max = 30, message = "Tên hiển thị không được vượt quá 30 kí tự")
     private String displayName;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime dob;
+    private LocalDate dob;
 
     private Gender gender;
 
