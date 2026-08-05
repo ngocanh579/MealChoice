@@ -39,22 +39,34 @@ CREATE TABLE merchants (
                            merchant_restaurant_name VARCHAR(150) NOT NULL,
                            merchant_email VARCHAR(255) UNIQUE NOT NULL,
                            merchant_phone VARCHAR(20) UNIQUE NOT NULL,
-                           merchant_address VARCHAR(255) NOT NULL,
-                           merchant_open_time TIME,
-                           merchant_close_time TIME,
                            merchant_status VARCHAR(30) DEFAULT 'PENDING',
 
                            FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- MERCHANT ADDRESSES
+
+CREATE TABLE merchant_addresses (
+                                    id BINARY(16) PRIMARY KEY,
+                                    merchant_id BINARY(16) NOT NULL,
+
+                                    merchant_address VARCHAR(255) NOT NULL,
+                                    merchant_open_time TIME,
+                                    merchant_close_time TIME,
+
+                                    FOREIGN KEY (merchant_id) REFERENCES merchants(id)
+);
+
 SET FOREIGN_KEY_CHECKS = 0;
 
+TRUNCATE TABLE merchant_addresses;
 TRUNCATE TABLE user_roles;
 TRUNCATE TABLE merchants;
 TRUNCATE TABLE users;
 TRUNCATE TABLE roles;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
 
 INSERT INTO roles (id, name) VALUES
                                  (1, 'ROLE_ADMIN'),
@@ -194,9 +206,6 @@ INSERT INTO merchants
     merchant_restaurant_name,
     merchant_email,
     merchant_phone,
-    merchant_address,
-    merchant_open_time,
-    merchant_close_time,
     merchant_status
 )
 VALUES
@@ -206,9 +215,6 @@ VALUES
         'Quan Com Ga Nam',
         'nam@merchant.com',
         '0900000004',
-        'Ha Noi',
-        '08:00:00',
-        '22:00:00',
         'APPROVED'
     ),
     (
@@ -217,9 +223,6 @@ VALUES
         'Bep Nha Hoa',
         'hoa@merchant.com',
         '0900000005',
-        'Ho Chi Minh',
-        '09:00:00',
-        '21:30:00',
         'PENDING'
     ),
     (
@@ -228,9 +231,6 @@ VALUES
         'Pizza Y Ngon',
         'minh@merchant.com',
         '0900000006',
-        'Da Nang',
-        '10:00:00',
-        '23:00:00',
         'APPROVED'
     ),
     (
@@ -239,9 +239,6 @@ VALUES
         'Tra Sua Moc',
         'lan@merchant.com',
         '0900000007',
-        'Hai Phong',
-        '08:30:00',
-        '22:30:00',
         'REJECTED'
     ),
     (
@@ -250,8 +247,52 @@ VALUES
         'Bun Cha Ha Thanh',
         'duc@merchant.com',
         '0900000008',
+        'BLOCKED'
+    );
+
+-- INSERT MERCHANT ADDRESSES
+
+INSERT INTO merchant_addresses
+(
+    id,
+    merchant_id,
+    merchant_address,
+    merchant_open_time,
+    merchant_close_time
+)
+VALUES
+    (
+        UUID_TO_BIN('20000000-0000-0000-0000-000000000001'),
+        UUID_TO_BIN('10000000-0000-0000-0000-000000000001'),
+        'Ha Noi',
+        '08:00:00',
+        '22:00:00'
+    ),
+    (
+        UUID_TO_BIN('20000000-0000-0000-0000-000000000002'),
+        UUID_TO_BIN('10000000-0000-0000-0000-000000000002'),
+        'Ho Chi Minh',
+        '09:00:00',
+        '21:30:00'
+    ),
+    (
+        UUID_TO_BIN('20000000-0000-0000-0000-000000000003'),
+        UUID_TO_BIN('10000000-0000-0000-0000-000000000003'),
+        'Da Nang',
+        '10:00:00',
+        '23:00:00'
+    ),
+    (
+        UUID_TO_BIN('20000000-0000-0000-0000-000000000004'),
+        UUID_TO_BIN('10000000-0000-0000-0000-000000000004'),
+        'Hai Phong',
+        '08:30:00',
+        '22:30:00'
+    ),
+    (
+        UUID_TO_BIN('20000000-0000-0000-0000-000000000005'),
+        UUID_TO_BIN('10000000-0000-0000-0000-000000000005'),
         'Ha Noi',
         '07:00:00',
-        '20:00:00',
-        'BLOCKED'
+        '20:00:00'
     );
