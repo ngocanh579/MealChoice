@@ -3,9 +3,13 @@ package vn.codegyme.meal_choice.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -17,15 +21,17 @@ public class Merchant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(length = 36)
+    @EqualsAndHashCode.Include
     private UUID id;
 
     @Column(
-            name = "restaurant_name",
+            name = "merchant_restaurant_name",
             nullable = false,
             length = 150
     )
-    private String restaurantName;
+    private String merchantRestaurantName;
 
     @Column(
             name = "merchant_email",
@@ -33,7 +39,7 @@ public class Merchant {
             nullable = false,
             length = 255
     )
-    private String email;
+    private String merchantEmail;
 
     @Column(
             name = "merchant_phone",
@@ -41,20 +47,7 @@ public class Merchant {
             nullable = false,
             length = 20
     )
-    private String phone;
-
-    @Column(
-            name = "merchant_address",
-            nullable = false,
-            length = 255
-    )
-    private String address;
-
-    @Column(name = "merchant_open_time")
-    private LocalTime openTime;
-
-    @Column(name = "merchant_close_time")
-    private LocalTime closeTime;
+    private String merchantPhone;
 
     @Column(
             name = "merchant_status",
@@ -68,4 +61,11 @@ public class Merchant {
             unique = true
     )
     private User user;
+
+    @OneToMany(
+            mappedBy = "merchant",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<MerchantAddress> addresses = new ArrayList<>();
 }
