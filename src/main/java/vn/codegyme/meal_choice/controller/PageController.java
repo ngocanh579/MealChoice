@@ -25,4 +25,14 @@ public class PageController {
     public String addressPage() {
         return "user/address";
     }
+
+    @GetMapping("/merchant/register")
+    public String merchantRegisterPage() {
+        return "merchant/register";
+    }
+
+    @GetMapping("/merchant/profile")
+    public String merchantProfilePage() {
+        return "merchant/profile";
+    }
 }
