@@ -8,15 +8,16 @@ import java.time.LocalTime;
 
 @Data
 public class MerchantUpdateRequest {
+
     @NotBlank(message = "Tên nhà hàng không được để trống")
-    private String restaurantName;
+    private String merchantRestaurantName;
 
     @NotBlank(message = "Địa chỉ không được để trống")
-    private String address;
+    private String merchantAddress;
 
     @NotNull(message = "Giờ mở cửa không được để trống")
-    private LocalTime openTime;
+    private LocalTime merchantOpenTime;
 
     @NotNull(message = "Giờ đóng cửa không được để trống")
-    private LocalTime closeTime;
+    private LocalTime merchantCloseTime;
 }

@@ -13,14 +13,14 @@ public class MerchantRegisterRequest {
     private String ownerName;
 
     @NotBlank(message = "Tên nhà hàng không được để trống")
-    private String restaurantName;
+    private String merchantRestaurantName;
 
     @NotBlank(message = "Số điện thoại không được để trống")
     @Pattern(
             regexp = "^[0-9]{10}$",
             message = "Số điện thoại phải gồm 10 chữ số"
     )
-    private String phone;
+    private String merchantPhone;
 
     @NotBlank(message = "Email không được để trống")
     @Pattern(
@@ -28,10 +28,10 @@ public class MerchantRegisterRequest {
             message = "Email chỉ được chứa chữ, số và _ - ."
     )
     @Email(message = "Email không đúng định dạng")
-    private String email;
+    private String merchantEmail;
 
     @NotBlank(message = "Địa chỉ không được để trống")
-    private String address;
+    private String merchantAddress;
 
     @NotBlank(message = "Mật khẩu không được để trống")
     @Size(
