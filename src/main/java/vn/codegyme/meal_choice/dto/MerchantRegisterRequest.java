@@ -9,9 +9,6 @@ import lombok.Data;
 @Data
 public class MerchantRegisterRequest {
 
-    @NotBlank(message = "Tên chủ cửa hàng không được để trống")
-    private String ownerName;
-
     @NotBlank(message = "Tên nhà hàng không được để trống")
     private String merchantRestaurantName;
 
