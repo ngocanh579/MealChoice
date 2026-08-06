@@ -21,7 +21,6 @@ public class MerchantAddressService {
     private final MerchantAddressRepository merchantAddressRepository;
 
 
-    // ==================== CREATE ====================
 
     @Transactional
     public void createAddress(
@@ -29,19 +28,14 @@ public class MerchantAddressService {
             MerchantAddressRequest request
     ) {
 
-        // Bước 1: Tìm Merchant để xác định địa chỉ thuộc cửa hàng nào
         Merchant merchant = merchantRepository.findById(merchantId)
                 .orElseThrow(() ->
                         new RuntimeException("Không tìm thấy Merchant"));
 
-        // Bước 2: Tạo đối tượng MerchantAddress mới
         MerchantAddress address = new MerchantAddress();
 
-        // Bước 3: Liên kết địa chỉ với Merchant
         address.setMerchant(merchant);
 
-        // Bước 4: Lấy dữ liệu từ Request
-        // và gán vào MerchantAddress
         address.setMerchantAddress(
                 request.getMerchantAddress()
         );
@@ -54,12 +48,9 @@ public class MerchantAddressService {
                 request.getMerchantCloseTime()
         );
 
-        // Bước 5: Lưu địa chỉ vào Database
         merchantAddressRepository.save(address);
     }
 
-
-    // ==================== READ ====================
 
     public List<MerchantAddressResponse> getAddresses(
             UUID merchantId
@@ -132,8 +123,6 @@ public class MerchantAddressService {
         merchantAddressRepository.delete(address);
     }
 
-
-    // ==================== MAPPER ====================
 
     // Chuyển MerchantAddress Entity thành MerchantAddressResponse
     private MerchantAddressResponse mapToResponse(
