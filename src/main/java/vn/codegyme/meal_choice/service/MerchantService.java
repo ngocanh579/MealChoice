@@ -8,10 +8,7 @@ import vn.codegyme.meal_choice.dto.MerchantAddressResponse;
 import vn.codegyme.meal_choice.dto.MerchantRegisterRequest;
 import vn.codegyme.meal_choice.dto.MerchantResponse;
 import vn.codegyme.meal_choice.dto.MerchantUpdateRequest;
-import vn.codegyme.meal_choice.entity.Merchant;
-import vn.codegyme.meal_choice.entity.MerchantAddress;
-import vn.codegyme.meal_choice.entity.Role;
-import vn.codegyme.meal_choice.entity.User;
+import vn.codegyme.meal_choice.entity.*;
 import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.RoleRepository;
@@ -73,16 +70,16 @@ public class MerchantService {
                 Merchant merchant = new Merchant();
 
                 merchant.setMerchantRestaurantName(
-                                request.getMerchantRestaurantName());
+                        request.getMerchantRestaurantName());
 
                 merchant.setMerchantEmail(
-                                request.getMerchantEmail());
+                        request.getMerchantEmail());
 
                 merchant.setMerchantPhone(
-                                request.getMerchantPhone());
+                        request.getMerchantPhone());
 
                 merchant.setUser(user);
-                merchant.setMerchantStatus("PENDING");
+                merchant.setMerchantStatus(MerchantStatus.PENDING);
 
                 merchantRepository.save(merchant);
 
