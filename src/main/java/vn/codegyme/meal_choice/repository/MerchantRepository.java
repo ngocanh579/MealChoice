@@ -16,6 +16,8 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
 
     boolean existsByMerchantEmail(String merchantEmail);
 
+    Optional<Merchant> findByMerchantEmail(String merchantEmail);
+
     boolean existsByMerchantPhone(String merchantPhone);
 
     List<Merchant> findAllByOrderByIdDesc();

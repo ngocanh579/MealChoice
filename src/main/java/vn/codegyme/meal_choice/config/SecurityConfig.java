@@ -14,6 +14,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import vn.codegyme.meal_choice.security.JwtAuthFilter;
 
+import org.springframework.http.MediaType;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -32,14 +36,23 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/", "/home", "/login", "/register", "/api/auth/**",
+                                "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/merchants/register").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/merchants/**").permitAll()
-                        .requestMatchers("/api/merchants/**").authenticated()
-                        .requestMatchers("/", "/login", "/register", "/merchant/**", "/user/**", "/food/**",
-                                "/admin/**", "/css/**", "/js/**", "/images/**", "/favicon.ico")
-                        .permitAll()
+
+                        // Role-based authorization
+                        .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/merchant/**", "/api/merchant/**").hasAnyRole("MERCHANT", "ADMIN")
+                        .requestMatchers("/user/**", "/api/user/**").authenticated()
+
                         .anyRequest().authenticated())
+                .exceptionHandling(ex -> ex
+                        .defaultAuthenticationEntryPointFor(
+                                new LoginUrlAuthenticationEntryPoint("/login"),
+                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+                        )
+                )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
