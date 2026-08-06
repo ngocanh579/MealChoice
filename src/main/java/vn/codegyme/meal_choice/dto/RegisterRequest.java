@@ -12,7 +12,10 @@ import lombok.Setter;
 public class RegisterRequest {
 
     @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không hợp lệ")
+    @Pattern(
+            regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.com$",
+            message = "Email phải có định dạng hợp lệ và kết thúc bằng .com"
+    )
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")
