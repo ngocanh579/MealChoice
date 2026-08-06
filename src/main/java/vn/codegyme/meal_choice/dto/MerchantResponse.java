@@ -1,6 +1,7 @@
 package vn.codegyme.meal_choice.dto;
 
 import lombok.Data;
+import vn.codegyme.meal_choice.entity.MerchantStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,7 +17,7 @@ public class MerchantResponse {
 
     private String merchantPhone;
 
-    private String merchantStatus;
+    private MerchantStatus merchantStatus;
 
     private List<MerchantAddressResponse> addresses;
 }
