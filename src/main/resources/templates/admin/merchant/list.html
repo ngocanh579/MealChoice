@@ -20,13 +20,12 @@
 
 <div class="container py-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="fw-bold mb-1">Quản lý Merchant</h3>
-            <p class="text-muted mb-0">
-                Quản lý đăng ký và trạng thái các merchant.
-            </p>
-        </div>
+    <!-- Header -->
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1">Quản lý Merchant</h3>
+        <p class="text-muted mb-0">
+            Quản lý đăng ký và trạng thái các merchant.
+        </p>
     </div>
 
     <!-- Thông báo -->
@@ -68,7 +67,7 @@
 
                 <a href="/admin/merchants?status=PENDING"
                    class="btn"
-                   th:classappend="${selectedStatus?.name() == 'PENDING'}
+                   th:classappend="${selectedStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}
                        ? 'btn-warning'
                        : 'btn-outline-warning'">
                     Chờ duyệt
@@ -76,7 +75,7 @@
 
                 <a href="/admin/merchants?status=APPROVED"
                    class="btn"
-                   th:classappend="${selectedStatus?.name() == 'APPROVED'}
+                   th:classappend="${selectedStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}
                        ? 'btn-success'
                        : 'btn-outline-success'">
                     Đã duyệt
@@ -84,7 +83,7 @@
 
                 <a href="/admin/merchants?status=REJECTED"
                    class="btn"
-                   th:classappend="${selectedStatus?.name() == 'REJECTED'}
+                   th:classappend="${selectedStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).REJECTED}
                        ? 'btn-danger'
                        : 'btn-outline-danger'">
                     Từ chối
@@ -92,7 +91,7 @@
 
                 <a href="/admin/merchants?status=BLOCKED"
                    class="btn"
-                   th:classappend="${selectedStatus?.name() == 'BLOCKED'}
+                   th:classappend="${selectedStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}
                        ? 'btn-secondary'
                        : 'btn-outline-secondary'">
                     Đã khóa
@@ -143,29 +142,29 @@
                         <!-- Trạng thái -->
                         <td>
 
-                            <span th:if="${merchant.merchantStatus.name() == 'PENDING'}"
+                            <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
                                   class="badge bg-warning text-dark">
                                 Chờ duyệt
                             </span>
 
-                            <span th:if="${merchant.merchantStatus.name() == 'APPROVED'}"
+                            <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}"
                                   class="badge bg-success">
                                 Đã duyệt
                             </span>
 
-                            <span th:if="${merchant.merchantStatus.name() == 'REJECTED'}"
+                            <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).REJECTED}"
                                   class="badge bg-danger">
                                 Từ chối
                             </span>
 
-                            <span th:if="${merchant.merchantStatus.name() == 'BLOCKED'}"
+                            <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}"
                                   class="badge bg-secondary">
                                 Đã khóa
                             </span>
 
                         </td>
 
-                        <!-- Trusted Partner -->
+                        <!-- Đối tác thân thiết -->
                         <td>
 
                             <span th:if="${merchant.trustedPartner}"
@@ -187,12 +186,13 @@
 
                                 <!-- Chi tiết -->
                                 <a th:href="@{/admin/merchants/{id}(id=${merchant.id})}"
-                                   class="btn btn-sm btn-outline-dark">
+                                   class="btn btn-sm btn-outline-dark"
+                                   title="Xem chi tiết">
                                     <i class="bi bi-eye"></i>
                                 </a>
 
                                 <!-- Duyệt -->
-                                <form th:if="${merchant.merchantStatus.name() == 'PENDING'}"
+                                <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
                                       th:action="@{/admin/merchants/{id}/approve(id=${merchant.id})}"
                                       method="post">
 
@@ -204,7 +204,7 @@
                                 </form>
 
                                 <!-- Từ chối -->
-                                <form th:if="${merchant.merchantStatus.name() == 'PENDING'}"
+                                <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
                                       th:action="@{/admin/merchants/{id}/reject(id=${merchant.id})}"
                                       method="post">
 
@@ -216,7 +216,7 @@
                                 </form>
 
                                 <!-- Khóa -->
-                                <form th:if="${merchant.merchantStatus.name() == 'APPROVED'}"
+                                <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}"
                                       th:action="@{/admin/merchants/{id}/toggle-lock(id=${merchant.id})}"
                                       method="post">
 
@@ -228,7 +228,7 @@
                                 </form>
 
                                 <!-- Mở khóa -->
-                                <form th:if="${merchant.merchantStatus.name() == 'BLOCKED'}"
+                                <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}"
                                       th:action="@{/admin/merchants/{id}/toggle-lock(id=${merchant.id})}"
                                       method="post">
 
@@ -240,7 +240,7 @@
                                 </form>
 
                                 <!-- Duyệt đối tác thân thiết -->
-                                <form th:if="${merchant.merchantStatus.name() == 'APPROVED'
+                                <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED
                                              and !merchant.trustedPartner}"
                                       th:action="@{/admin/merchants/{id}/trusted-partner(id=${merchant.id})}"
                                       method="post">
