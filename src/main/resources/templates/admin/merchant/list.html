@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Merchant</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Quản lý Merchant</h3>
+            <p class="text-muted mb-0">
+                Quản lý đăng ký và trạng thái các merchant.
+            </p>
+        </div>
+    </div>
+
+    <!-- Thông báo -->
+    <div th:if="${message}"
+         class="alert alert-success alert-dismissible fade show"
+         role="alert">
+
+        <span th:text="${message}"></span>
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}"
+         class="alert alert-danger alert-dismissible fade show"
+         role="alert">
+
+        <span th:text="${error}"></span>
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <div class="d-flex gap-2 flex-wrap">
+
+                <a href="/admin/merchants"
+                   class="btn"
+                   th:classappend="${selectedStatus == null}
+                       ? 'btn-dark'
+                       : 'btn-outline-dark'">
+                    Tất cả
+                </a>
+
+                <a href="/admin/merchants?status=PENDING"
+                   class="btn"
+                   th:classappend="${selectedStatus?.name() == 'PENDING'}
+                       ? 'btn-warning'
+                       : 'btn-outline-warning'">
+                    Chờ duyệt
+                </a>
+
+                <a href="/admin/merchants?status=APPROVED"
+                   class="btn"
+                   th:classappend="${selectedStatus?.name() == 'APPROVED'}
+                       ? 'btn-success'
+                       : 'btn-outline-success'">
+                    Đã duyệt
+                </a>
+
+                <a href="/admin/merchants?status=REJECTED"
+                   class="btn"
+                   th:classappend="${selectedStatus?.name() == 'REJECTED'}
+                       ? 'btn-danger'
+                       : 'btn-outline-danger'">
+                    Từ chối
+                </a>
+
+                <a href="/admin/merchants?status=BLOCKED"
+                   class="btn"
+                   th:classappend="${selectedStatus?.name() == 'BLOCKED'}
+                       ? 'btn-secondary'
+                       : 'btn-outline-secondary'">
+                    Đã khóa
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Danh sách -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                    <tr>
+                        <th>STT</th>
+                        <th>Nhà hàng</th>
+                        <th>Email</th>
+                        <th>Số điện thoại</th>
+                        <th>Trạng thái</th>
+                        <th>Đối tác thân thiết</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+
+                    <tr th:each="merchant, stat : ${merchants}">
+
+                        <td th:text="${stat.count}"></td>
+
+                        <td>
+                            <span class="fw-semibold"
+                                  th:text="${merchant.merchantRestaurantName}">
+                            </span>
+                        </td>
+
+                        <td th:text="${merchant.merchantEmail}"></td>
+
+                        <td th:text="${merchant.merchantPhone}"></td>
+
+                        <!-- Trạng thái -->
+                        <td>
+
+                            <span th:if="${merchant.merchantStatus.name() == 'PENDING'}"
+                                  class="badge bg-warning text-dark">
+                                Chờ duyệt
+                            </span>
+
+                            <span th:if="${merchant.merchantStatus.name() == 'APPROVED'}"
+                                  class="badge bg-success">
+                                Đã duyệt
+                            </span>
+
+                            <span th:if="${merchant.merchantStatus.name() == 'REJECTED'}"
+                                  class="badge bg-danger">
+                                Từ chối
+                            </span>
+
+                            <span th:if="${merchant.merchantStatus.name() == 'BLOCKED'}"
+                                  class="badge bg-secondary">
+                                Đã khóa
+                            </span>
+
+                        </td>
+
+                        <!-- Trusted Partner -->
+                        <td>
+
+                            <span th:if="${merchant.trustedPartner}"
+                                  class="badge bg-primary">
+                                Đối tác thân thiết
+                            </span>
+
+                            <span th:unless="${merchant.trustedPartner}"
+                                  class="text-muted">
+                                Không
+                            </span>
+
+                        </td>
+
+                        <!-- Thao tác -->
+                        <td>
+
+                            <div class="d-flex justify-content-center gap-1 flex-wrap">
+
+                                <!-- Chi tiết -->
+                                <a th:href="@{/admin/merchants/{id}(id=${merchant.id})}"
+                                   class="btn btn-sm btn-outline-dark">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+
+                                <!-- Duyệt -->
+                                <form th:if="${merchant.merchantStatus.name() == 'PENDING'}"
+                                      th:action="@{/admin/merchants/{id}/approve(id=${merchant.id})}"
+                                      method="post">
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-success">
+                                        Duyệt
+                                    </button>
+
+                                </form>
+
+                                <!-- Từ chối -->
+                                <form th:if="${merchant.merchantStatus.name() == 'PENDING'}"
+                                      th:action="@{/admin/merchants/{id}/reject(id=${merchant.id})}"
+                                      method="post">
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-danger">
+                                        Từ chối
+                                    </button>
+
+                                </form>
+
+                                <!-- Khóa -->
+                                <form th:if="${merchant.merchantStatus.name() == 'APPROVED'}"
+                                      th:action="@{/admin/merchants/{id}/toggle-lock(id=${merchant.id})}"
+                                      method="post">
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-danger">
+                                        Khóa
+                                    </button>
+
+                                </form>
+
+                                <!-- Mở khóa -->
+                                <form th:if="${merchant.merchantStatus.name() == 'BLOCKED'}"
+                                      th:action="@{/admin/merchants/{id}/toggle-lock(id=${merchant.id})}"
+                                      method="post">
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-success">
+                                        Mở khóa
+                                    </button>
+
+                                </form>
+
+                                <!-- Duyệt đối tác thân thiết -->
+                                <form th:if="${merchant.merchantStatus.name() == 'APPROVED'
+                                             and !merchant.trustedPartner}"
+                                      th:action="@{/admin/merchants/{id}/trusted-partner(id=${merchant.id})}"
+                                      method="post">
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-primary">
+                                        Đối tác
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    <!-- Không có dữ liệu -->
+                    <tr th:if="${#lists.isEmpty(merchants)}">
+
+                        <td colspan="7"
+                            class="text-center text-muted py-5">
+
+                            <i class="bi bi-shop fs-1 d-block mb-2"></i>
+
+                            Không có merchant nào.
+
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Footer -->
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
+</script>
+
+</body>
+</html>
