@@ -51,11 +51,15 @@ public class Merchant {
     )
     private String merchantPhone;
 
+    @Enumerated(EnumType.STRING)
     @Column(
             name = "merchant_status",
             length = 30
     )
-    private String merchantStatus;
+    private MerchantStatus merchantStatus;
+
+    @Column(name = "is_trusted_partner", nullable = false)
+    private boolean trustedPartner = false;
 
     @OneToOne
     @JoinColumn(
