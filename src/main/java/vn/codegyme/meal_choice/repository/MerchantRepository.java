@@ -18,6 +18,7 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
 
     Optional<Merchant> findByMerchantEmail(String merchantEmail);
 
+    boolean existsByUserId(UUID userId);
     boolean existsByMerchantPhone(String merchantPhone);
 
     List<Merchant> findAllByOrderByIdDesc();
@@ -25,6 +26,7 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
     List<Merchant> findByMerchantStatusOrderByIdDesc(
             MerchantStatus merchantStatus
     );
+    Optional<Merchant> findByUser_Id(UUID userId);
 
     @Query("""
         SELECT DISTINCT m
