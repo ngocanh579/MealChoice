@@ -8,10 +8,12 @@ import vn.codegyme.meal_choice.dto.MerchantAddressResponse;
 import vn.codegyme.meal_choice.dto.MerchantRegisterRequest;
 import vn.codegyme.meal_choice.dto.MerchantResponse;
 import vn.codegyme.meal_choice.dto.MerchantUpdateRequest;
-import vn.codegyme.meal_choice.entity.*;
+import vn.codegyme.meal_choice.entity.Merchant;
+import vn.codegyme.meal_choice.entity.MerchantAddress;
+import vn.codegyme.meal_choice.entity.MerchantStatus;
+import vn.codegyme.meal_choice.entity.User;
 import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
-import vn.codegyme.meal_choice.repository.RoleRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
 
 import java.util.List;
@@ -21,155 +23,179 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MerchantService {
 
-        private final UserRepository userRepository;
-        private final RoleRepository roleRepository;
-        private final MerchantRepository merchantRepository;
-        private final MerchantAddressRepository merchantAddressRepository;
-        private final PasswordEncoder passwordEncoder;
-        private final EmailService emailService;
+    private final UserRepository userRepository;
+    private final MerchantRepository merchantRepository;
+    private final MerchantAddressRepository merchantAddressRepository;
+    private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
 
-        // Đăng ký Merchant (đã fix user không thể đăng kí merchant cho user khác)
-        @Transactional
-        public void registerMerchant(MerchantRegisterRequest request) {
+    @Transactional
+    public void registerMerchant(
+            MerchantRegisterRequest request,
+            String userEmail) {
 
-                if (userRepository.existsByEmail(request.getMerchantEmail())
-                                || merchantRepository.existsByMerchantEmail(request.getMerchantEmail())) {
-                        throw new RuntimeException("Email đã tồn tại");
-                }
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Không tìm thấy tài khoản người dùng"));
 
-                if (userRepository.existsByPhoneNumber(request.getMerchantPhone())
-                                || merchantRepository.existsByMerchantPhone(request.getMerchantPhone())) {
-                        throw new RuntimeException("Số điện thoại đã tồn tại");
-                }
-
-                if (!request.getPassword().equals(request.getConfirmPassword())) {
-                        throw new RuntimeException("Mật khẩu nhập lại không đúng");
-                }
-
-                // Tạo User
-                User user = new User();
-
-                user.setDisplayName(request.getOwnerName());
-                user.setEmail(request.getMerchantEmail());
-                user.setPhoneNumber(request.getMerchantPhone());
-                user.setPassword(
-                                passwordEncoder.encode(request.getPassword()));
-
-                user.setIsActive(true);
-
-                // Lấy ROLE_MERCHANT
-                Role merchantRole = roleRepository
-                                .findByName(Role.RoleName.ROLE_MERCHANT)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy ROLE_MERCHANT"));
-
-                user.getRoles().add(merchantRole);
-
-                userRepository.save(user);
-
-                // Tạo Merchant
-                Merchant merchant = new Merchant();
-
-                merchant.setMerchantRestaurantName(
-                        request.getMerchantRestaurantName());
-
-                merchant.setMerchantEmail(
-                        request.getMerchantEmail());
-
-                merchant.setMerchantPhone(
-                        request.getMerchantPhone());
-
-                merchant.setUser(user);
-                merchant.setMerchantStatus(MerchantStatus.PENDING);
-
-                merchantRepository.save(merchant);
-
-                // Tạo địa chỉ đầu tiên cho Merchant
-                MerchantAddress merchantAddress = new MerchantAddress();
-
-                merchantAddress.setMerchant(merchant);
-                merchantAddress.setMerchantAddress(
-                                request.getMerchantAddress());
-
-                merchantAddressRepository.save(merchantAddress);
-
-                // Gửi email thông báo
-                emailService.sendMerchantRegisterEmail(
-                                request.getMerchantEmail(),
-                                request.getMerchantRestaurantName());
+        if (merchantRepository.existsByUserId(user.getId())) {
+            throw new RuntimeException(
+                    "Tài khoản này đã đăng ký Merchant");
         }
 
-        // Cập nhật thông tin Merchant
-        @Transactional
-        public void updateMerchant(UUID merchantId, MerchantUpdateRequest request) {
-
-                Merchant merchant = merchantRepository.findById(merchantId)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy Merchant"));
-
-                // Cập nhật tên nhà hàng
-                merchant.setMerchantRestaurantName(
-                                request.getMerchantRestaurantName());
-
-                merchantRepository.save(merchant);
-
-                // Cập nhật địa chỉ chính nếu truyền địa chỉ vào (Tạo mới nếu chưa có địa chỉ nào)
-                if (request.getMerchantAddress() != null && !request.getMerchantAddress().isBlank()) {
-                    List<MerchantAddress> addresses = merchantAddressRepository.findByMerchantId(merchantId);
-                    MerchantAddress address;
-                    if (!addresses.isEmpty()) {
-                        address = addresses.get(0);
-                    } else {
-                        address = new MerchantAddress();
-                        address.setMerchant(merchant);
-                    }
-                    address.setMerchantAddress(request.getMerchantAddress());
-                    if (request.getMerchantOpenTime() != null) {
-                        address.setMerchantOpenTime(request.getMerchantOpenTime());
-                    }
-                    if (request.getMerchantCloseTime() != null) {
-                        address.setMerchantCloseTime(request.getMerchantCloseTime());
-                    }
-                    merchantAddressRepository.save(address);
-                }
+        if (merchantRepository.existsByMerchantEmail(
+                request.getMerchantEmail())) {
+            throw new RuntimeException(
+                    "Email Merchant đã tồn tại");
         }
 
-        // Lấy thông tin Merchant
-        public MerchantResponse getMerchant(UUID merchantId) {
-
-                Merchant merchant = merchantRepository.findById(merchantId)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy Merchant"));
-
-                MerchantResponse response = new MerchantResponse();
-
-                response.setId(merchant.getId());
-
-                response.setMerchantRestaurantName(
-                                merchant.getMerchantRestaurantName());
-
-                response.setMerchantEmail(
-                                merchant.getMerchantEmail());
-
-                response.setMerchantPhone(
-                                merchant.getMerchantPhone());
-
-                response.setMerchantStatus(
-                                merchant.getMerchantStatus());
-
-                // Map danh sách địa chỉ của Merchant
-                List<MerchantAddressResponse> addressResponses = merchantAddressRepository
-                                .findByMerchantId(merchantId)
-                                .stream()
-                                .map(addr -> {
-                                        MerchantAddressResponse res = new MerchantAddressResponse();
-                                        res.setId(addr.getId());
-                                        res.setMerchantAddress(addr.getMerchantAddress());
-                                        res.setMerchantOpenTime(addr.getMerchantOpenTime());
-                                        res.setMerchantCloseTime(addr.getMerchantCloseTime());
-                                        return res;
-                                })
-                                .toList();
-
-                response.setAddresses(addressResponses);
-
-                return response;
+        if (merchantRepository.existsByMerchantPhone(
+                request.getMerchantPhone())) {
+            throw new RuntimeException(
+                    "Số điện thoại đã tồn tại");
         }
+
+        if (!request.getPassword()
+                .equals(request.getConfirmPassword())) {
+            throw new RuntimeException(
+                    "Mật khẩu nhập lại không đúng");
+        }
+
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword())) {
+            throw new RuntimeException(
+                    "Mật khẩu tài khoản không đúng");
+        }
+
+        Merchant merchant = new Merchant();
+
+        merchant.setMerchantRestaurantName(
+                request.getMerchantRestaurantName());
+
+        merchant.setMerchantEmail(
+                request.getMerchantEmail());
+
+        merchant.setMerchantPhone(
+                request.getMerchantPhone());
+
+        merchant.setUser(user);
+
+        merchant.setMerchantStatus(
+                MerchantStatus.PENDING);
+
+        merchantRepository.save(merchant);
+
+        MerchantAddress merchantAddress =
+                new MerchantAddress();
+
+        merchantAddress.setMerchant(merchant);
+
+        merchantAddress.setMerchantAddress(
+                request.getMerchantAddress());
+
+        merchantAddressRepository.save(
+                merchantAddress);
+
+        emailService.sendMerchantRegisterEmail(
+                request.getMerchantEmail(),
+                request.getMerchantRestaurantName());
+    }
+
+    @Transactional
+    public void updateMerchant(
+            UUID merchantId,
+            MerchantUpdateRequest request) {
+
+        Merchant merchant = merchantRepository
+                .findById(merchantId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Không tìm thấy Merchant"));
+
+        merchant.setMerchantRestaurantName(
+                request.getMerchantRestaurantName());
+
+        merchantRepository.save(merchant);
+
+        List<MerchantAddress> addresses =
+                merchantAddressRepository
+                        .findByMerchantId(merchantId);
+
+        MerchantAddress address;
+
+        if (!addresses.isEmpty()) {
+            address = addresses.get(0);
+        } else {
+            address = new MerchantAddress();
+            address.setMerchant(merchant);
+        }
+
+        address.setMerchantAddress(
+                request.getMerchantAddress());
+
+        address.setMerchantOpenTime(
+                request.getMerchantOpenTime());
+
+        address.setMerchantCloseTime(
+                request.getMerchantCloseTime());
+
+        merchantAddressRepository.save(address);
+    }
+
+    public MerchantResponse getMerchant(
+            UUID merchantId) {
+
+        Merchant merchant = merchantRepository
+                .findById(merchantId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Không tìm thấy Merchant"));
+
+        MerchantResponse response =
+                new MerchantResponse();
+
+        response.setId(merchant.getId());
+
+        response.setMerchantRestaurantName(
+                merchant.getMerchantRestaurantName());
+
+        response.setMerchantEmail(
+                merchant.getMerchantEmail());
+
+        response.setMerchantPhone(
+                merchant.getMerchantPhone());
+
+        response.setMerchantStatus(
+                merchant.getMerchantStatus());
+
+        List<MerchantAddressResponse> addressResponses =
+                merchantAddressRepository
+                        .findByMerchantId(merchantId)
+                        .stream()
+                        .map(addr -> {
+
+                            MerchantAddressResponse res =
+                                    new MerchantAddressResponse();
+
+                            res.setId(addr.getId());
+
+                            res.setMerchantAddress(
+                                    addr.getMerchantAddress());
+
+                            res.setMerchantOpenTime(
+                                    addr.getMerchantOpenTime());
+
+                            res.setMerchantCloseTime(
+                                    addr.getMerchantCloseTime());
+
+                            return res;
+                        })
+                        .toList();
+
+        response.setAddresses(addressResponses);
+
+        return response;
+    }
 }
