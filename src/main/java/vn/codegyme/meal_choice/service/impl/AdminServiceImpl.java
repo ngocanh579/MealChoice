@@ -5,7 +5,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.MerchantStatus;
+import vn.codegyme.meal_choice.entity.Role;
+import vn.codegyme.meal_choice.entity.User;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
+import vn.codegyme.meal_choice.repository.RoleRepository;
+import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.service.AdminService;
 
 import java.util.List;
@@ -17,7 +21,8 @@ import java.util.UUID;
 public class AdminServiceImpl implements AdminService {
 
     private final MerchantRepository merchantRepository;
-
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     // Xem danh sách
     @Override
     @Transactional(readOnly = true)
@@ -45,6 +50,31 @@ public class AdminServiceImpl implements AdminService {
         Merchant merchant = findMerchant(id);
 
         merchant.setMerchantStatus(MerchantStatus.APPROVED);
+
+        User user = merchant.getUser();
+
+        if (user == null) {
+            throw new IllegalArgumentException(
+                    "Merchant chưa liên kết với tài khoản User"
+            );
+        }
+
+        Role merchantRole = roleRepository
+                .findByName(Role.RoleName.ROLE_MERCHANT)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Không tìm thấy role ROLE_MERCHANT"
+                        )
+                );
+
+        user.getRoles().add(merchantRole);
+
+        System.out.println("USER: " + user.getEmail());
+        System.out.println("ROLES TRƯỚC SAVE: " + user.getRoles()
+                .stream()
+                .map(role -> role.getName().name())
+                .toList());
+        userRepository.save(user);
         merchantRepository.save(merchant);
     }
 
