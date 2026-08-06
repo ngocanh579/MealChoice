@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kích hoạt tài khoản - MealChoice</title>
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body class="mc-page">
+<main class="mc-shell mc-main" style="max-width:680px">
+    <section class="mc-card" style="text-align:center;padding:48px">
+        <div id="verifyIcon" style="font-size:4rem">✓</div>
+        <h1 id="verifyTitle">Đang kiểm tra kết quả...</h1>
+        <p id="verifyMessage"></p>
+        <div class="mc-actions" style="justify-content:center">
+            <a class="mc-btn mc-btn-primary" href="/login">Đến trang đăng nhập</a>
+            <a class="mc-btn mc-btn-outline" href="/home">Về trang chủ</a>
+        </div>
+    </section>
+</main>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('status') === 'success';
+    document.getElementById('verifyIcon').textContent = success ? '✅' : '⚠️';
+    document.getElementById('verifyTitle').textContent = success ? 'Kích hoạt thành công!' : 'Không thể kích hoạt';
+    document.getElementById('verifyMessage').textContent = success
+        ? `Tài khoản ${params.get('email') || ''} đã sẵn sàng để đăng nhập.`
+        : (params.get('message') || 'Liên kết kích hoạt không hợp lệ hoặc đã hết hạn.');
+</script>
+</body>
+</html>

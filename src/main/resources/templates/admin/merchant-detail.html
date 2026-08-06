@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Merchant - MealChoice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body class="mc-page" data-page="admin-merchant-detail">
+<div th:replace="~{layout/navbar :: navbar}"></div>
+<main id="merchantDetail" class="mc-shell mc-main" th:attr="data-merchant-id=${merchantId}">
+    <a class="mc-btn mc-btn-outline" href="/admin/merchants" style="margin-bottom:18px">← Quay lại danh sách</a>
+    <section class="mc-hero">
+        <div style="display:flex;justify-content:space-between;gap:20px;align-items:center;flex-wrap:wrap">
+            <div>
+                <p style="font-weight:800;color:#fca5a5;margin-bottom:6px">CHI TIẾT MERCHANT</p>
+                <h1 id="detailRestaurantName">Đang tải...</h1>
+            </div>
+            <div id="detailStatus"><span class="mc-badge status-PENDING">PENDING</span></div>
+        </div>
+    </section>
+    <div id="pageAlert" class="mc-alert" role="alert"></div>
+
+    <section class="mc-grid mc-grid-2">
+        <article class="mc-card">
+            <h2>Thông tin cửa hàng</h2>
+            <dl class="mc-detail-list">
+                <dt>Chủ cửa hàng</dt><dd id="detailOwnerName">—</dd>
+                <dt>Email</dt><dd id="detailEmail">—</dd>
+                <dt>Số điện thoại</dt><dd id="detailPhone">—</dd>
+                <dt>Địa chỉ</dt><dd id="detailAddress">—</dd>
+                <dt>Giờ hoạt động</dt><dd id="detailHours">—</dd>
+            </dl>
+        </article>
+        <article class="mc-card">
+            <h2>Thông tin xét duyệt</h2>
+            <dl class="mc-detail-list">
+                <dt>Tài khoản</dt><dd id="detailAccount">—</dd>
+                <dt>Phân loại</dt><dd id="detailLoyal">—</dd>
+                <dt>Ghi chú</dt><dd id="detailReview">—</dd>
+                <dt>Người duyệt</dt><dd id="detailReviewer">—</dd>
+            </dl>
+        </article>
+    </section>
+
+    <section class="mc-card" style="margin-top:22px">
+        <h2>Thao tác quản trị</h2>
+        <div id="detailActions" class="mc-actions"></div>
+    </section>
+</main>
+<div th:replace="~{layout/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/admin-merchants.js"></script>
+</body>
+</html>

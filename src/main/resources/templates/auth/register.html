@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký tài khoản - MealChoice</title>
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body class="mc-page" data-page="user-register">
+<main class="mc-shell mc-main" style="max-width:760px">
+    <section class="mc-card">
+        <p style="color:#e23744;font-weight:800;margin-top:0">MEALCHOICE</p>
+        <h1>Tạo tài khoản người dùng</h1>
+        <p>Đăng ký xong, hệ thống sẽ gửi liên kết kích hoạt đến email của bạn.</p>
+        <div id="pageAlert" class="mc-alert" role="alert"></div>
+
+        <form id="userRegisterForm" class="mc-form-grid">
+            <div class="mc-field mc-field-full">
+                <label for="displayName">Họ và tên</label>
+                <input id="displayName" name="displayName" minlength="2" maxlength="30" required>
+            </div>
+            <div class="mc-field">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required>
+            </div>
+            <div class="mc-field">
+                <label for="phoneNumber">Số điện thoại</label>
+                <input id="phoneNumber" name="phoneNumber" pattern="^(0|\+84)[35789][0-9]{8}$" required>
+            </div>
+            <div class="mc-field">
+                <label for="password">Mật khẩu</label>
+                <input id="password" name="password" type="password" minlength="8" maxlength="16" required>
+            </div>
+            <div class="mc-field">
+                <label for="confirmPassword">Nhập lại mật khẩu</label>
+                <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="16" required>
+            </div>
+            <div class="mc-field-full mc-actions">
+                <button class="mc-btn mc-btn-primary" type="submit">Đăng ký</button>
+                <a class="mc-btn mc-btn-outline" href="/login">Đã có tài khoản</a>
+            </div>
+        </form>
+    </section>
+</main>
+<script src="/js/main.js"></script>
+<script>
+    document.getElementById('userRegisterForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const alertBox = document.getElementById('pageAlert');
+        const data = Object.fromEntries(new FormData(form));
+        if (data.password !== data.confirmPassword) {
+            MealChoice.alert(alertBox, 'error', 'Mật khẩu nhập lại không khớp');
+            return;
+        }
+        try {
+            const result = await MealChoice.request('/api/auth/register', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            MealChoice.alert(alertBox, 'success', `Đăng ký thành công cho ${result.email}. Hãy kiểm tra email để kích hoạt tài khoản.`);
+            form.reset();
+        } catch (error) {
+            MealChoice.alert(alertBox, 'error', error.message);
+        }
+    });
+</script>
+</body>
+</html>

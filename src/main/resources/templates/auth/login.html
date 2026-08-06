@@ -285,9 +285,16 @@
                         localStorage.setItem('refreshToken', result.refreshToken);
                     }
                     showAlert('success', 'Đăng nhập thành công! Đang chuyển hướng...');
-                    // Chuyển hướng trình duyệt sang trang profile sau 1 giây
+                    // Chuyển hướng đúng trang theo vai trò sau 1 giây
                     setTimeout(() => {
-                        window.location.href = "/user/profile";
+                        const roles = Array.isArray(result.roles) ? result.roles : [];
+                        if (roles.includes('ROLE_ADMIN')) {
+                            window.location.href = "/admin/merchants";
+                        } else if (roles.includes('ROLE_MERCHANT')) {
+                            window.location.href = "/merchant/profile";
+                        } else {
+                            window.location.href = "/user/profile";
+                        }
                     }, 1000);
                 } else {
                     const message = result.message || "Email hoặc mật khẩu không chính xác";
