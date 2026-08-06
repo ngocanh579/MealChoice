@@ -33,4 +33,12 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
         WHERE m.id = :id
     """)
     Optional<Merchant> findByIdWithAddresses(@Param("id") UUID id);
+
+    @Query("""
+        SELECT DISTINCT m
+        FROM Merchant m
+        LEFT JOIN FETCH m.addresses
+        WHERE m.merchantEmail = :email
+    """)
+    Optional<Merchant> findByMerchantEmailWithAddresses(@Param("email") String email);
 }

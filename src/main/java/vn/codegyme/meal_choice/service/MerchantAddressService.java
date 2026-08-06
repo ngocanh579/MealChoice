@@ -17,132 +17,108 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MerchantAddressService {
 
-    private final MerchantRepository merchantRepository;
-    private final MerchantAddressRepository merchantAddressRepository;
+        private final MerchantRepository merchantRepository;
+        private final MerchantAddressRepository merchantAddressRepository;
 
+        @Transactional
+        public void createAddress(
+                        UUID merchantId,
+                        MerchantAddressRequest request) {
 
+                Merchant merchant = merchantRepository.findById(merchantId)
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy Merchant"));
 
-    @Transactional
-    public void createAddress(
-            UUID merchantId,
-            MerchantAddressRequest request
-    ) {
+                MerchantAddress address = new MerchantAddress();
 
-        Merchant merchant = merchantRepository.findById(merchantId)
-                .orElseThrow(() ->
-                        new RuntimeException("Không tìm thấy Merchant"));
+                address.setMerchant(merchant);
 
-        MerchantAddress address = new MerchantAddress();
+                address.setMerchantAddress(
+                                request.getMerchantAddress());
 
-        address.setMerchant(merchant);
+                address.setMerchantOpenTime(
+                                request.getMerchantOpenTime());
 
-        address.setMerchantAddress(
-                request.getMerchantAddress()
-        );
+                address.setMerchantCloseTime(
+                                request.getMerchantCloseTime());
 
-        address.setMerchantOpenTime(
-                request.getMerchantOpenTime()
-        );
-
-        address.setMerchantCloseTime(
-                request.getMerchantCloseTime()
-        );
-
-        merchantAddressRepository.save(address);
-    }
-
-
-    public List<MerchantAddressResponse> getAddresses(
-            UUID merchantId
-    ) {
-
-        if (!merchantRepository.existsById(merchantId)) {
-            throw new RuntimeException("Không tìm thấy Merchant");
+                merchantAddressRepository.save(address);
         }
 
-        List<MerchantAddress> addresses =
-                merchantAddressRepository.findByMerchantId(merchantId);
+        public List<MerchantAddressResponse> getAddresses(
+                        UUID merchantId) {
 
-        return addresses.stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
+                if (!merchantRepository.existsById(merchantId)) {
+                        throw new RuntimeException("Không tìm thấy Merchant");
+                }
 
+                List<MerchantAddress> addresses = merchantAddressRepository.findByMerchantId(merchantId);
 
-    @Transactional
-    public void updateAddress(
-            UUID merchantId,
-            UUID addressId,
-            MerchantAddressRequest request
-    ) {
-
-        MerchantAddress address = merchantAddressRepository
-                .findById(addressId)
-                .orElseThrow(() ->
-                        new RuntimeException("Không tìm thấy địa chỉ"));
-
-        if (!address.getMerchant().getId().equals(merchantId)) {
-            throw new RuntimeException(
-                    "Địa chỉ không thuộc Merchant này"
-            );
+                return addresses.stream()
+                                .map(this::mapToResponse)
+                                .toList();
         }
 
-        address.setMerchantAddress(
-                request.getMerchantAddress()
-        );
+        @Transactional
+        public void updateAddress(
+                        UUID merchantId,
+                        UUID addressId,
+                        MerchantAddressRequest request) {
 
-        address.setMerchantOpenTime(
-                request.getMerchantOpenTime()
-        );
+                MerchantAddress address = merchantAddressRepository
+                                .findById(addressId)
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
 
-        address.setMerchantCloseTime(
-                request.getMerchantCloseTime()
-        );
+                if (!address.getMerchant().getId().equals(merchantId)) {
+                        throw new RuntimeException(
+                                        "Địa chỉ không thuộc Merchant này");
+                }
 
-        merchantAddressRepository.save(address);
-    }
+                address.setMerchantAddress(
+                                request.getMerchantAddress());
 
-    @Transactional
-    public void deleteAddress(
-            UUID merchantId,
-            UUID addressId
-    ) {
+                address.setMerchantOpenTime(
+                                request.getMerchantOpenTime());
 
+                address.setMerchantCloseTime(
+                                request.getMerchantCloseTime());
 
-        MerchantAddress address = merchantAddressRepository
-                .findById(addressId)
-                .orElseThrow(() ->
-                        new RuntimeException("Không tìm thấy địa chỉ"));
-
-        if (!address.getMerchant().getId().equals(merchantId)) {
-            throw new RuntimeException(
-                    "Địa chỉ không thuộc Merchant này"
-            );
+                merchantAddressRepository.save(address);
         }
 
-        merchantAddressRepository.delete(address);
-    }
+        @Transactional
+        public void deleteAddress(
+                        UUID merchantId,
+                        UUID addressId) {
+                MerchantAddress address = merchantAddressRepository
+                                .findById(addressId)
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
 
+                if (address.getMerchant() != null && !address.getMerchant().getId().equals(merchantId)) {
+                        throw new RuntimeException("Địa chỉ không thuộc Merchant này");
+                }
 
-    // Chuyển MerchantAddress Entity thành MerchantAddressResponse
-    private MerchantAddressResponse mapToResponse(
-            MerchantAddress address
-    ) {
+                Merchant merchant = address.getMerchant();
+                if (merchant != null && merchant.getAddresses() != null) {
+                        merchant.getAddresses().remove(address);
+                }
 
-        MerchantAddressResponse response =
-                new MerchantAddressResponse();
+                merchantAddressRepository.delete(address);
+        }
 
-        response.setId(address.getId());
-        response.setMerchantAddress(
-                address.getMerchantAddress()
-        );
-        response.setMerchantOpenTime(
-                address.getMerchantOpenTime()
-        );
-        response.setMerchantCloseTime(
-                address.getMerchantCloseTime()
-        );
+        // Chuyển MerchantAddress Entity thành MerchantAddressResponse
+        private MerchantAddressResponse mapToResponse(
+                        MerchantAddress address) {
 
-        return response;
-    }
+                MerchantAddressResponse response = new MerchantAddressResponse();
+
+                response.setId(address.getId());
+                response.setMerchantAddress(
+                                address.getMerchantAddress());
+                response.setMerchantOpenTime(
+                                address.getMerchantOpenTime());
+                response.setMerchantCloseTime(
+                                address.getMerchantCloseTime());
+
+                return response;
+        }
 }

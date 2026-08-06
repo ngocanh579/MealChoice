@@ -43,7 +43,7 @@ public class SecurityConfig {
 
                         // Role-based authorization
                         .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/merchant/**", "/api/merchant/**").hasAnyRole("MERCHANT", "ADMIN")
+                        .requestMatchers("/merchant/**", "/api/merchant/**", "/api/merchants/**").hasAnyRole("MERCHANT", "ADMIN")
                         .requestMatchers("/user/**", "/api/user/**").authenticated()
 
                         .anyRequest().authenticated())

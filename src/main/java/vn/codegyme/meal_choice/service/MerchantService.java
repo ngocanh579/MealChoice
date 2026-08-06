@@ -111,14 +111,24 @@ public class MerchantService {
 
                 merchantRepository.save(merchant);
 
-                // Cập nhật địa chỉ của Merchant
-                List<MerchantAddress> addresses = merchantAddressRepository.findByMerchantId(merchantId);
-                if (!addresses.isEmpty()) {
-                        MerchantAddress address = addresses.get(0);
-                        address.setMerchantAddress(request.getMerchantAddress());
+                // Cập nhật địa chỉ chính nếu truyền địa chỉ vào (Tạo mới nếu chưa có địa chỉ nào)
+                if (request.getMerchantAddress() != null && !request.getMerchantAddress().isBlank()) {
+                    List<MerchantAddress> addresses = merchantAddressRepository.findByMerchantId(merchantId);
+                    MerchantAddress address;
+                    if (!addresses.isEmpty()) {
+                        address = addresses.get(0);
+                    } else {
+                        address = new MerchantAddress();
+                        address.setMerchant(merchant);
+                    }
+                    address.setMerchantAddress(request.getMerchantAddress());
+                    if (request.getMerchantOpenTime() != null) {
                         address.setMerchantOpenTime(request.getMerchantOpenTime());
+                    }
+                    if (request.getMerchantCloseTime() != null) {
                         address.setMerchantCloseTime(request.getMerchantCloseTime());
-                        merchantAddressRepository.save(address);
+                    }
+                    merchantAddressRepository.save(address);
                 }
         }
 

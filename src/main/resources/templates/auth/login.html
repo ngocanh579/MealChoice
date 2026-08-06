@@ -287,18 +287,20 @@
                 if (response.ok) {
                     if (result.accessToken) {
                         localStorage.setItem('accessToken', result.accessToken);
+                        document.cookie = `accessToken=${result.accessToken}; path=/; max-age=86400; SameSite=Lax`;
                     }
                     if (result.refreshToken) {
                         localStorage.setItem('refreshToken', result.refreshToken);
                     }
-                    //lưu tên user sau khi đăng nhập thành công
                     if (result.displayName) {
                         localStorage.setItem('displayName', result.displayName);
                     }
+                    if (result.roles) {
+                        localStorage.setItem('userRoles', JSON.stringify(result.roles));
+                    }
                     showAlert('success', 'Đăng nhập thành công! Đang chuyển hướng...');
-                    // Chuyển hướng trình duyệt sang trang profile sau 1 giây
                     setTimeout(() => {
-                        window.location.href = "/user/profile";
+                        window.location.href = "/home";
                     }, 1000);
                 } else {
                     const message = result.message || "Email hoặc mật khẩu không chính xác";

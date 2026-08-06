@@ -1,4 +1,4 @@
-<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm sticky-top">
+<nav th:fragment="navbar" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm sticky-top">
     <div class="container">
         <!-- Logo -->
         <a class="navbar-brand d-flex align-items-center fw-bold text-danger fs-4" href="/">
@@ -42,20 +42,46 @@
                     </a>
                 </li>
 
-                <!-- User Profile Dropdown -->
-                <li class="nav-item dropdown ms-lg-2">
+                <!-- Admin Link (Only for ROLE_ADMIN) -->
+                <li class="nav-item d-none" id="adminRoleNav" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ADMIN')">
+                    <a class="btn btn-danger rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-1 fw-semibold"
+                       href="/admin/merchants">
+                        <i class="bi bi-shield-lock-fill"></i>
+                        <span>Quản lý Admin</span>
+                    </a>
+                </li>
+
+                <!-- Merchant Link (Only for ROLE_MERCHANT) -->
+                <li class="nav-item d-none" id="merchantRoleNav" sec:authorize="hasAnyAuthority('ROLE_MERCHANT', 'MERCHANT')">
+                    <a class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-1 fw-semibold"
+                       href="/merchant/profile">
+                        <i class="bi bi-shop"></i>
+                        <span>Kênh Merchant</span>
+                    </a>
+                </li>
+
+                <!-- Guest Login Button (When NOT logged in) -->
+                <li class="nav-item ms-lg-2" id="guestNav">
+                    <a class="btn btn-danger rounded-pill px-3 py-1 text-sm fw-semibold d-flex align-items-center gap-1"
+                       href="/login">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>Đăng nhập</span>
+                    </a>
+                </li>
+
+                <!-- User Profile Dropdown (When logged in) -->
+                <li class="nav-item dropdown ms-lg-2 d-none" id="userProfileNav">
                     <a class="btn btn-light rounded-pill border d-flex align-items-center gap-2 px-3 py-1" href="#"
                        data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle fs-5 text-secondary"></i>
-                        <!--                        <span class="fw-semibold text-dark text-sm">Tài khoản</span>-->
                         <span id="userDisplayName"
                               class="fw-semibold text-dark text-sm">
-                                    Đăng ký
+                                    Tài khoản
                         </span>
                         <i class="bi bi-chevron-down fs-7 text-muted"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3 mt-2">
-                        <li><a class="dropdown-item py-2 active" href="/user/profile"><i class="bi bi-person me-2"></i>Thông
+                        <li><a class="dropdown-item py-2" href="/user/profile"><i class="bi bi-person me-2"></i>Thông
                             tin cá nhân</a></li>
                         <li><a class="dropdown-item py-2" href="/orders"><i class="bi bi-bag-check me-2"></i>Đơn hàng
                             của tôi</a></li>
@@ -76,27 +102,52 @@
             e.preventDefault();
             if (confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
                 try {
-                    const response = await fetch('/api/auth/logout', {
+                    await fetch('/api/auth/logout', {
                         method: 'POST'
                     });
-                    if (response.ok) {
-                        window.location.href = "/login";
-                    } else {
-                        alert("Đăng xuất thất bại!");
-                    }
                 } catch (error) {
                     console.error("Lỗi đăng xuất:", error);
+                } finally {
+                    // Xóa cookie accessToken và localStorage
+                    document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                    localStorage.clear();
+                    window.location.href = "/login";
                 }
             }
         }
     </script>
 
     <script>
-        // Hiển thị tên user nếu đã đăng nhập
+        // Hiển thị giao diện người dùng dựa trên trạng thái Đăng nhập
         const displayName = localStorage.getItem('displayName');
+        const guestNav = document.getElementById('guestNav');
+        const userProfileNav = document.getElementById('userProfileNav');
 
         if (displayName) {
-            document.getElementById('userDisplayName').innerText = displayName;
+            if (guestNav) guestNav.classList.add('d-none');
+            if (userProfileNav) userProfileNav.classList.remove('d-none');
+            const nameEl = document.getElementById('userDisplayName');
+            if (nameEl) nameEl.innerText = displayName;
+        } else {
+            if (guestNav) guestNav.classList.remove('d-none');
+            if (userProfileNav) userProfileNav.classList.add('d-none');
+        }
+
+        // Kiểm tra Roles từ localStorage hoặc JwtToken
+        let roles = [];
+        const userRolesStr = localStorage.getItem('userRoles');
+        if (userRolesStr) {
+            try { roles = JSON.parse(userRolesStr); } catch (e) {}
+        }
+        
+        // Nếu đăng nhập tài khoản Admin admin@mealchoice.com
+        if (displayName === 'Admin' || roles.includes('ROLE_ADMIN') || roles.includes('ADMIN')) {
+            const adminNav = document.getElementById('adminRoleNav');
+            if (adminNav) adminNav.classList.remove('d-none');
+        }
+        if (roles.includes('ROLE_MERCHANT') || roles.includes('MERCHANT')) {
+            const merchantNav = document.getElementById('merchantRoleNav');
+            if (merchantNav) merchantNav.classList.remove('d-none');
         }
     </script>
 </nav>

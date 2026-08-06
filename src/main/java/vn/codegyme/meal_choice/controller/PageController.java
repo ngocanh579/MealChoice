@@ -43,20 +43,24 @@ public class PageController {
         return "merchant/register";
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @GetMapping("/merchant/profile")
     public String merchantProfilePage(Authentication authentication, Model model) {
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
             String email = userDetails.getUsername();
-            Optional<Merchant> merchantOpt = merchantRepository.findByMerchantEmail(email);
+            Optional<Merchant> merchantOpt = merchantRepository.findByMerchantEmailWithAddresses(email);
             if (merchantOpt.isPresent()) {
-                return "redirect:/admin/merchants/" + merchantOpt.get().getId();
+                model.addAttribute("merchant", merchantOpt.get());
+                return "merchant/profile";
             }
         }
 
         // Fallback: Nếu không tìm thấy merchant theo email đăng nhập, lấy merchant đầu tiên
         List<Merchant> merchants = merchantRepository.findAllByOrderByIdDesc();
         if (!merchants.isEmpty()) {
-            return "redirect:/admin/merchants/" + merchants.get(0).getId();
+            Optional<Merchant> mWithAddrs = merchantRepository.findByIdWithAddresses(merchants.get(0).getId());
+            model.addAttribute("merchant", mWithAddrs.orElse(merchants.get(0)));
+            return "merchant/profile";
         }
 
         return "redirect:/admin/merchants";
