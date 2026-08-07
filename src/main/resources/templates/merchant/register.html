@@ -117,21 +117,38 @@
 
                         <!-- Địa chỉ -->
                         <div class="mb-3">
-                            <label for="merchantAddress"
-                                   class="form-label fw-semibold">
+                            <label class="form-label fw-semibold">
                                 Địa chỉ nhà hàng <span class="text-danger">*</span>
                             </label>
+                            
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="provinceSelect" required>
+                                        <option value="" selected disabled>Tỉnh/Thành phố</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="districtSelect" required disabled>
+                                        <option value="" selected disabled>Quận/Huyện</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="wardSelect" required disabled>
+                                        <option value="" selected disabled>Phường/Xã</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <input type="text"
+                                   class="form-control rounded-3 mt-2"
+                                   id="streetInput"
+                                   placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)"
+                                   required>
 
-                            <textarea class="form-control rounded-3"
-                                      id="merchantAddress"
-                                      name="merchantAddress"
-                                      rows="3"
-                                      placeholder="Nhập địa chỉ nhà hàng"
-                                      required></textarea>
+                            <input type="hidden" id="merchantAddress" name="merchantAddress">
 
-                            <div id="merchantAddressError"
-                                 class="invalid-feedback">
-                                Địa chỉ nhà hàng không được để trống.
+                            <div id="merchantAddressError" class="text-danger mt-1 d-none" style="font-size: 0.875em;">
+                                Vui lòng chọn đầy đủ địa chỉ.
                             </div>
                         </div>
 
@@ -281,8 +298,13 @@
         const phone =
             document.getElementById("merchantPhone");
 
-        const address =
-            document.getElementById("merchantAddress");
+        const address = document.getElementById("merchantAddress");
+        const province = document.getElementById("provinceSelect");
+        const district = document.getElementById("districtSelect");
+        const ward = document.getElementById("wardSelect");
+        const street = document.getElementById("streetInput");
+        const addressError = document.getElementById("merchantAddressError");
+        addressError.classList.add("d-none");
 
         const password =
             document.getElementById("password");
@@ -319,11 +341,28 @@
             return false;
         }
 
-        if (!address.value.trim()) {
-            address.classList.add("is-invalid");
-            address.focus();
+        if (!province.value || !district.value || !ward.value || !street.value.trim()) {
+            if (!province.value) province.classList.add("is-invalid");
+            if (!district.value) district.classList.add("is-invalid");
+            if (!ward.value) ward.classList.add("is-invalid");
+            if (!street.value.trim()) street.classList.add("is-invalid");
+            
+            addressError.classList.remove("d-none");
+            
+            if (!province.value) province.focus();
+            else if (!district.value) district.focus();
+            else if (!ward.value) ward.focus();
+            else street.focus();
+            
             return false;
         }
+        
+        // Gộp địa chỉ
+        const provinceText = province.options[province.selectedIndex].text;
+        const districtText = district.options[district.selectedIndex].text;
+        const wardText = ward.options[ward.selectedIndex].text;
+        
+        address.value = street.value.trim() + ", " + wardText + ", " + districtText + ", " + provinceText;
 
         if (!password.value) {
             password.classList.add("is-invalid");
@@ -352,13 +391,64 @@
     }
 
     document.querySelectorAll(
-        "#merchantRegisterForm input, #merchantRegisterForm textarea"
+        "#merchantRegisterForm input, #merchantRegisterForm textarea, #merchantRegisterForm select"
     ).forEach(function(input) {
-        input.addEventListener("input", function() {
-            if (this.value.trim()) {
+        input.addEventListener("change", function() {
+            if (this.value && this.value.trim() !== '') {
                 this.classList.remove("is-invalid");
             }
         });
+        input.addEventListener("input", function() {
+            if (this.value && this.value.trim() !== '') {
+                this.classList.remove("is-invalid");
+            }
+        });
+    });
+
+    // API Lấy dữ liệu Tỉnh/Thành phố (provinces.open-api.vn)
+    const host = "https://provinces.open-api.vn/api/";
+    const provinceSelect = document.getElementById("provinceSelect");
+    const districtSelect = document.getElementById("districtSelect");
+    const wardSelect = document.getElementById("wardSelect");
+
+    fetch(host + "?depth=1")
+        .then(response => response.json())
+        .then(data => {
+            let options = '<option value="" selected disabled>Tỉnh/Thành phố</option>';
+            data.forEach(item => {
+                options += `<option value="${item.code}">${item.name}</option>`;
+            });
+            provinceSelect.innerHTML = options;
+        });
+
+    provinceSelect.addEventListener("change", function() {
+        districtSelect.disabled = false;
+        wardSelect.disabled = true;
+        wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
+        
+        fetch(host + "p/" + this.value + "?depth=2")
+            .then(response => response.json())
+            .then(data => {
+                let options = '<option value="" selected disabled>Quận/Huyện</option>';
+                data.districts.forEach(item => {
+                    options += `<option value="${item.code}">${item.name}</option>`;
+                });
+                districtSelect.innerHTML = options;
+            });
+    });
+
+    districtSelect.addEventListener("change", function() {
+        wardSelect.disabled = false;
+        
+        fetch(host + "d/" + this.value + "?depth=2")
+            .then(response => response.json())
+            .then(data => {
+                let options = '<option value="" selected disabled>Phường/Xã</option>';
+                data.wards.forEach(item => {
+                    options += `<option value="${item.code}">${item.name}</option>`;
+                });
+                wardSelect.innerHTML = options;
+            });
     });
 
     document.getElementById("merchantRegisterForm")

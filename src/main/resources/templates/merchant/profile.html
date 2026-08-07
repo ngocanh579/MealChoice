@@ -201,11 +201,30 @@
                                 th:value="${merchant.merchantRestaurantName}" required>
                         </div>
                         <div class="mb-3">
-                            <label for="editAddress" class="form-label fw-semibold">Địa chỉ chính <span
+                            <label class="form-label fw-semibold">Địa chỉ chính <span
                                     class="text-muted fw-normal fs-7">(Không bắt buộc)</span></label>
-                            <input type="text" class="form-control rounded-3" id="editAddress"
-                                th:value="${!#lists.isEmpty(merchant.addresses) ? merchant.addresses[0].merchantAddress : ''}"
-                                placeholder="Để trống nếu không muốn cập nhật địa chỉ chính">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="mainProvinceSelect">
+                                        <option value="" selected disabled>Tỉnh/Thành phố</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="mainDistrictSelect" disabled>
+                                        <option value="" selected disabled>Quận/Huyện</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="mainWardSelect" disabled>
+                                        <option value="" selected disabled>Phường/Xã</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <input type="text" class="form-control rounded-3" id="mainStreetInput"
+                                placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)">
+                            <input type="hidden" id="editAddress" 
+                                th:value="${!#lists.isEmpty(merchant.addresses) ? merchant.addresses[0].merchantAddress : ''}">
+                            <div class="form-text">Chọn lại nếu muốn cập nhật địa chỉ chính.</div>
                         </div>
                         <div class="row">
                             <div class="col-6 mb-3">
@@ -246,10 +265,28 @@
                 <form id="addAddressForm" th:data-merchant-id="${merchant.id}">
                     <div class="modal-body py-4">
                         <div class="mb-3">
-                            <label for="newAddress" class="form-label fw-semibold">Địa chỉ nhà hàng <span
+                            <label class="form-label fw-semibold">Địa chỉ nhà hàng <span
                                     class="text-danger">*</span></label>
-                            <input type="text" class="form-control rounded-3" id="newAddress"
-                                placeholder="VD: 456 Đường XYZ, Quận 1, TP.HCM" required>
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="newProvinceSelect" required>
+                                        <option value="" selected disabled>Tỉnh/Thành phố</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="newDistrictSelect" required disabled>
+                                        <option value="" selected disabled>Quận/Huyện</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="newWardSelect" required disabled>
+                                        <option value="" selected disabled>Phường/Xã</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <input type="text" class="form-control rounded-3" id="newStreetInput"
+                                placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)" required>
+                            <input type="hidden" id="newAddress">
                         </div>
                         <div class="row">
                             <div class="col-6 mb-3">
@@ -291,9 +328,28 @@
                     <input type="hidden" id="editAddressId">
                     <div class="modal-body py-4">
                         <div class="mb-3">
-                            <label for="editAddressDetail" class="form-label fw-semibold">Địa chỉ nhà hàng <span
-                                    class="text-danger">*</span></label>
-                            <input type="text" class="form-control rounded-3" id="editAddressDetail" required>
+                            <label class="form-label fw-semibold">Địa chỉ nhà hàng <span
+                                    class="text-muted fw-normal fs-7">(Chọn lại nếu muốn sửa)</span></label>
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="editProvinceSelect">
+                                        <option value="" selected disabled>Tỉnh/Thành phố</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="editDistrictSelect" disabled>
+                                        <option value="" selected disabled>Quận/Huyện</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select rounded-3" id="editWardSelect" disabled>
+                                        <option value="" selected disabled>Phường/Xã</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <input type="text" class="form-control rounded-3" id="editStreetInput"
+                                placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)">
+                            <input type="hidden" id="editAddressDetail">
                         </div>
                         <div class="row">
                             <div class="col-6 mb-3">
@@ -503,6 +559,83 @@
                 showAlert('error', '❌ Đã có lỗi xảy ra khi kết nối server.');
             }
         }
+        // API Address helper function
+        function setupAddressDropdowns(prefix) {
+            const host = "https://provinces.open-api.vn/api/";
+            const provinceSelect = document.getElementById(prefix + "ProvinceSelect");
+            const districtSelect = document.getElementById(prefix + "DistrictSelect");
+            const wardSelect = document.getElementById(prefix + "WardSelect");
+            const streetInput = document.getElementById(prefix + "StreetInput");
+            
+            let hiddenId = '';
+            if (prefix === 'new') hiddenId = 'newAddress';
+            else if (prefix === 'edit') hiddenId = 'editAddressDetail';
+            else if (prefix === 'main') hiddenId = 'editAddress';
+            const hiddenAddress = document.getElementById(hiddenId);
+
+            if (!provinceSelect || !hiddenAddress) return;
+
+            const updateHiddenAddress = () => {
+                if (provinceSelect.value && districtSelect.value && wardSelect.value && streetInput.value.trim()) {
+                    hiddenAddress.value = streetInput.value.trim() + ", " + 
+                        wardSelect.options[wardSelect.selectedIndex].text + ", " + 
+                        districtSelect.options[districtSelect.selectedIndex].text + ", " + 
+                        provinceSelect.options[provinceSelect.selectedIndex].text;
+                }
+            };
+
+            streetInput.addEventListener("input", updateHiddenAddress);
+
+            fetch(host + "?depth=1")
+                .then(response => response.json())
+                .then(data => {
+                    let options = '<option value="" selected disabled>Tỉnh/Thành phố</option>';
+                    data.forEach(item => {
+                        options += `<option value="${item.code}">${item.name}</option>`;
+                    });
+                    provinceSelect.innerHTML = options;
+                });
+
+            provinceSelect.addEventListener("change", function() {
+                districtSelect.disabled = false;
+                wardSelect.disabled = true;
+                wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
+                updateHiddenAddress();
+                
+                fetch(host + "p/" + this.value + "?depth=2")
+                    .then(response => response.json())
+                    .then(data => {
+                        let options = '<option value="" selected disabled>Quận/Huyện</option>';
+                        data.districts.forEach(item => {
+                            options += `<option value="${item.code}">${item.name}</option>`;
+                        });
+                        districtSelect.innerHTML = options;
+                    });
+            });
+
+            districtSelect.addEventListener("change", function() {
+                wardSelect.disabled = false;
+                updateHiddenAddress();
+                
+                fetch(host + "d/" + this.value + "?depth=2")
+                    .then(response => response.json())
+                    .then(data => {
+                        let options = '<option value="" selected disabled>Phường/Xã</option>';
+                        data.wards.forEach(item => {
+                            options += `<option value="${item.code}">${item.name}</option>`;
+                        });
+                        wardSelect.innerHTML = options;
+                    });
+            });
+
+            wardSelect.addEventListener("change", updateHiddenAddress);
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            setupAddressDropdowns('new');
+            setupAddressDropdowns('edit');
+            setupAddressDropdowns('main');
+        });
     </script>
 </body>
 
