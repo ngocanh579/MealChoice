@@ -1,4 +1,60 @@
 package vn.codegyme.meal_choice.entity;
 
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@Table(name = "food_categories")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class FoodCategory {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(length = 36)
+    private UUID id;
+
+    @Column(name = "category_name", nullable = false, unique = true, length = 100)
+    private String categoryName;
+
+    @Column(name = "category_description", length = 255)
+    private String categoryDescription;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    @OneToMany(
+            mappedBy = "food",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<FoodImage> images = new ArrayList<>();
 }
