@@ -33,6 +33,9 @@ public class MerchantRegisterRequest {
     @NotBlank(message = "Vui lòng chọn tỉnh/thành phố")
     private String provinceCode;
 
+    @NotBlank(message = "Vui lòng chọn quận/huyện")
+    private String districtCode;
+
     @NotBlank(message = "Vui lòng chọn phường/xã")
     private String wardCode;
 
