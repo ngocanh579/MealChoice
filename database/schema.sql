@@ -1,299 +1,192 @@
--- Active: 1785914295113@@mysql-22176-buivietbacn01-1ff7.a.aivencloud.com@10055@meal_choice
 DROP DATABASE IF EXISTS meal_choice;
-
 CREATE DATABASE meal_choice;
 
 USE meal_choice;
 
 -- Roles
 CREATE TABLE roles (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) UNIQUE NOT NULL
+                       id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                       name VARCHAR(50) UNIQUE NOT NULL
 );
 
 -- Users
 CREATE TABLE users (
-    id VARCHAR(36) PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(60) NOT NULL,
-    display_name VARCHAR(32) NOT NULL,
-    phone_number VARCHAR(20) UNIQUE NOT NULL,
-    gender ENUM('MALE', 'FEMALE', 'OTHER'),
-    avatar_url VARCHAR(255),
-    dob DATE,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at DATETIME(6)
+                       id VARCHAR(36) PRIMARY KEY,
+                       email VARCHAR(255) UNIQUE NOT NULL,
+                       password VARCHAR(60) NOT NULL,
+                       display_name VARCHAR(32) NOT NULL,
+                       phone_number VARCHAR(20) UNIQUE NOT NULL,
+                       gender ENUM('MALE', 'FEMALE', 'OTHER'),
+                       avatar_url VARCHAR(255),
+                       dob DATE,
+                       is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                       created_at DATETIME(6)
 );
 
 -- User Roles
 CREATE TABLE user_roles (
-    user_id VARCHAR(36),
-    role_id BIGINT,
-    PRIMARY KEY (user_id, role_id),
-    FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (role_id) REFERENCES roles (id)
+                            user_id VARCHAR(36),
+                            role_id BIGINT,
+                            PRIMARY KEY (user_id, role_id),
+                            FOREIGN KEY (user_id) REFERENCES users (id),
+                            FOREIGN KEY (role_id) REFERENCES roles (id)
 );
 
 -- Merchants
 CREATE TABLE merchants (
-    id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) UNIQUE,
-    merchant_restaurant_name VARCHAR(150) NOT NULL,
-    merchant_email VARCHAR(255) UNIQUE NOT NULL,
-    merchant_phone VARCHAR(20) UNIQUE NOT NULL,
-    merchant_status VARCHAR(30) DEFAULT 'PENDING',
-    is_trusted_partner BOOLEAN NOT NULL DEFAULT FALSE,
-    FOREIGN KEY (user_id) REFERENCES users (id)
+                           id VARCHAR(36) PRIMARY KEY,
+                           user_id VARCHAR(36) UNIQUE,
+                           merchant_restaurant_name VARCHAR(150) NOT NULL,
+                           merchant_email VARCHAR(255) UNIQUE NOT NULL,
+                           merchant_phone VARCHAR(20) UNIQUE NOT NULL,
+                           merchant_status VARCHAR(30) DEFAULT 'PENDING',
+                           is_trusted_partner BOOLEAN NOT NULL DEFAULT FALSE,
+                           FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
--- MERCHANT ADDRESSES
+-- DROP TABLE IF EXISTS wards;
+-- DROP TABLE IF EXISTS provinces;
+-- DROP TABLE IF EXISTS administrative_units;
+-- DROP TABLE IF EXISTS administrative_regions;
+
+-- CREATE administrative_regions TABLE
+CREATE TABLE administrative_regions (
+                                        id integer NOT NULL,
+                                        name varchar(255) NOT NULL,
+                                        name_en varchar(255) NOT NULL,
+                                        code_name varchar(255) NULL,
+                                        code_name_en varchar(255) NULL,
+                                        CONSTRAINT administrative_regions_pkey PRIMARY KEY (id)
+);
+
+
+-- CREATE administrative_units TABLE
+CREATE TABLE administrative_units (
+                                      id integer NOT NULL,
+                                      full_name varchar(255) NULL,
+                                      full_name_en varchar(255) NULL,
+                                      short_name varchar(255) NULL,
+                                      short_name_en varchar(255) NULL,
+                                      code_name varchar(255) NULL,
+                                      code_name_en varchar(255) NULL,
+                                      CONSTRAINT administrative_units_pkey PRIMARY KEY (id)
+);
+
+
+-- CREATE provinces TABLE
+CREATE TABLE provinces (
+                           code varchar(20) NOT NULL,
+                           name varchar(255) NOT NULL,
+                           name_en varchar(255) NULL,
+                           full_name varchar(255) NOT NULL,
+                           full_name_en varchar(255) NULL,
+                           code_name varchar(255) NULL,
+                           administrative_unit_id integer NULL,
+                           CONSTRAINT provinces_pkey PRIMARY KEY (code)
+);
+
+
+-- provinces foreign keys
+
+ALTER TABLE provinces ADD CONSTRAINT provinces_administrative_unit_id_fkey FOREIGN KEY (administrative_unit_id) REFERENCES administrative_units(id);
+CREATE INDEX idx_provinces_unit ON provinces(administrative_unit_id);
+
+-- CREATE wards TABLE
+CREATE TABLE wards (
+                       code varchar(20) NOT NULL,
+                       name varchar(255) NOT NULL,
+                       name_en varchar(255) NULL,
+                       full_name varchar(255) NULL,
+                       full_name_en varchar(255) NULL,
+                       code_name varchar(255) NULL,
+                       province_code varchar(20) NULL,
+                       administrative_unit_id integer NULL,
+                       CONSTRAINT wards_pkey PRIMARY KEY (code)
+);
+
+-- wards foreign keys
+
+ALTER TABLE wards ADD CONSTRAINT wards_administrative_unit_id_fkey FOREIGN KEY (administrative_unit_id) REFERENCES administrative_units(id);
+ALTER TABLE wards ADD CONSTRAINT wards_province_code_fkey FOREIGN KEY (province_code) REFERENCES provinces(code);
+
+CREATE INDEX idx_wards_province ON wards(province_code);
+CREATE INDEX idx_wards_unit ON wards(administrative_unit_id);
+
+-- 5. MERCHANT ADDRESSES
 
 CREATE TABLE merchant_addresses (
-    id VARCHAR(36) PRIMARY KEY,
-    merchant_id VARCHAR(36) NOT NULL,
-    merchant_address VARCHAR(255) NOT NULL,
-    merchant_open_time TIME,
-    merchant_close_time TIME,
-    FOREIGN KEY (merchant_id) REFERENCES merchants (id)
+                                    id VARCHAR(36) PRIMARY KEY,
+
+                                    merchant_id VARCHAR(36) NOT NULL,
+                                    merchant_address VARCHAR(255) NOT NULL,
+
+    -- Địa chỉ hành chính mới
+                                    province_code VARCHAR(20) NOT NULL,
+                                    ward_code VARCHAR(20) NOT NULL,
+
+                                    merchant_open_time TIME NOT NULL,
+                                    merchant_close_time TIME NOT NULL,
+
+                                    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+
+                                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                                        ON UPDATE CURRENT_TIMESTAMP,
+
+                                    FOREIGN KEY (merchant_id)
+                                        REFERENCES merchants(id),
+
+                                    FOREIGN KEY (province_code)
+                                        REFERENCES provinces(code),
+
+                                    FOREIGN KEY (ward_code)
+                                        REFERENCES wards(code)
 );
+-- category
+CREATE TABLE food_categories (
+                                 id VARCHAR(36) PRIMARY KEY,
+                                 category_name VARCHAR(100) NOT NULL UNIQUE,
+                                 category_description VARCHAR(255),
+                                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+-- food
+CREATE TABLE foods (
+                       id VARCHAR(36) PRIMARY KEY,
 
-SET FOREIGN_KEY_CHECKS = 0;
+                       merchant_id VARCHAR(36) NOT NULL,
+                       merchant_address_id VARCHAR(36) NOT NULL,
+                       food_category_id VARCHAR(36) NOT NULL,
 
-TRUNCATE TABLE merchant_addresses;
+                       food_name VARCHAR(150) NOT NULL,
+                       preparation_time INT,
+                       food_note TEXT,
 
-TRUNCATE TABLE user_roles;
+                       price DECIMAL(12,2) NOT NULL,
+                       discount_price DECIMAL(12,2),
+                       service_fee DECIMAL(12,2) DEFAULT 0,
 
-TRUNCATE TABLE merchants;
+                       views INT NOT NULL DEFAULT 0,
+                       order_count INT NOT NULL DEFAULT 0,
 
-TRUNCATE TABLE users;
+                       is_recommended BOOLEAN NOT NULL DEFAULT FALSE,
 
-TRUNCATE TABLE roles;
+                       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                           ON UPDATE CURRENT_TIMESTAMP,
+                       deleted_at DATETIME NULL,
 
-SET FOREIGN_KEY_CHECKS = 1;
+                       FOREIGN KEY (merchant_id) REFERENCES merchants(id),
+                       FOREIGN KEY (merchant_address_id) REFERENCES merchant_addresses(id),
+                       FOREIGN KEY (food_category_id) REFERENCES food_categories(id)
+);
+-- images
+CREATE TABLE food_images (
+                             id VARCHAR(36) PRIMARY KEY,
+                             food_id VARCHAR(36) NOT NULL,
+                             image_url VARCHAR(500) NOT NULL,
+                             is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+                             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-INSERT INTO
-    roles (id, name)
-VALUES (1, 'ROLE_ADMIN'),
-    (2, 'ROLE_USER'),
-    (3, 'ROLE_MERCHANT');
-
-INSERT INTO
-    users (
-        id,
-        email,
-        password,
-        display_name,
-        phone_number,
-        gender,
-        avatar_url,
-        dob,
-        is_active,
-        created_at
-    )
-VALUES (
-        '00000000-0000-0000-0000-000000000001',
-        'admin@mealchoice.com',
-        '$2a$10$JUx/hVBylvDiS4ctiYi6hubPy4n9qKQpx43ayQprX64kcLbHUaOdO',
-        'Admin',
-        '0900000001',
-        'MALE',
-        NULL,
-        '1990-01-01',
-        TRUE,
-        NOW()
-    ),
-    (
-        '00000000-0000-0000-0000-000000000002',
-        'an@gmail.com',
-        '$2a$10$JUx/hVBylvDiS4ctiYi6hubPy4n9qKQpx43ayQprX64kcLbHUaOdO',
-        'Nguyen Van An',
-        '0900000002',
-        'MALE',
-        NULL,
-        '2000-05-10',
-        TRUE,
-        NOW()
-    ),
-    (
-        '00000000-0000-0000-0000-000000000003',
-        'binh@gmail.com',
-        '$2a$10$JUx/hVBylvDiS4ctiYi6hubPy4n9qKQpx43ayQprX64kcLbHUaOdO',
-        'Tran Thi Binh',
-        '0900000003',
-        'FEMALE',
-        NULL,
-        '2001-08-15',
-        TRUE,
-        NOW()
-    ),
-    (
-        '00000000-0000-0000-0000-000000000004',
-        'nam@merchant.com',
-        '$2a$10$JUx/hVBylvDiS4ctiYi6hubPy4n9qKQpx43ayQprX64kcLbHUaOdO',
-        'Le Van Nam',
-        '0900000004',
-        'MALE',
-        NULL,
-        '1995-03-20',
-        TRUE,
-        NOW()
-    ),
-    (
-        '00000000-0000-0000-0000-000000000005',
-        'hoa@merchant.com',
-        '$2a$10$JUx/hVBylvDiS4ctiYi6hubPy4n9qKQpx43ayQprX64kcLbHUaOdO',
-        'Pham Thi Hoa',
-        '0900000005',
-        'FEMALE',
-        NULL,
-        '1996-11-25',
-        TRUE,
-        NOW()
-    ),
-    (
-        '00000000-0000-0000-0000-000000000006',
-        'minh@merchant.com',
-        '$2a$10$JUx/hVBylvDiS4ctiYi6hubPy4n9qKQpx43ayQprX64kcLbHUaOdO',
-        'Nguyen Van Minh',
-        '0900000006',
-        'MALE',
-        NULL,
-        '1994-02-02',
-        TRUE,
-        NOW()
-    ),
-    (
-        '00000000-0000-0000-0000-000000000007',
-        'lan@merchant.com',
-        '$2a$10$JUx/hVBylvDiS4ctiYi6hubPy4n9qKQpx43ayQprX64kcLbHUaOdO',
-        'Do Thi Lan',
-        '0900000007',
-        'FEMALE',
-        NULL,
-        '1997-06-06',
-        TRUE,
-        NOW()
-    ),
-    (
-        '00000000-0000-0000-0000-000000000008',
-        'duc@merchant.com',
-        '$2a$10$JUx/hVBylvDiS4ctiYi6hubPy4n9qKQpx43ayQprX64kcLbHUaOdO',
-        'Hoang Duc',
-        '0900000008',
-        'MALE',
-        NULL,
-        '1993-09-09',
-        TRUE,
-        NOW()
-    );
-
-INSERT INTO
-    user_roles (user_id, role_id)
-VALUES (
-        '00000000-0000-0000-0000-000000000001',
-        1
-    ),
-    (
-        '00000000-0000-0000-0000-000000000002',
-        2
-    ),
-    (
-        '00000000-0000-0000-0000-000000000003',
-        2
-    ),
-    (
-        '00000000-0000-0000-0000-000000000004',
-        2
-    ),
-    (
-        '00000000-0000-0000-0000-000000000004',
-        3
-    ),
-    (
-        '00000000-0000-0000-0000-000000000005',
-        2
-    ),
-    (
-        '00000000-0000-0000-0000-000000000005',
-        3
-    ),
-    (
-        '00000000-0000-0000-0000-000000000006',
-        2
-    ),
-    (
-        '00000000-0000-0000-0000-000000000006',
-        3
-    ),
-    (
-        '00000000-0000-0000-0000-000000000007',
-        2
-    ),
-    (
-        '00000000-0000-0000-0000-000000000007',
-        3
-    ),
-    (
-        '00000000-0000-0000-0000-000000000008',
-        2
-    ),
-    (
-        '00000000-0000-0000-0000-000000000008',
-        3
-    );
-
-INSERT INTO
-    merchants (
-        id,
-        user_id,
-        merchant_restaurant_name,
-        merchant_email,
-        merchant_phone,
-        merchant_status,
-        is_trusted_partner
-    )
-VALUES (
-        '10000000-0000-0000-0000-000000000001',
-        '00000000-0000-0000-0000-000000000004',
-        'Quan Com Ga Nam',
-        'nam@merchant.com',
-        '0900000004',
-        'APPROVED',
-        TRUE
-    ),
-    (
-        '10000000-0000-0000-0000-000000000002',
-        '00000000-0000-0000-0000-000000000005',
-        'Bep Nha Hoa',
-        'hoa@merchant.com',
-        '0900000005',
-        'PENDING',
-        FALSE
-    ),
-    (
-        '10000000-0000-0000-0000-000000000003',
-        '00000000-0000-0000-0000-000000000006',
-        'Pizza Y Ngon',
-        'minh@merchant.com',
-        '0900000006',
-        'APPROVED',
-        FALSE
-    ),
-    (
-        '10000000-0000-0000-0000-000000000004',
-        '00000000-0000-0000-0000-000000000007',
-        'Tra Sua Moc',
-        'lan@merchant.com',
-        '0900000007',
-        'REJECTED',
-        FALSE
-    ),
-    (
-        '10000000-0000-0000-0000-000000000005',
-        '00000000-0000-0000-0000-000000000008',
-        'Bun Cha Ha Thanh',
-        'duc@merchant.com',
-        '0900000008',
-        'BLOCKED',
-        FALSE
-    );
+                             FOREIGN KEY (food_id) REFERENCES foods(id)
+);
