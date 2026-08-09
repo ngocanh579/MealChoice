@@ -3,8 +3,8 @@ package vn.codegyme.meal_choice.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.codegyme.meal_choice.dto.MerchantAddressRequest;
-import vn.codegyme.meal_choice.dto.MerchantAddressResponse;
+import vn.codegyme.meal_choice.dto.merchant.MerchantAddressRequest;
+import vn.codegyme.meal_choice.dto.merchant.MerchantAddressResponse;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.MerchantAddress;
 import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
@@ -29,17 +29,13 @@ public class MerchantAddressService {
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Merchant"));
 
                 MerchantAddress address = new MerchantAddress();
-
                 address.setMerchant(merchant);
-
-                address.setMerchantAddress(
-                                request.getMerchantAddress());
-
-                address.setMerchantOpenTime(
-                                request.getMerchantOpenTime());
-
-                address.setMerchantCloseTime(
-                                request.getMerchantCloseTime());
+                address.setMerchantAddress(request.getMerchantAddress());
+                address.setProvinceCode(request.getProvinceCode());
+                address.setWardCode(request.getWardCode());
+                address.setMerchantOpenTime(request.getMerchantOpenTime());
+                address.setMerchantCloseTime(request.getMerchantCloseTime());
+                address.setDefault(request.isDefault());
 
                 merchantAddressRepository.save(address);
         }
@@ -73,14 +69,12 @@ public class MerchantAddressService {
                                         "Địa chỉ không thuộc Merchant này");
                 }
 
-                address.setMerchantAddress(
-                                request.getMerchantAddress());
-
-                address.setMerchantOpenTime(
-                                request.getMerchantOpenTime());
-
-                address.setMerchantCloseTime(
-                                request.getMerchantCloseTime());
+                address.setMerchantAddress(request.getMerchantAddress());
+                address.setProvinceCode(request.getProvinceCode());
+                address.setWardCode(request.getWardCode());
+                address.setMerchantOpenTime(request.getMerchantOpenTime());
+                address.setMerchantCloseTime(request.getMerchantCloseTime());
+                address.setDefault(request.isDefault());
 
                 merchantAddressRepository.save(address);
         }
@@ -112,12 +106,12 @@ public class MerchantAddressService {
                 MerchantAddressResponse response = new MerchantAddressResponse();
 
                 response.setId(address.getId());
-                response.setMerchantAddress(
-                                address.getMerchantAddress());
-                response.setMerchantOpenTime(
-                                address.getMerchantOpenTime());
-                response.setMerchantCloseTime(
-                                address.getMerchantCloseTime());
+                response.setProvinceCode(address.getProvinceCode());
+                response.setWardCode(address.getWardCode());
+                response.setMerchantAddress(address.getMerchantAddress());
+                response.setMerchantOpenTime(address.getMerchantOpenTime());
+                response.setMerchantCloseTime(address.getMerchantCloseTime());
+                response.setDefault(address.isDefault());
 
                 return response;
         }
