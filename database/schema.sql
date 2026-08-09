@@ -124,8 +124,8 @@ CREATE TABLE merchant_addresses (
                                     province_code VARCHAR(20) NOT NULL,
                                     ward_code VARCHAR(20) NOT NULL,
 
-                                    merchant_open_time TIME NOT NULL,
-                                    merchant_close_time TIME NOT NULL,
+                                    merchant_open_time TIME  NULL,
+                                    merchant_close_time TIME  NULL,
 
                                     is_default BOOLEAN NOT NULL DEFAULT FALSE,
 

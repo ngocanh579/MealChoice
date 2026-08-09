@@ -2,7 +2,15 @@
 /* Created at:  Sun, 12 Jul 2026 12:23:03 +0700 */
 /* Reference: https://github.com/ThangLeQuoc/vietnamese-provinces-database */
 /* =============================================== */
+USE meal_choice;
+SET FOREIGN_KEY_CHECKS = 0;
 
+TRUNCATE TABLE wards;
+TRUNCATE TABLE provinces;
+TRUNCATE TABLE administrative_units;
+TRUNCATE TABLE administrative_regions;
+
+SET FOREIGN_KEY_CHECKS = 1;
 -- DATA for administrative_regions --
 INSERT INTO administrative_regions(id,name,name_en,code_name,code_name_en) VALUES(1,'Đông Bắc Bộ','Northeast','dong_bac_bo','northest');
 INSERT INTO administrative_regions(id,name,name_en,code_name,code_name_en) VALUES(2,'Tây Bắc Bộ','Northwest','tay_bac_bo','northwest');
