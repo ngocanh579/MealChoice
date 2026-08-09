@@ -1,4 +1,4 @@
-package vn.codegyme.meal_choice.dto;
+package vn.codegyme.meal_choice.dto.merchant;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -29,6 +29,12 @@ public class MerchantRegisterRequest {
 
     @NotBlank(message = "Địa chỉ không được để trống")
     private String merchantAddress;
+
+    @NotBlank(message = "Vui lòng chọn tỉnh/thành phố")
+    private String provinceCode;
+
+    @NotBlank(message = "Vui lòng chọn phường/xã")
+    private String wardCode;
 
     @NotBlank(message = "Mật khẩu không được để trống")
     @Size(

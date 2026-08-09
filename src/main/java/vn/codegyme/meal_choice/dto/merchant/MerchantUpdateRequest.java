@@ -1,4 +1,4 @@
-package vn.codegyme.meal_choice.dto;
+package vn.codegyme.meal_choice.dto.merchant;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

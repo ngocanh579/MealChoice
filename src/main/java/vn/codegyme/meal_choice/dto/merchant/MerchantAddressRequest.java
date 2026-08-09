@@ -1,4 +1,4 @@
-package vn.codegyme.meal_choice.dto;
+package vn.codegyme.meal_choice.dto.merchant;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,7 +9,13 @@ import java.time.LocalTime;
 @Data
 public class MerchantAddressRequest {
 
-    @NotBlank(message = "Địa chỉ không được để trống")
+    @NotBlank(message = "Tỉnh/Thành phố không được để trống")
+    private String provinceCode;
+
+    @NotBlank(message = "Phường/Xã không được để trống")
+    private String wardCode;
+
+    @NotBlank(message = "Địa chỉ chi tiết không được để trống")
     private String merchantAddress;
 
     @NotNull(message = "Giờ mở cửa không được để trống")
@@ -17,4 +23,6 @@ public class MerchantAddressRequest {
 
     @NotNull(message = "Giờ đóng cửa không được để trống")
     private LocalTime merchantCloseTime;
+
+    private boolean isDefault = false;
 }
