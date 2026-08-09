@@ -74,6 +74,13 @@ public class Food {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @OneToMany(
+            mappedBy = "food",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<FoodImage> images = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         if (id == null) {
@@ -100,16 +107,8 @@ public class Food {
         updatedAt = LocalDateTime.now();
     }
 
-
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
-    @OneToMany(
-            mappedBy = "food",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    private List<FoodImage> images = new ArrayList<>();
 }
