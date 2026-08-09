@@ -51,6 +51,13 @@ public class MerchantAddress {
     private String provinceCode;
 
     @Column(
+            name = "district_code",
+            nullable = false,
+            length = 20
+    )
+    private String districtCode;
+
+    @Column(
             name = "ward_code",
             nullable = false,
             length = 20
