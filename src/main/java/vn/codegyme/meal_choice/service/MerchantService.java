@@ -4,10 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.codegyme.meal_choice.dto.MerchantAddressResponse;
-import vn.codegyme.meal_choice.dto.MerchantRegisterRequest;
-import vn.codegyme.meal_choice.dto.MerchantResponse;
-import vn.codegyme.meal_choice.dto.MerchantUpdateRequest;
+import vn.codegyme.meal_choice.dto.merchant.MerchantAddressResponse;
+import vn.codegyme.meal_choice.dto.merchant.MerchantRegisterRequest;
+import vn.codegyme.meal_choice.dto.merchant.MerchantResponse;
+import vn.codegyme.meal_choice.dto.merchant.MerchantUpdateRequest;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.MerchantAddress;
 import vn.codegyme.meal_choice.entity.MerchantStatus;
@@ -94,6 +94,10 @@ public class MerchantService {
 
         merchantAddress.setMerchantAddress(
                 request.getMerchantAddress());
+
+        merchantAddress.setProvinceCode(request.getProvinceCode());
+
+        merchantAddress.setWardCode(request.getWardCode());
 
         merchantAddressRepository.save(
                 merchantAddress);
