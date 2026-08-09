@@ -6,8 +6,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -25,7 +23,12 @@ public class FoodCategory {
     @Column(length = 36)
     private UUID id;
 
-    @Column(name = "category_name", nullable = false, unique = true, length = 100)
+    @Column(
+            name = "category_name",
+            nullable = false,
+            unique = true,
+            length = 100
+    )
     private String categoryName;
 
     @Column(name = "category_description", length = 255)
@@ -42,6 +45,7 @@ public class FoodCategory {
         if (id == null) {
             id = UUID.randomUUID();
         }
+
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
@@ -50,11 +54,4 @@ public class FoodCategory {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
-    @OneToMany(
-            mappedBy = "food",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    private List<FoodImage> images = new ArrayList<>();
 }
