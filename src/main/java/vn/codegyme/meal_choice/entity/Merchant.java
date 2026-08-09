@@ -74,4 +74,11 @@ public class Merchant {
             orphanRemoval = true
     )
     private List<MerchantAddress> addresses = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "merchant",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Food> foods = new ArrayList<>();
 }
