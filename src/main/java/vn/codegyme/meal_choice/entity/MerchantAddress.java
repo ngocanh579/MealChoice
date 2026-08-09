@@ -57,16 +57,10 @@ public class MerchantAddress {
     )
     private String wardCode;
 
-    @Column(
-            name = "merchant_open_time",
-            nullable = false
-    )
+    @Column(name = "merchant_open_time")
     private LocalTime merchantOpenTime;
 
-    @Column(
-            name = "merchant_close_time",
-            nullable = false
-    )
+    @Column(name = "merchant_close_time")
     private LocalTime merchantCloseTime;
 
     @Column(
