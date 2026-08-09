@@ -44,74 +44,6 @@ CREATE TABLE merchants (
                            FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
--- DROP TABLE IF EXISTS wards;
--- DROP TABLE IF EXISTS provinces;
--- DROP TABLE IF EXISTS administrative_units;
--- DROP TABLE IF EXISTS administrative_regions;
-
--- CREATE administrative_regions TABLE
-CREATE TABLE administrative_regions (
-                                        id integer NOT NULL,
-                                        name varchar(255) NOT NULL,
-                                        name_en varchar(255) NOT NULL,
-                                        code_name varchar(255) NULL,
-                                        code_name_en varchar(255) NULL,
-                                        CONSTRAINT administrative_regions_pkey PRIMARY KEY (id)
-);
-
-
--- CREATE administrative_units TABLE
-CREATE TABLE administrative_units (
-                                      id integer NOT NULL,
-                                      full_name varchar(255) NULL,
-                                      full_name_en varchar(255) NULL,
-                                      short_name varchar(255) NULL,
-                                      short_name_en varchar(255) NULL,
-                                      code_name varchar(255) NULL,
-                                      code_name_en varchar(255) NULL,
-                                      CONSTRAINT administrative_units_pkey PRIMARY KEY (id)
-);
-
-
--- CREATE provinces TABLE
-CREATE TABLE provinces (
-                           code varchar(20) NOT NULL,
-                           name varchar(255) NOT NULL,
-                           name_en varchar(255) NULL,
-                           full_name varchar(255) NOT NULL,
-                           full_name_en varchar(255) NULL,
-                           code_name varchar(255) NULL,
-                           administrative_unit_id integer NULL,
-                           CONSTRAINT provinces_pkey PRIMARY KEY (code)
-);
-
-
--- provinces foreign keys
-
-ALTER TABLE provinces ADD CONSTRAINT provinces_administrative_unit_id_fkey FOREIGN KEY (administrative_unit_id) REFERENCES administrative_units(id);
-CREATE INDEX idx_provinces_unit ON provinces(administrative_unit_id);
-
--- CREATE wards TABLE
-CREATE TABLE wards (
-                       code varchar(20) NOT NULL,
-                       name varchar(255) NOT NULL,
-                       name_en varchar(255) NULL,
-                       full_name varchar(255) NULL,
-                       full_name_en varchar(255) NULL,
-                       code_name varchar(255) NULL,
-                       province_code varchar(20) NULL,
-                       administrative_unit_id integer NULL,
-                       CONSTRAINT wards_pkey PRIMARY KEY (code)
-);
-
--- wards foreign keys
-
-ALTER TABLE wards ADD CONSTRAINT wards_administrative_unit_id_fkey FOREIGN KEY (administrative_unit_id) REFERENCES administrative_units(id);
-ALTER TABLE wards ADD CONSTRAINT wards_province_code_fkey FOREIGN KEY (province_code) REFERENCES provinces(code);
-
-CREATE INDEX idx_wards_province ON wards(province_code);
-CREATE INDEX idx_wards_unit ON wards(administrative_unit_id);
-
 -- 5. MERCHANT ADDRESSES
 
 CREATE TABLE merchant_addresses (
@@ -122,6 +54,7 @@ CREATE TABLE merchant_addresses (
 
     -- Địa chỉ hành chính mới
                                     province_code VARCHAR(20) NOT NULL,
+                                    district_code VARCHAR(20) NOT NULL,
                                     ward_code VARCHAR(20) NOT NULL,
 
                                     merchant_open_time TIME  NULL,
@@ -134,14 +67,10 @@ CREATE TABLE merchant_addresses (
                                         ON UPDATE CURRENT_TIMESTAMP,
 
                                     FOREIGN KEY (merchant_id)
-                                        REFERENCES merchants(id),
+                                        REFERENCES merchants(id)
 
-                                    FOREIGN KEY (province_code)
-                                        REFERENCES provinces(code),
-
-                                    FOREIGN KEY (ward_code)
-                                        REFERENCES wards(code)
 );
+
 -- category
 CREATE TABLE food_categories (
                                  id VARCHAR(36) PRIMARY KEY,
@@ -150,6 +79,7 @@ CREATE TABLE food_categories (
                                  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                                  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
 -- food
 CREATE TABLE foods (
                        id VARCHAR(36) PRIMARY KEY,
@@ -179,7 +109,9 @@ CREATE TABLE foods (
                        FOREIGN KEY (merchant_id) REFERENCES merchants(id),
                        FOREIGN KEY (merchant_address_id) REFERENCES merchant_addresses(id),
                        FOREIGN KEY (food_category_id) REFERENCES food_categories(id)
+
 );
+
 -- images
 CREATE TABLE food_images (
                              id VARCHAR(36) PRIMARY KEY,
@@ -189,4 +121,5 @@ CREATE TABLE food_images (
                              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
                              FOREIGN KEY (food_id) REFERENCES foods(id)
+
 );
