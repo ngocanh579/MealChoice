@@ -20,8 +20,8 @@ INSERT INTO users (
 VALUES
     (
         '10000000-0000-0000-0000-000000000001',
-        'admin@mealchoice.com',
-        '$2a$10$7EqJtq98hPqEX7fNZaFWoO6jJ9kJ9Qz3nK8W4L5xT6u7V8w9X0Y1Z',
+        'lanh123ngoc@gmail.com',
+        '$2a$10$E3M.E/3f9T6y.A3f31p.o.0k2gA8eWJz5Wq6SgZf2ZfG9O7f.pE9W',
         'Admin',
         '0900000001',
         'MALE',
