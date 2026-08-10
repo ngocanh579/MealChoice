@@ -104,6 +104,8 @@ public class MerchantService {
         merchantAddress.setWardCode(
                 request.getWardCode());
 
+        merchantAddress.setDefault(true);
+
         merchantAddressRepository.save(
                 merchantAddress);
 
@@ -199,6 +201,15 @@ public class MerchantService {
 
                             res.setId(addr.getId());
 
+                            res.setProvinceCode(
+                                    addr.getProvinceCode());
+
+                            res.setDistrictCode(
+                                    addr.getDistrictCode());
+
+                            res.setWardCode(
+                                    addr.getWardCode());
+
                             res.setMerchantAddress(
                                     addr.getMerchantAddress());
 
@@ -207,6 +218,9 @@ public class MerchantService {
 
                             res.setMerchantCloseTime(
                                     addr.getMerchantCloseTime());
+
+                            res.setDefault(
+                                    addr.isDefault());
 
                             return res;
                         })

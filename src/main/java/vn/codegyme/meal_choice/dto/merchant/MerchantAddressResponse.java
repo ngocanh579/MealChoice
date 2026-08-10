@@ -12,6 +12,8 @@ public class MerchantAddressResponse {
 
     private String provinceCode;
 
+    private String districtCode;
+
     private String wardCode;
 
     private String merchantAddress;
