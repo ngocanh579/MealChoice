@@ -86,7 +86,6 @@ CREATE TABLE foods (
 
                        merchant_id VARCHAR(36) NOT NULL,
                        merchant_address_id VARCHAR(36) NOT NULL,
-                       food_category_id VARCHAR(36) NOT NULL,
 
                        food_name VARCHAR(150) NOT NULL,
                        preparation_time INT,
@@ -106,10 +105,26 @@ CREATE TABLE foods (
                            ON UPDATE CURRENT_TIMESTAMP,
                        deleted_at DATETIME NULL,
 
-                       FOREIGN KEY (merchant_id) REFERENCES merchants(id),
-                       FOREIGN KEY (merchant_address_id) REFERENCES merchant_addresses(id),
-                       FOREIGN KEY (food_category_id) REFERENCES food_categories(id)
+                       FOREIGN KEY (merchant_id)
+                           REFERENCES merchants(id),
 
+                       FOREIGN KEY (merchant_address_id)
+                           REFERENCES merchant_addresses(id)
+);
+--  food_category
+CREATE TABLE food_category_mapping (
+                                       food_id VARCHAR(36) NOT NULL,
+                                       food_category_id VARCHAR(36) NOT NULL,
+
+                                       PRIMARY KEY (food_id, food_category_id),
+
+                                       FOREIGN KEY (food_id)
+                                           REFERENCES foods(id)
+                                           ON DELETE CASCADE,
+
+                                       FOREIGN KEY (food_category_id)
+                                           REFERENCES food_categories(id)
+                                           ON DELETE CASCADE
 );
 
 -- images
