@@ -5,15 +5,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.codegyme.meal_choice.dto.food.FoodCreateRequest;
 import vn.codegyme.meal_choice.dto.food.FoodResponse;
-import vn.codegyme.meal_choice.entity.Food;
-import vn.codegyme.meal_choice.entity.FoodCategory;
-import vn.codegyme.meal_choice.entity.Merchant;
-import vn.codegyme.meal_choice.entity.MerchantAddress;
+import vn.codegyme.meal_choice.entity.*;
 import vn.codegyme.meal_choice.repository.FoodCategoryRepository;
 import vn.codegyme.meal_choice.repository.FoodRepository;
 import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,31 +27,20 @@ public class FoodService {
 
     // Thêm món ăn
     @Transactional
-    public FoodResponse createFood(
-            UUID merchantId,
-            FoodCreateRequest request) {
+    public FoodResponse createFood(UUID merchantId, FoodCreateRequest request) {
+        Merchant merchant = getApprovedMerchant(merchantId);
 
-        Merchant merchant = merchantRepository.findById(merchantId)
-                .orElseThrow(() ->
-                        new RuntimeException("Không tìm thấy Merchant"));
-
-        MerchantAddress address = merchantAddressRepository
-                .findById(request.getMerchantAddressId())
-                .orElseThrow(() ->
-                        new RuntimeException("Không tìm thấy địa chỉ Merchant"));
+        MerchantAddress address = merchantAddressRepository.findById(request.getMerchantAddressId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ Merchant"));
 
         if (!address.getMerchant().getId().equals(merchantId)) {
-            throw new RuntimeException(
-                    "Địa chỉ không thuộc Merchant này");
+            throw new RuntimeException("Địa chỉ không thuộc Merchant này");
         }
 
-        List<FoodCategory> categories =
-                foodCategoryRepository.findAllById(
-                        request.getCategoryIds());
+        List<FoodCategory> categories = foodCategoryRepository.findAllById(request.getCategoryIds());
 
         if (categories.size() != request.getCategoryIds().size()) {
-            throw new RuntimeException(
-                    "Một hoặc nhiều danh mục không tồn tại");
+            throw new RuntimeException("Một hoặc nhiều danh mục không tồn tại");
         }
 
         Food food = Food.builder()
@@ -64,83 +52,57 @@ public class FoodService {
                 .foodNote(request.getFoodNote())
                 .price(request.getPrice())
                 .discountPrice(request.getDiscountPrice())
-                .serviceFee(request.getServiceFee())
+                .serviceFee(request.getServiceFee() != null ? request.getServiceFee() : BigDecimal.ZERO)
                 .isRecommended(false)
                 .views(0)
                 .orderCount(0)
                 .build();
 
-        Food savedFood = foodRepository.save(food);
-
-        return mapToResponse(savedFood);
+        return mapToResponse(foodRepository.save(food));
     }
 
-    // Lấy danh sách món của Merchant
+    // Lấy danh sách món
     public List<FoodResponse> getFoods(UUID merchantId) {
-
         if (!merchantRepository.existsById(merchantId)) {
-            throw new RuntimeException(
-                    "Không tìm thấy Merchant");
+            throw new RuntimeException("Không tìm thấy Merchant");
         }
 
-        return foodRepository
-                .findByMerchant_IdAndDeletedAtIsNull(merchantId)
+        return foodRepository.findByMerchant_IdAndDeletedAtIsNull(merchantId)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
-    // Lấy một món của Merchant
-    public FoodResponse getFood(
-            UUID merchantId,
-            UUID foodId) {
-
-        Food food = foodRepository
-                .findByIdAndMerchant_IdAndDeletedAtIsNull(
-                        foodId,
-                        merchantId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Không tìm thấy món ăn"));
+    // Lấy chi tiết món
+    public FoodResponse getFood(UUID merchantId, UUID foodId) {
+        Food food = foodRepository.findByIdAndMerchant_IdAndDeletedAtIsNull(foodId, merchantId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy món ăn"));
 
         return mapToResponse(food);
     }
 
     // Cập nhật món ăn
     @Transactional
-    public FoodResponse updateFood(
-            UUID merchantId,
-            UUID foodId,
-            FoodCreateRequest request) {
+    public FoodResponse updateFood(UUID merchantId, UUID foodId, FoodCreateRequest request) {
+        Merchant merchant = getApprovedMerchant(merchantId);
 
-        Food food = foodRepository
-                .findByIdAndMerchant_IdAndDeletedAtIsNull(
-                        foodId,
-                        merchantId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Không tìm thấy món ăn"));
+        Food food = foodRepository.findByIdAndMerchant_IdAndDeletedAtIsNull(foodId, merchantId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy món ăn"));
 
-        MerchantAddress address = merchantAddressRepository
-                .findById(request.getMerchantAddressId())
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Không tìm thấy địa chỉ Merchant"));
+        MerchantAddress address = merchantAddressRepository.findById(request.getMerchantAddressId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ Merchant"));
 
         if (!address.getMerchant().getId().equals(merchantId)) {
-            throw new RuntimeException(
-                    "Địa chỉ không thuộc Merchant này");
+            throw new RuntimeException("Địa chỉ không thuộc Merchant này");
         }
 
-        List<FoodCategory> categories =
-                foodCategoryRepository.findAllById(
-                        request.getCategoryIds());
+        List<FoodCategory> categories = foodCategoryRepository.findAllById(request.getCategoryIds());
 
         if (categories.size() != request.getCategoryIds().size()) {
-            throw new RuntimeException(
-                    "Một hoặc nhiều danh mục không tồn tại");
+            throw new RuntimeException("Một hoặc nhiều danh mục không tồn tại");
         }
 
+        food.setMerchant(merchant);
         food.setMerchantAddress(address);
         food.setFoodCategories(categories);
         food.setFoodName(request.getFoodName());
@@ -148,74 +110,70 @@ public class FoodService {
         food.setFoodNote(request.getFoodNote());
         food.setPrice(request.getPrice());
         food.setDiscountPrice(request.getDiscountPrice());
-        food.setServiceFee(request.getServiceFee());
+        food.setServiceFee(request.getServiceFee() != null ? request.getServiceFee() : BigDecimal.ZERO);
 
-        Food updatedFood = foodRepository.save(food);
-
-        return mapToResponse(updatedFood);
+        return mapToResponse(foodRepository.save(food));
     }
 
     // Xóa mềm món ăn
     @Transactional
-    public void deleteFood(
-            UUID merchantId,
-            UUID foodId) {
+    public void deleteFood(UUID merchantId, UUID foodId) {
+        Merchant merchant = getApprovedMerchant(merchantId);
 
-        Food food = foodRepository
-                .findByIdAndMerchant_IdAndDeletedAtIsNull(
-                        foodId,
-                        merchantId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Không tìm thấy món ăn"));
+        Food food = foodRepository.findByIdAndMerchant_IdAndDeletedAtIsNull(foodId, merchantId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy món ăn"));
 
-        food.setDeletedAt(
-                java.time.LocalDateTime.now());
-
+        food.setMerchant(merchant);
+        food.setDeletedAt(LocalDateTime.now());
         foodRepository.save(food);
     }
 
-    // Chuyển Entity sang Response
-    private FoodResponse mapToResponse(Food food) {
+    // Kiểm tra Merchant
+    private Merchant getApprovedMerchant(UUID merchantId) {
+        Merchant merchant = merchantRepository.findById(merchantId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Merchant"));
 
+        if (merchant.getMerchantStatus() != MerchantStatus.APPROVED) {
+            throw new RuntimeException("Merchant chưa được Admin phê duyệt");
+        }
+
+        return merchant;
+    }
+
+    // Entity → Response
+    private FoodResponse mapToResponse(Food food) {
         FoodResponse response = new FoodResponse();
 
         response.setId(food.getId());
 
         if (food.getMerchantAddress() != null) {
-            response.setMerchantAddressId(
-                    food.getMerchantAddress().getId());
-
-            response.setMerchantAddress(
-                    food.getMerchantAddress().getMerchantAddress());
+            response.setMerchantAddressId(food.getMerchantAddress().getId());
+            response.setMerchantAddress(food.getMerchantAddress().getMerchantAddress());
         }
 
         response.setFoodName(food.getFoodName());
-        response.setPreparationTime(
-                food.getPreparationTime());
+        response.setPreparationTime(food.getPreparationTime());
         response.setFoodNote(food.getFoodNote());
         response.setPrice(food.getPrice());
-        response.setDiscountPrice(
-                food.getDiscountPrice());
-        response.setServiceFee(
-                food.getServiceFee());
+        response.setDiscountPrice(food.getDiscountPrice());
+        response.setServiceFee(food.getServiceFee());
         response.setViews(food.getViews());
-        response.setOrderCount(
-                food.getOrderCount());
-        response.setIsRecommended(
-                food.getIsRecommended());
+        response.setOrderCount(food.getOrderCount());
+        response.setIsRecommended(food.getIsRecommended());
 
         response.setCategoryIds(
                 food.getFoodCategories()
                         .stream()
                         .map(FoodCategory::getId)
-                        .toList());
+                        .toList()
+        );
 
         response.setImageUrls(
                 food.getImages()
                         .stream()
-                        .map(image -> image.getImageUrl())
-                        .toList());
+                        .map(FoodImage::getImageUrl)
+                        .toList()
+        );
 
         response.setCreatedAt(food.getCreatedAt());
         response.setUpdatedAt(food.getUpdatedAt());
