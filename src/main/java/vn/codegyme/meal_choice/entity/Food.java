@@ -34,9 +34,13 @@ public class Food {
     @JoinColumn(name = "merchant_address_id", nullable = false)
     private MerchantAddress merchantAddress;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "food_category_id", nullable = false)
-    private FoodCategory foodCategory;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "food_category_mapping",
+            joinColumns = @JoinColumn(name = "food_id"),
+            inverseJoinColumns = @JoinColumn(name = "food_category_id")
+    )
+    private List<FoodCategory> foodCategories = new ArrayList<>();
 
     @Column(name = "food_name", nullable = false, length = 150)
     private String foodName;
