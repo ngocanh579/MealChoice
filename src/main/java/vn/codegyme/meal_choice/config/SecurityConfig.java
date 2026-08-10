@@ -41,17 +41,25 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
 
-                        // Public
+                        // Public (Xem trang chủ, tìm kiếm, nhà hàng, món ăn, danh mục, auth, static files)
                         .requestMatchers(
                                 "/",
                                 "/home",
+                                "/search/**",
+                                "/restaurants/**",
+                                "/food/**",
+                                "/foods/**",
+                                "/categories/**",
+                                "/api/foods/**",
+                                "/api/categories/**",
                                 "/login",
                                 "/register",
                                 "/api/auth/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
-                                "/favicon.ico"
+                                "/favicon.ico",
+                                "/error"
                         ).permitAll()
 
                         // User đã đăng nhập được mở trang đăng ký Merchant

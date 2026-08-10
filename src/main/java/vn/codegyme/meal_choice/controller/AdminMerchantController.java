@@ -22,7 +22,7 @@ public class AdminMerchantController {
     // Danh sách merchant
     @GetMapping
     public String showMerchantList(
-            @RequestParam(required = false) MerchantStatus status,
+            @RequestParam(name = "status", required = false) MerchantStatus status,
             Model model) {
 
         model.addAttribute(
@@ -39,7 +39,7 @@ public class AdminMerchantController {
 // Xem chi tiết merchant
     @GetMapping("/{id}")
     public String showMerchantDetail(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
             Model model) {
 
         model.addAttribute(
@@ -53,7 +53,7 @@ public class AdminMerchantController {
     // Duyệt
     @PostMapping("/{id}/approve")
     public String approve(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
             RedirectAttributes redirectAttributes) {
 
         adminService.approveMerchant(id);
@@ -68,7 +68,7 @@ public class AdminMerchantController {
     // Từ chối
     @PostMapping("/{id}/reject")
     public String reject(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
             RedirectAttributes redirectAttributes) {
 
         adminService.rejectMerchant(id);
@@ -83,7 +83,7 @@ public class AdminMerchantController {
     // Khóa / mở khóa
     @PostMapping("/{id}/toggle-lock")
     public String toggleLock(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
             RedirectAttributes redirectAttributes) {
 
         adminService.toggleMerchantLockStatus(id);
@@ -98,7 +98,7 @@ public class AdminMerchantController {
     // Duyệt đối tác thân thiết
     @PostMapping("/{id}/trusted-partner")
     public String approveTrustedPartner(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
             RedirectAttributes redirectAttributes) {
 
         try {
@@ -120,7 +120,7 @@ public class AdminMerchantController {
     // Bỏ đối tác thân thiết
     @PostMapping("/{id}/trusted-partner/remove")
     public String removeTrustedPartner(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
             RedirectAttributes redirectAttributes) {
 
         adminService.removeTrustedPartner(id);
