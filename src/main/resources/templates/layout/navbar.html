@@ -196,13 +196,12 @@
         const merchantRoleNav = document.getElementById('merchantRoleNav');
         const adminRoleNav = document.getElementById('adminRoleNav');
 
-        // Hiển thị User hoặc Guest
+        // Hiển thị User/Guest
         if (displayName) {
             guestNav?.classList.add('d-none');
             userProfileNav?.classList.remove('d-none');
 
             const nameEl = document.getElementById('userDisplayName');
-
             if (nameEl) {
                 nameEl.innerText = displayName;
             }
@@ -211,7 +210,7 @@
             userProfileNav?.classList.add('d-none');
         }
 
-        // Lấy Role của User
+        // Lấy Role
         let roles = [];
         const userRolesStr = localStorage.getItem('userRoles');
 
@@ -233,7 +232,7 @@
             adminRoleNav?.classList.remove('d-none');
         }
 
-        // Kiểm tra Merchant đã được duyệt
+        // Merchant đã được duyệt
         const isMerchant =
             roles.includes('ROLE_MERCHANT') ||
             roles.includes('MERCHANT');
@@ -246,7 +245,7 @@
             checkMerchantStatus();
         }
 
-        // Kiểm tra trạng thái đăng ký Merchant
+        // Kiểm tra trạng thái Merchant
         async function checkMerchantStatus() {
             try {
                 const response = await fetch("/api/merchants/my-status");
@@ -257,9 +256,9 @@
 
                 const data = await response.json();
 
-                // Mặc định ẩn hai trạng thái
                 registerMerchantNav?.classList.add('d-none');
                 merchantPendingNav?.classList.add('d-none');
+                merchantRoleNav?.classList.add('d-none');
 
                 // Chưa đăng ký
                 if (!data.registered) {
@@ -267,7 +266,7 @@
                     return;
                 }
 
-                // Đang chờ Admin duyệt
+                // Đang chờ duyệt
                 if (data.status === 'PENDING') {
                     merchantPendingNav?.classList.remove('d-none');
                     return;
@@ -279,20 +278,11 @@
                     return;
                 }
 
-                // Đã được duyệt nhưng Role chưa cập nhật
+                // Đã được duyệt
                 if (data.status === 'APPROVED') {
-                    if (registerMerchantNav) {
-                        registerMerchantNav.classList.add('d-none');
-                    }
-                    if (merchantPendingNav) {
-                        merchantPendingNav.classList.add('d-none');
-                    }
-                    if (merchantRoleNav) {
-                        merchantRoleNav.classList.remove('d-none');
-                    }
+                    merchantRoleNav?.classList.remove('d-none');
                     return;
                 }
-
             } catch (error) {
                 console.error("Lỗi kiểm tra trạng thái Merchant:", error);
             }
