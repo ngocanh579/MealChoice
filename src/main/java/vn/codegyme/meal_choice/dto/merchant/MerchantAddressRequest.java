@@ -12,6 +12,9 @@ public class MerchantAddressRequest {
     @NotBlank(message = "Tỉnh/Thành phố không được để trống")
     private String provinceCode;
 
+    @NotBlank(message = "Quận/Huyện không được để trống")
+    private String districtCode;
+
     @NotBlank(message = "Phường/Xã không được để trống")
     private String wardCode;
 
