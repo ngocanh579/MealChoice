@@ -95,9 +95,14 @@ public class MerchantService {
         merchantAddress.setMerchantAddress(
                 request.getMerchantAddress());
 
-        merchantAddress.setProvinceCode(request.getProvinceCode());
+        merchantAddress.setProvinceCode(
+                request.getProvinceCode());
 
-        merchantAddress.setWardCode(request.getWardCode());
+        merchantAddress.setDistrictCode(
+                request.getDistrictCode());
+
+        merchantAddress.setWardCode(
+                request.getWardCode());
 
         merchantAddressRepository.save(
                 merchantAddress);
@@ -138,6 +143,15 @@ public class MerchantService {
 
         address.setMerchantAddress(
                 request.getMerchantAddress());
+
+        address.setProvinceCode(
+                request.getProvinceCode());
+
+        address.setDistrictCode(
+                request.getDistrictCode());
+
+        address.setWardCode(
+                request.getWardCode());
 
         address.setMerchantOpenTime(
                 request.getMerchantOpenTime());
