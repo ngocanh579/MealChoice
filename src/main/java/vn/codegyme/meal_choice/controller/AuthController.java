@@ -8,10 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import vn.codegyme.meal_choice.dto.AuthResponse;
-import vn.codegyme.meal_choice.dto.LoginRequest;
-import vn.codegyme.meal_choice.dto.LogoutRequest;
-import vn.codegyme.meal_choice.dto.RegisterRequest;
+import vn.codegyme.meal_choice.dto.*;
 import vn.codegyme.meal_choice.service.AuthService;
 
 @RestController
@@ -22,9 +19,9 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest request) {
+        String message = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(message));
     }
 
     @PostMapping("/login")
