@@ -14,6 +14,7 @@ import vn.codegyme.meal_choice.service.AdminService;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -88,16 +89,50 @@ public class AdminServiceImpl implements AdminService {
         merchantRepository.save(merchant);
     }
 
-    // Khóa / mở khóa
+    // Khóa /lý do khóa/ mở khóa
     @Override
-    public void toggleMerchantLockStatus(UUID id) {
-        Merchant merchant = findMerchant(id);
+    @Transactional
+    public void toggleMerchantLockStatus(
+            UUID id,
+            String lockReason
+    ) {
 
+        Merchant merchant = merchantRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Không tìm thấy merchant."
+                        )
+                );
+
+        // Merchant đang bị khóa -> mở khóa
         if (merchant.getMerchantStatus() == MerchantStatus.BLOCKED) {
+
             merchant.setMerchantStatus(MerchantStatus.APPROVED);
+
+            merchant.setLockReason(null);
+            merchant.setLockedAt(null);
+
         } else {
+
+            // Merchant đang hoạt động -> khóa
+            if (lockReason == null
+                    || lockReason.trim().isEmpty()) {
+
+                throw new IllegalArgumentException(
+                        "Vui lòng nhập lý do khóa merchant."
+                );
+            }
+
             merchant.setMerchantStatus(MerchantStatus.BLOCKED);
-            merchant.setTrustedPartner(false);
+
+            merchant.setLockReason(
+                    lockReason.trim()
+            );
+
+            merchant.setLockedAt(
+                    LocalDateTime.now()
+            );
         }
 
         merchantRepository.save(merchant);

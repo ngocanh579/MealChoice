@@ -49,6 +49,11 @@ public class AdminMerchantController {
 
         return "admin/merchant/detail";
     }
+//    merchant block không xem được
+    @GetMapping("/merchant-blocked")
+    public String merchantBlocked() {
+        return "merchant/blocked";
+    }
 
     // Duyệt
     @PostMapping("/{id}/approve")
@@ -80,17 +85,32 @@ public class AdminMerchantController {
         return "redirect:/admin/merchants";
     }
 
-    // Khóa / mở khóa
+    // Khóa /lý do khóa/ mở khóa/
     @PostMapping("/{id}/toggle-lock")
     public String toggleLock(
             @PathVariable UUID id,
+            @RequestParam(required = false) String lockReason,
             RedirectAttributes redirectAttributes) {
 
-        adminService.toggleMerchantLockStatus(id);
-        redirectAttributes.addFlashAttribute(
-                "message",
-                "Đã cập nhật trạng thái khóa merchant."
-        );
+        try {
+
+            adminService.toggleMerchantLockStatus(
+                    id,
+                    lockReason
+            );
+
+            redirectAttributes.addFlashAttribute(
+                    "message",
+                    "Đã cập nhật trạng thái merchant."
+            );
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
+        }
 
         return "redirect:/admin/merchants";
     }

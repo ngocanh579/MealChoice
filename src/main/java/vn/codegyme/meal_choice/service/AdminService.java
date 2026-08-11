@@ -23,8 +23,11 @@ public interface AdminService {
     // Từ chối merchant
     void rejectMerchant(UUID id);
 
-    // Khóa / mở khóa
-    void toggleMerchantLockStatus(UUID id);
+    // Khóa/ lý do khóa/ mở khóa
+    void toggleMerchantLockStatus(
+            UUID id,
+            String lockReason
+    );
 
     // Duyệt đối tác thân thiết
     void approveTrustedPartner(UUID id);
