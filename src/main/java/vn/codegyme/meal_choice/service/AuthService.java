@@ -1,6 +1,7 @@
 package vn.codegyme.meal_choice.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import vn.codegyme.meal_choice.dto.RegisterRequest;
 import vn.codegyme.meal_choice.entity.RefreshToken;
 import vn.codegyme.meal_choice.entity.Role;
 import vn.codegyme.meal_choice.entity.User;
+import vn.codegyme.meal_choice.event.UserRegisteredEvent;
 import vn.codegyme.meal_choice.repository.RefreshTokenRepository;
 import vn.codegyme.meal_choice.repository.RoleRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
@@ -28,6 +30,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final long REFRESH_TOKEN_EXPIRATION_MS = 604800000L;
 
@@ -62,6 +65,8 @@ public class AuthService {
 
         // Save in database
         userRepository.save(user);
+
+        eventPublisher.publishEvent(new UserRegisteredEvent(user.getEmail(), user.getDisplayName()));
 
         return buildAuthResponse(user);
     }

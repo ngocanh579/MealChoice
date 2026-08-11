@@ -38,13 +38,13 @@ public class PageController {
         return "user/address";
     }
 
-    @GetMapping("/merchant/register")
+    @GetMapping("/merchants/register")
     public String merchantRegisterPage() {
         return "merchant/register";
     }
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    @GetMapping("/merchant/profile")
+    @GetMapping("/merchants/profile")
     public String merchantProfilePage(Authentication authentication, Model model) {
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
             String email = userDetails.getUsername();
