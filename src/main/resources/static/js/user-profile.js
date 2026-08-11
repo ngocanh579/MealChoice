@@ -11,6 +11,9 @@ let initialAddressData = {};
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
     setupEventListeners();
+    // Tự động làm mới access token trước khi hết hạn
+    silentRefresh();
+    setInterval(silentRefresh, 14 * 60 * 1000); // Mỗi 14 phút
 });
 
 // Helper to get Auth Headers with JWT Bearer Token
@@ -31,6 +34,32 @@ function checkAuthentication() {
         return;
     }
     loadProfile();
+}
+
+async function silentRefresh() {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) return;
+
+    try {
+        const response = await fetch('/api/auth/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('accessToken', data.accessToken);
+        } else {
+            // Refresh token hết hạn (sau 7 ngày) → logout thật sự
+            console.warn('Refresh token hết hạn, đăng xuất...');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/login';
+        }
+    } catch (e) {
+        console.error('Silent refresh thất bại:', e);
+    }
 }
 
 // Logout function

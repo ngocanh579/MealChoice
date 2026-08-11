@@ -12,9 +12,10 @@ import lombok.Setter;
 public class RegisterRequest {
 
     @NotBlank(message = "Email không được để trống")
+    @Email(message = "Email phải có định dạng hợp lệ")
     @Pattern(
-            regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.com$",
-            message = "Email phải có định dạng hợp lệ và kết thúc bằng .com"
+            regexp = "^[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$",
+            message = "Email phải có định dạng hợp lệ"
     )
     private String email;
 

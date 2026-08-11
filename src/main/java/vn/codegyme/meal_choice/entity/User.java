@@ -60,9 +60,6 @@ public class User {
     )
     private Set<Role> roles = new HashSet<>();
 
-//    @Column(nullable = false)
-//    private Boolean isActive = true;
-
     @Builder.Default
     @Column(nullable = false)
     @ColumnDefault("true") // Sinh ra SQL DDL: DEFAULT true
