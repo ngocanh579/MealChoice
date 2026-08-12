@@ -9,7 +9,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 import vn.codegyme.meal_choice.entity.Address;
 import vn.codegyme.meal_choice.entity.Category;
 import vn.codegyme.meal_choice.entity.Food;
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Controller
@@ -60,12 +63,34 @@ public class PageController {
         return null;
     }
 
+    // Helper nạp trạng thái thích món ăn và theo dõi quán ăn của user vào model
+    private void addLikeStatusToModel(Authentication authentication, Model model) {
+        boolean isLoggedIn = false;
+        List<Long> likedFoodIds = Collections.emptyList();
+        List<UUID> likedMerchantIds = Collections.emptyList();
+        
+        if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+            Optional<User> userOpt = userRepository.findByEmail(userDetails.getUsername());
+            if (userOpt.isPresent()) {
+                isLoggedIn = true;
+                UUID userId = userOpt.get().getId();
+                likedFoodIds = foodRepository.findLikedFoodIdsByUserId(userId);
+                likedMerchantIds = merchantRepository.findLikedMerchantIdsByUserId(userId);
+            }
+        }
+        
+        model.addAttribute("isLoggedIn", isLoggedIn);
+        model.addAttribute("likedFoodIds", likedFoodIds);
+        model.addAttribute("likedMerchantIds", likedMerchantIds);
+    }
+
     // 1. TRANG CHỦ
     @GetMapping({"/", "/home"})
     public String homePage(@RequestParam(name = "page", defaultValue = "0") int page,
                            Authentication authentication,
                            Model model) {
         try {
+            addLikeStatusToModel(authentication, model);
             // 1. Danh sách Category
             List<Category> categories = categoryRepository.findAll();
             model.addAttribute("categories", categories != null ? categories : Collections.emptyList());
@@ -128,7 +153,9 @@ public class PageController {
     public String searchPage(@RequestParam(name = "keyword", required = false) String keyword,
                              @RequestParam(name = "categoryId", required = false) Long categoryId,
                              @RequestParam(name = "page", defaultValue = "0") int page,
+                             Authentication authentication,
                              Model model) {
+        addLikeStatusToModel(authentication, model);
         Pageable pageable = PageRequest.of(Math.max(0, page), 50);
         String cleanKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
 
@@ -164,6 +191,7 @@ public class PageController {
                               @RequestParam(name = "page", defaultValue = "0") int page,
                               Authentication authentication,
                               Model model) {
+        addLikeStatusToModel(authentication, model);
         Pageable pageable = PageRequest.of(Math.max(0, page), 50);
         String userLocation = getUserLocation(authentication);
 
@@ -203,7 +231,9 @@ public class PageController {
     @GetMapping({"/restaurants/popular", "/restaurants/top-picks"})
     public String popularPage(@RequestParam(name = "categoryId", required = false) Long categoryId,
                               @RequestParam(name = "page", defaultValue = "0") int page,
+                              Authentication authentication,
                               Model model) {
+        addLikeStatusToModel(authentication, model);
         Pageable pageable = PageRequest.of(Math.max(0, page), 50);
         Page<Food> foodPage;
         try {
@@ -237,7 +267,9 @@ public class PageController {
     @GetMapping("/restaurants/top-discounts")
     public String topDiscountsPage(@RequestParam(name = "categoryId", required = false) Long categoryId,
                                    @RequestParam(name = "page", defaultValue = "0") int page,
+                                   Authentication authentication,
                                    Model model) {
+        addLikeStatusToModel(authentication, model);
         Pageable pageable = PageRequest.of(Math.max(0, page), 50);
         Page<Food> foodPage;
         try {
@@ -265,7 +297,9 @@ public class PageController {
     @GetMapping("/restaurants/new")
     public String newRestaurantsPage(@RequestParam(name = "categoryId", required = false) Long categoryId,
                                      @RequestParam(name = "page", defaultValue = "0") int page,
+                                     Authentication authentication,
                                      Model model) {
+        addLikeStatusToModel(authentication, model);
         Pageable pageable = PageRequest.of(Math.max(0, page), 50);
         Page<Food> foodPage;
         try {
@@ -328,4 +362,5 @@ public class PageController {
 
         return "redirect:/admin/merchants";
     }
+
 }

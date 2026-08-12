@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import vn.codegyme.meal_choice.entity.Food;
 
 import java.util.UUID;
+import java.util.List;
 
 @Repository
 public interface FoodRepository extends JpaRepository<Food, Long> {
@@ -48,4 +49,12 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     // 9. Tìm món ăn của một merchant cụ thể
     @Query("SELECT f FROM Food f WHERE f.merchant.id = :merchantId AND f.active = true ORDER BY f.id DESC")
     Page<Food> findAllByMerchant_IdAndIsActiveTrueOrderByIdDesc(@Param("merchantId") UUID merchantId, Pageable pageable);
+
+    // 10. Lấy danh sách món ăn active cùng thành phố (dựa trên địa chỉ của Merchant)
+    @Query("SELECT f FROM Food f JOIN f.merchant m JOIN m.addresses a WHERE f.active = true AND LOWER(a.merchantAddress) LIKE LOWER(CONCAT('%', :city))")
+    List<Food> findAllActiveInCity(@Param("city") String city);
+
+    // 11. Lấy danh sách ID món ăn mà một User (dựa trên userId) đã thích
+    @Query("SELECT f.id FROM Food f JOIN f.likedByUsers u WHERE u.id = :userId")
+    List<Long> findLikedFoodIdsByUserId(@Param("userId") UUID userId);
 }

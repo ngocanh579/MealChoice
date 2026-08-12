@@ -43,4 +43,8 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
         WHERE m.merchantEmail = :email
     """)
     Optional<Merchant> findByMerchantEmailWithAddresses(@Param("email") String email);
+
+    // Lấy danh sách ID nhà hàng mà một User (dựa trên userId) đã thích (theo dõi)
+    @Query("SELECT m.id FROM Merchant m JOIN m.likedByUsers u WHERE u.id = :userId")
+    List<UUID> findLikedMerchantIdsByUserId(@Param("userId") UUID userId);
 }

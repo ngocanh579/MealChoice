@@ -12,20 +12,26 @@
 
         <button type="button"
             class="btn btn-light rounded-circle shadow-sm position-absolute top-0 end-0 m-3 z-2 p-2 d-flex align-items-center justify-content-center text-danger border-0 btn-wishlist"
-            style="width: 36px; height: 36px;" title="Yêu thích">
-            <i class="bi bi-heart-fill fs-6"></i>
+            th:data-food-id="${food.id}"
+            style="width: 36px; height: 36px;" 
+            th:title="${likedFoodIds != null and likedFoodIds.contains(food.id)} ? 'Bỏ yêu thích' : 'Yêu thích'">
+            <i th:class="${likedFoodIds != null and likedFoodIds.contains(food.id)} ? 'bi bi-heart-fill fs-6' : 'bi bi-heart fs-6'"></i>
         </button>
 
-        <div class="ratio ratio-4x3 position-relative overflow-hidden bg-light">
-            <img th:src="${food.imageUrl != null and !#strings.isEmpty(food.imageUrl)} ? ${food.imageUrl} : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'"
-                class="card-img-top object-fit-cover food-card-img" th:alt="${food.name != null ? food.name : 'Món ăn'}"
-                loading="lazy">
-        </div>
+        <a th:href="@{/foods/{id}(id=${food.id})}">
+            <div class="ratio ratio-4x3 position-relative overflow-hidden bg-light">
+                <img th:src="${food.imageUrl != null and !#strings.isEmpty(food.imageUrl)} ? ${food.imageUrl} : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'"
+                    class="card-img-top object-fit-cover food-card-img" th:alt="${food.name != null ? food.name : 'Món ăn'}"
+                    loading="lazy">
+            </div>
+        </a>
 
         <div class="card-body p-3 d-flex flex-column">
-            <h6 class="card-title fw-bold text-dark mb-1 text-truncate"
-                th:text="${food.name != null ? food.name : 'Tên món ăn'}"
-                th:title="${food.name != null ? food.name : 'Tên món ăn'}">Tên món ăn</h6>
+            <a th:href="@{/foods/{id}(id=${food.id})}" class="text-decoration-none text-dark">
+                <h6 class="card-title fw-bold text-dark mb-1 text-truncate"
+                    th:text="${food.name != null ? food.name : 'Tên món ăn'}"
+                    th:title="${food.name != null ? food.name : 'Tên món ăn'}">Tên món ăn</h6>
+            </a>
             <p class="card-text text-muted fs-8 mb-2 text-truncate"
                 th:text="${food.address != null ? food.address : 'Địa chỉ quán'}"
                 th:title="${food.address != null ? food.address : 'Địa chỉ quán'}"><i

@@ -1,9 +1,18 @@
 -- Active: 1786245195103@@127.0.0.1@3306@meal_choice
-DROP DATABASE IF EXISTS meal_choice;
-
-CREATE DATABASE meal_choice;
-
-USE meal_choice;
+-- Dọn dẹp các bảng cũ nếu đã tồn tại để tránh lỗi trùng lặp khi chạy lại schema
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS merchant_likes;
+DROP TABLE IF EXISTS food_likes;
+DROP TABLE IF EXISTS food_images;
+DROP TABLE IF EXISTS foods;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS merchant_addresses;
+DROP TABLE IF EXISTS merchants;
+DROP TABLE IF EXISTS addresses;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS roles;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ====================================================================
 -- 1. TẠO CÁC BẢNG (DDL SCHEMA)
@@ -107,6 +116,24 @@ CREATE TABLE food_images (
     image_url VARCHAR(500) NOT NULL,
     food_id BIGINT NOT NULL,
     FOREIGN KEY (food_id) REFERENCES foods (id) ON DELETE CASCADE
+);
+
+-- Food Likes (Lượt thích món ăn)
+CREATE TABLE food_likes (
+    user_id VARCHAR(36) NOT NULL,
+    food_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, food_id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (food_id) REFERENCES foods (id) ON DELETE CASCADE
+);
+
+-- Merchant Likes (Lượt thích quán ăn)
+CREATE TABLE merchant_likes (
+    user_id VARCHAR(36) NOT NULL,
+    merchant_id VARCHAR(36) NOT NULL,
+    PRIMARY KEY (user_id, merchant_id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE CASCADE
 );
 
 -- ====================================================================
@@ -458,7 +485,6 @@ INSERT INTO
         category_id
     )
 VALUES
-    -- Món Cơm trưa (Category 1)
     (
         1,
         'Cơm Tấm Sườn Bì Chả Trứng Ốp La',
@@ -523,8 +549,6 @@ VALUES
         '10000000-0000-0000-0000-000000000002',
         1
     ),
-
--- Món Phở & Bún (Category 2)
 (
     5,
     'Phở Bò Tái Nạm Gầu Bắp Bò',
@@ -589,8 +613,6 @@ VALUES
     '10000000-0000-0000-0000-000000000005',
     2
 ),
-
--- Pizza & Pasta (Category 3)
 (
     9,
     'Pizza Hải Sản Pesto Xanh Tươi Độc Quyền',
@@ -655,8 +677,6 @@ VALUES
     '10000000-0000-0000-0000-000000000003',
     3
 ),
-
--- Gà Rán & Burger (Category 4)
 (
     13,
     'Combo Gà Rán Giòn Cay 4 Miếng Kèm Khoai',
@@ -721,8 +741,6 @@ VALUES
     '10000000-0000-0000-0000-000000000002',
     4
 ),
-
--- Món Nhật & Sushi (Category 5)
 (
     17,
     'Set Sushi Sashimi Cá Hồi Thượng Hạng',
@@ -787,8 +805,6 @@ VALUES
     '10000000-0000-0000-0000-000000000003',
     5
 ),
-
--- Trà Sữa & Đồ Uống (Category 7)
 (
     21,
     'Trà Sữa Oolong Nướng Trân Châu Hoàng Kim',
@@ -853,8 +869,6 @@ VALUES
     '10000000-0000-0000-0000-000000000004',
     7
 ),
-
--- Bánh Mì & Healthy Salad (Categories 8 & 9)
 (
     25,
     'Bánh Mì Heo Quay Giòn Bì Kèm Dưa Leo',
@@ -919,8 +933,6 @@ VALUES
     '10000000-0000-0000-0000-000000000003',
     9
 ),
-
--- Lẩu & Món Hàn (Categories 6 & 10)
 (
     29,
     'Combo Lẩu Thái Tomyum Hải Sản 2 Người',
@@ -992,7 +1004,6 @@ VALUES
 INSERT INTO
     food_images (id, image_url, food_id)
 VALUES
-    -- Món 1 (Cơm Tấm)
     (
         1,
         'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80',
@@ -1003,8 +1014,6 @@ VALUES
         'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&auto=format&fit=crop&q=80',
         1
     ),
-
--- Món 2 (Cơm Sườn Cây)
 (
     3,
     'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&auto=format&fit=crop&q=80',
@@ -1015,8 +1024,6 @@ VALUES
     'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80',
     2
 ),
-
--- Món 3 (Cơm Chiên)
 (
     5,
     'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=600&auto=format&fit=crop&q=80',
@@ -1027,8 +1034,6 @@ VALUES
     'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&auto=format&fit=crop&q=80',
     3
 ),
-
--- Món 4 (Cơm Bò Xào)
 (
     7,
     'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80',
@@ -1039,8 +1044,6 @@ VALUES
     'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80',
     4
 ),
-
--- Món 5 (Phở Bò)
 (
     9,
     'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=600&auto=format&fit=crop&q=80',
@@ -1051,8 +1054,6 @@ VALUES
     'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&auto=format&fit=crop&q=80',
     5
 ),
-
--- Món 6 (Phở Gà)
 (
     11,
     'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&auto=format&fit=crop&q=80',
@@ -1063,8 +1064,6 @@ VALUES
     'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=600&auto=format&fit=crop&q=80',
     6
 ),
-
--- Món 7 (Bún Chả)
 (
     13,
     'https://images.unsplash.com/photo-1559847844-5315695dadae?w=600&auto=format&fit=crop&q=80',
@@ -1075,8 +1074,6 @@ VALUES
     'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80',
     7
 ),
-
--- Món 8 (Bún Bò)
 (
     15,
     'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80',
@@ -1087,8 +1084,6 @@ VALUES
     'https://images.unsplash.com/photo-1559847844-5315695dadae?w=600&auto=format&fit=crop&q=80',
     8
 ),
-
--- Món 9 (Pizza Hải Sản)
 (
     17,
     'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80',
@@ -1099,8 +1094,6 @@ VALUES
     'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&auto=format&fit=crop&q=80',
     9
 ),
-
--- Món 10 (Pizza Bò)
 (
     19,
     'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&auto=format&fit=crop&q=80',
@@ -1111,8 +1104,6 @@ VALUES
     'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80',
     10
 ),
-
--- Món 11 (Mì Ý Bò Băm)
 (
     21,
     'https://images.unsplash.com/photo-1621996346565-e3d5d6281691?w=600&auto=format&fit=crop&q=80',
@@ -1123,8 +1114,6 @@ VALUES
     'https://images.unsplash.com/photo-1608897013039-887f21d8c804?w=600&auto=format&fit=crop&q=80',
     11
 ),
-
--- Món 12 (Mì Ý Sốt Kem)
 (
     23,
     'https://images.unsplash.com/photo-1608897013039-887f21d8c804?w=600&auto=format&fit=crop&q=80',
@@ -1135,8 +1124,6 @@ VALUES
     'https://images.unsplash.com/photo-1621996346565-e3d5d6281691?w=600&auto=format&fit=crop&q=80',
     12
 ),
-
--- Món 13 (Gà Rán 4 Miếng)
 (
     25,
     'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&auto=format&fit=crop&q=80',
@@ -1147,8 +1134,6 @@ VALUES
     'https://images.unsplash.com/photo-1562967914-608f82629710?w=600&auto=format&fit=crop&q=80',
     13
 ),
-
--- Món 14 (Burger Bò)
 (
     27,
     'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80',
@@ -1159,8 +1144,6 @@ VALUES
     'https://images.unsplash.com/photo-1550547660-d9450f859349?w=600&auto=format&fit=crop&q=80',
     14
 ),
-
--- Món 15 (Gà Popcorn)
 (
     29,
     'https://images.unsplash.com/photo-1562967914-608f82629710?w=600&auto=format&fit=crop&q=80',
@@ -1171,8 +1154,6 @@ VALUES
     'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&auto=format&fit=crop&q=80',
     15
 ),
-
--- Món 16 (Burger Tôm)
 (
     31,
     'https://images.unsplash.com/photo-1550547660-d9450f859349?w=600&auto=format&fit=crop&q=80',
@@ -1183,8 +1164,6 @@ VALUES
     'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80',
     16
 ),
-
--- Món 17 (Sushi Sashimi)
 (
     33,
     'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=600&auto=format&fit=crop&q=80',
@@ -1195,8 +1174,6 @@ VALUES
     'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=600&auto=format&fit=crop&q=80',
     17
 ),
-
--- Món 18 (Cơm Lươn)
 (
     35,
     'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=600&auto=format&fit=crop&q=80',
@@ -1207,8 +1184,6 @@ VALUES
     'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=600&auto=format&fit=crop&q=80',
     18
 ),
-
--- Món 19 (Mì Ramen)
 (
     37,
     'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&auto=format&fit=crop&q=80',
@@ -1219,8 +1194,6 @@ VALUES
     'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80',
     19
 ),
-
--- Món 20 (Cơm Bò Wagyu)
 (
     39,
     'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80',
@@ -1231,8 +1204,6 @@ VALUES
     'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&auto=format&fit=crop&q=80',
     20
 ),
-
--- Món 21 (Trà Sữa Oolong)
 (
     41,
     'https://images.unsplash.com/photo-1558857563-b371033873b8?w=600&auto=format&fit=crop&q=80',
@@ -1243,8 +1214,6 @@ VALUES
     'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600&auto=format&fit=crop&q=80',
     21
 ),
-
--- Món 22 (Trà Đào Cam Sả)
 (
     43,
     'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600&auto=format&fit=crop&q=80',
@@ -1255,8 +1224,6 @@ VALUES
     'https://images.unsplash.com/photo-1558857563-b371033873b8?w=600&auto=format&fit=crop&q=80',
     22
 ),
-
--- Món 23 (Sữa Tươi Đường Đen)
 (
     45,
     'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80',
@@ -1267,8 +1234,6 @@ VALUES
     'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&auto=format&fit=crop&q=80',
     23
 ),
-
--- Món 24 (Cà Phê Muối)
 (
     47,
     'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&auto=format&fit=crop&q=80',
@@ -1279,8 +1244,6 @@ VALUES
     'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80',
     24
 ),
-
--- Món 25 (Bánh Mì Heo Quay)
 (
     49,
     'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80',
@@ -1291,8 +1254,6 @@ VALUES
     'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&auto=format&fit=crop&q=80',
     25
 ),
-
--- Món 26 (Bánh Mì Chảo)
 (
     51,
     'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&auto=format&fit=crop&q=80',
@@ -1303,8 +1264,6 @@ VALUES
     'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80',
     26
 ),
-
--- Món 27 (Salad Ức Gà)
 (
     53,
     'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
@@ -1315,8 +1274,6 @@ VALUES
     'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
     27
 ),
-
--- Món 28 (Salad Bò Úc)
 (
     55,
     'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
@@ -1327,8 +1284,6 @@ VALUES
     'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
     28
 ),
-
--- Món 29 (Lẩu Thái Tomyum)
 (
     57,
     'https://images.unsplash.com/photo-1547928576-a4a33237cbc3?w=600&auto=format&fit=crop&q=80',
@@ -1339,8 +1294,6 @@ VALUES
     'https://images.unsplash.com/photo-1553163147-622ab57be1c7?w=600&auto=format&fit=crop&q=80',
     29
 ),
-
--- Món 30 (Cơm Trộn Bibimbap)
 (
     59,
     'https://images.unsplash.com/photo-1553163147-622ab57be1c7?w=600&auto=format&fit=crop&q=80',
@@ -1351,8 +1304,6 @@ VALUES
     'https://images.unsplash.com/photo-1547928576-a4a33237cbc3?w=600&auto=format&fit=crop&q=80',
     30
 ),
-
--- Món 31 (Gà Sốt Cay)
 (
     61,
     'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&auto=format&fit=crop&q=80',
@@ -1363,8 +1314,6 @@ VALUES
     'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=600&auto=format&fit=crop&q=80',
     31
 ),
-
--- Món 32 (Mì Cay)
 (
     63,
     'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=600&auto=format&fit=crop&q=80',
@@ -1375,3 +1324,44 @@ VALUES
     'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&auto=format&fit=crop&q=80',
     32
 );
+
+-- ====================================================================
+-- 4. THÊM LƯỢT THÍCH MÓN ĂN VÀ QUÁN ĂN MẪU (food_likes, merchant_likes)
+-- ====================================================================
+INSERT INTO food_likes (user_id, food_id) VALUES
+('00000000-0000-0000-0000-000000000002', 1),
+('00000000-0000-0000-0000-000000000002', 3),
+('00000000-0000-0000-0000-000000000002', 5),
+('00000000-0000-0000-0000-000000000002', 9),
+('00000000-0000-0000-0000-000000000002', 13),
+('00000000-0000-0000-0000-000000000002', 21),
+('00000000-0000-0000-0000-000000000003', 1),
+('00000000-0000-0000-0000-000000000003', 2),
+('00000000-0000-0000-0000-000000000003', 5),
+('00000000-0000-0000-0000-000000000003', 10),
+('00000000-0000-0000-0000-000000000003', 13),
+('00000000-0000-0000-0000-000000000003', 17),
+('00000000-0000-0000-0000-000000000003', 21),
+('00000000-0000-0000-0000-000000000004', 1),
+('00000000-0000-0000-0000-000000000004', 5),
+('00000000-0000-0000-0000-000000000004', 9),
+('00000000-0000-0000-0000-000000000004', 21),
+('00000000-0000-0000-0000-000000000005', 1),
+('00000000-0000-0000-0000-000000000005', 3),
+('00000000-0000-0000-0000-000000000005', 13),
+('00000000-0000-0000-0000-000000000005', 25);
+
+INSERT INTO merchant_likes (user_id, merchant_id) VALUES
+('00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001'),
+('00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001'),
+('00000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000001'),
+('00000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000001'),
+('00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002'),
+('00000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000002'),
+('00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003'),
+('00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003'),
+('00000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003'),
+('00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000004'),
+('00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000005'),
+('00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000005'),
+('00000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000005');
