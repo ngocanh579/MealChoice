@@ -1,7 +1,10 @@
 package vn.codegyme.meal_choice.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "foods")
@@ -53,6 +56,11 @@ public class Food {
     private Category category;
 
     @Builder.Default
+    @OneToMany(mappedBy = "food", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Size(max = 10, message = "Một món ăn chỉ có thể có tối đa 10 hình ảnh")
+    private List<FoodImage> foodImages = new ArrayList<>();
+
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean active = true;
 
@@ -66,6 +74,17 @@ public class Food {
 
     public void setIsActive(Boolean active) {
         this.active = active;
+    }
+
+    // Trả về ảnh có ID bé nhất từ danh sách foodImages, nếu trống thì trả về imageUrl gốc
+    public String getImageUrl() {
+        if (foodImages != null && !foodImages.isEmpty()) {
+            return foodImages.stream()
+                    .min(java.util.Comparator.comparing(FoodImage::getId))
+                    .map(FoodImage::getImageUrl)
+                    .orElse(imageUrl);
+        }
+        return imageUrl;
     }
 
     // Helper: Định dạng giá gốc (ví dụ: 65.000 đ) an toàn chống Exception
