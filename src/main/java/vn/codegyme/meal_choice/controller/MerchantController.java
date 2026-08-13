@@ -71,6 +71,7 @@ public class MerchantController {
 
                         response.put("registered", false);
                         response.put("status", null);
+                        response.put("rejectionReason", null);
 
                 } else {
 
@@ -78,6 +79,9 @@ public class MerchantController {
                         response.put(
                                 "status",
                                 merchant.getMerchantStatus().name());
+                        response.put(
+                                "rejectionReason",
+                                merchant.getRejectReason());
                 }
 
                 return ResponseEntity.ok(response);
