@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static com.sun.org.apache.xml.internal.serializer.Method.TEXT;
+
 @Entity
 @Table(name = "merchants")
 @Getter
@@ -74,4 +76,7 @@ public class Merchant {
             orphanRemoval = true
     )
     private List<MerchantAddress> addresses = new ArrayList<>();
+
+    @Column(columnDefinition = TEXT)
+    private String rejectReason;
 }
