@@ -47,6 +47,7 @@ public class SecurityConfig {
                                 "/home",
                                 "/login",
                                 "/register",
+                                "/activate",
                                 "/api/auth/**",
                                 "/css/**",
                                 "/js/**",
