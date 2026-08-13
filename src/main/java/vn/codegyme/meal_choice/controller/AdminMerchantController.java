@@ -66,12 +66,6 @@ public class AdminMerchantController {
 
     // Khóa /lý do khóa/ mở khóa/
     @PostMapping("/{id}/toggle-lock")
-<<<<<<< HEAD
-    public String toggleLock(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
-
-        adminService.toggleMerchantLockStatus(id);
-        redirectAttributes.addFlashAttribute("message", "Đã cập nhật trạng thái khóa merchant.");
-=======
     public String toggleLock(
             @PathVariable UUID id,
             @RequestParam(required = false) String lockReason,
@@ -96,7 +90,6 @@ public class AdminMerchantController {
                     e.getMessage()
             );
         }
->>>>>>> truong
 
         return "redirect:/admin/merchants";
     }

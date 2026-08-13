@@ -80,15 +80,13 @@ public class Merchant {
     )
     private List<MerchantAddress> addresses = new ArrayList<>();
 
-<<<<<<< HEAD
     @Column()
     private String rejectReason;
-=======
     @OneToMany(
             mappedBy = "merchant",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<Food> foods = new ArrayList<>();
->>>>>>> truong
+
 }
