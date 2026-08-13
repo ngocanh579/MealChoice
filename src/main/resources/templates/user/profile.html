@@ -159,25 +159,30 @@
                     <h6 class="fw-bold text-danger my-3"><i class="bi bi-pin-map me-2"></i>Địa chỉ</h6>
 
                     <div class="row g-2 mb-3">
-                        <div class="col-6">
+                        <div class="col-4">
                             <label for="city" class="form-label small fw-semibold">
                                 Tỉnh/Thành phố <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control rounded-3" id="city" name="city" required placeholder="Ví dụ: Hồ Chí Minh">
+                            <select class="form-select rounded-3" id="city" name="city" required>
+                                <option value="" selected disabled>Tỉnh/Thành phố</option>
+                            </select>
                         </div>
-                        <div class="col-6">
+                        <div class="col-4">
                             <label for="district" class="form-label small fw-semibold">
                                 Quận/Huyện <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control rounded-3" id="district" name="district" required placeholder="Ví dụ: Quận 1">
+                            <select class="form-select rounded-3" id="district" name="district" required disabled>
+                                <option value="" selected disabled>Quận/Huyện</option>
+                            </select>
                         </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="ward" class="form-label small fw-semibold">
-                            Phường/Xã <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" class="form-control rounded-3" id="ward" name="ward" required placeholder="Ví dụ: Phường Bến Nghé">
+                        <div class="col-4">
+                            <label for="ward" class="form-label small fw-semibold">
+                                Phường/Xã <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select rounded-3" id="ward" name="ward" required disabled>
+                                <option value="" selected disabled>Phường/Xã</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -223,5 +228,61 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/user-profile.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const host = "https://provinces.open-api.vn/api/";
+        const citySelect = document.getElementById("city");
+        const districtSelect = document.getElementById("district");
+        const wardSelect = document.getElementById("ward");
+
+        fetch(host + "?depth=1")
+            .then(response => response.json())
+            .then(data => {
+                let options = '<option value="" selected disabled>Tỉnh/Thành phố</option>';
+                data.forEach(item => {
+                    options += `<option value="${item.name}" data-code="${item.code}">${item.name}</option>`;
+                });
+                citySelect.innerHTML = options;
+            });
+
+        citySelect.addEventListener("change", function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const code = selectedOption.getAttribute('data-code');
+            if(!code) return;
+            
+            districtSelect.disabled = false;
+            wardSelect.disabled = true;
+            wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
+            
+            fetch(host + "p/" + code + "?depth=2")
+                .then(response => response.json())
+                .then(data => {
+                    let options = '<option value="" selected disabled>Quận/Huyện</option>';
+                    data.districts.forEach(item => {
+                        options += `<option value="${item.name}" data-code="${item.code}">${item.name}</option>`;
+                    });
+                    districtSelect.innerHTML = options;
+                });
+        });
+
+        districtSelect.addEventListener("change", function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const code = selectedOption.getAttribute('data-code');
+            if(!code) return;
+
+            wardSelect.disabled = false;
+            
+            fetch(host + "d/" + code + "?depth=2")
+                .then(response => response.json())
+                .then(data => {
+                    let options = '<option value="" selected disabled>Phường/Xã</option>';
+                    data.wards.forEach(item => {
+                        options += `<option value="${item.name}" data-code="${item.code}">${item.name}</option>`;
+                    });
+                    wardSelect.innerHTML = options;
+                });
+        });
+    });
+</script>
 </body>
 </html>

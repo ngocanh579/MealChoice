@@ -32,26 +32,25 @@ public class AuthService {
     private static final long REFRESH_TOKEN_EXPIRATION_MS = 604800000L;
 
     @Transactional
-    public AuthResponse register(RegisterRequest registerRequest){
+    public AuthResponse register(RegisterRequest registerRequest) {
 
         // Check email if it exists
-        if (userRepository.existsByEmail(registerRequest.getEmail())){
+        if (userRepository.existsByEmail(registerRequest.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
         }
 
         // Check phone number if it exists
-        if (userRepository.existsByPhoneNumber(registerRequest.getPhoneNumber())){
+        if (userRepository.existsByPhoneNumber(registerRequest.getPhoneNumber())) {
             throw new RuntimeException("Số điện thoại đã tồn tại");
         }
 
         // Check duplicate password
-        if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())){
+        if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
             throw new RuntimeException("Mật khẩu xác nhận không khớp");
         }
 
         Role userRole = roleRepository.findByName(Role.RoleName.ROLE_USER)
                 .orElseThrow(() -> new RuntimeException("Role USER chưa được khởi tạo trong hệ thống"));
-
 
         // Create a new user with hash password
         User user = new User();
@@ -68,12 +67,12 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse login (LoginRequest loginRequest){
+    public AuthResponse login(LoginRequest loginRequest) {
 
         User user = userRepository.findByEmail(loginRequest.getEmail())
-            .orElseThrow(() -> new RuntimeException("Email hoặc mật khẩu không đúng"));
+                .orElseThrow(() -> new RuntimeException("Email hoặc mật khẩu không đúng"));
 
-        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new RuntimeException("Email hoặc mật khẩu không đúng");
         }
 
@@ -112,12 +111,11 @@ public class AuthService {
         response.setRoles(
                 user.getRoles().stream()
                         .map(role -> role.getName().name())
-                        .collect(Collectors.toSet())
-        );
+                        .collect(Collectors.toSet()));
         return response;
     }
 
-    private AuthResponse buildAuthResponse(User user){
+    private AuthResponse buildAuthResponse(User user) {
 
         String accessToken = jwtService.generateAccessToken(user.getEmail());
         String refreshTokenValue = jwtService.generateRefreshToken(user.getEmail());
@@ -141,8 +139,7 @@ public class AuthService {
         authResponse.setRoles(
                 user.getRoles().stream()
                         .map(role -> role.getName().name())
-                        .collect(Collectors.toSet())
-        );
+                        .collect(Collectors.toSet()));
 
         return authResponse;
     }

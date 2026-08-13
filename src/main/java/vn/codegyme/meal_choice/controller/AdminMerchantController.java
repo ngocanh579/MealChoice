@@ -1,80 +1,134 @@
 package vn.codegyme.meal_choice.controller;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import vn.codegyme.meal_choice.dto.*;
-import vn.codegyme.meal_choice.service.AdminMerchantManagementService;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import vn.codegyme.meal_choice.entity.MerchantStatus;
+import vn.codegyme.meal_choice.service.AdminService;
 
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-@RestController
-@RequestMapping("/api/admin/merchants")
-@RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@Controller
+@RequestMapping("/admin/merchants")
 public class AdminMerchantController {
 
-    private final AdminMerchantManagementService adminMerchantService;
+    private final AdminService adminService;
 
+    public AdminMerchantController(AdminService adminService) {
+        this.adminService = adminService;
+    }
+
+    // Danh sách merchant
     @GetMapping
-    public ResponseEntity<Map<String, Object>> list(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword
-    ) {
-        List<AdminMerchantResponse> merchants = adminMerchantService.findAll(status, keyword);
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Lấy danh sách merchant thành công",
-                "data", merchants
-        ));
+    public String showMerchantList(
+            @RequestParam(required = false) MerchantStatus status,
+            Model model) {
+
+        model.addAttribute(
+                "merchants",
+                status == null
+                        ? adminService.getAllMerchants()
+                        : adminService.getMerchantsByStatus(status)
+        );
+
+        model.addAttribute("selectedStatus", status);
+
+        return "admin/merchant/list";
+    }
+// Xem chi tiết merchant
+    @GetMapping("/{id}")
+    public String showMerchantDetail(
+            @PathVariable UUID id,
+            Model model) {
+
+        model.addAttribute(
+                "merchant",
+                adminService.getMerchantById(id)
+        );
+
+        return "admin/merchant/detail";
     }
 
-    @GetMapping("/{merchantId}")
-    public ResponseEntity<Map<String, Object>> detail(@PathVariable UUID merchantId) {
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Lấy chi tiết merchant thành công",
-                "data", adminMerchantService.findById(merchantId)
-        ));
+    // Duyệt
+    @PostMapping("/{id}/approve")
+    public String approve(
+            @PathVariable UUID id,
+            RedirectAttributes redirectAttributes) {
+
+        adminService.approveMerchant(id);
+        redirectAttributes.addFlashAttribute(
+                "message",
+                "Đã duyệt đăng ký merchant."
+        );
+
+        return "redirect:/admin/merchants";
     }
 
-    @PatchMapping("/{merchantId}/decision")
-    public ResponseEntity<Map<String, Object>> decide(
-            @PathVariable UUID merchantId,
-            @Valid @RequestBody MerchantDecisionRequest request
-    ) {
-        return success("Đã cập nhật quyết định xét duyệt", adminMerchantService.decide(merchantId, request));
+    // Từ chối
+    @PostMapping("/{id}/reject")
+    public String reject(
+            @PathVariable UUID id,
+            RedirectAttributes redirectAttributes) {
+
+        adminService.rejectMerchant(id);
+        redirectAttributes.addFlashAttribute(
+                "message",
+                "Đã từ chối đăng ký merchant."
+        );
+
+        return "redirect:/admin/merchants";
     }
 
-    @PatchMapping("/{merchantId}/lock")
-    public ResponseEntity<Map<String, Object>> lock(
-            @PathVariable UUID merchantId,
-            @Valid @RequestBody MerchantLockRequest request
-    ) {
-        String message = request.locked() ? "Đã khóa merchant" : "Đã mở khóa merchant";
-        return success(message, adminMerchantService.setLocked(merchantId, request.locked()));
+    // Khóa / mở khóa
+    @PostMapping("/{id}/toggle-lock")
+    public String toggleLock(
+            @PathVariable UUID id,
+            RedirectAttributes redirectAttributes) {
+
+        adminService.toggleMerchantLockStatus(id);
+        redirectAttributes.addFlashAttribute(
+                "message",
+                "Đã cập nhật trạng thái khóa merchant."
+        );
+
+        return "redirect:/admin/merchants";
     }
 
-    @PatchMapping("/{merchantId}/loyal-partner")
-    public ResponseEntity<Map<String, Object>> loyalPartner(
-            @PathVariable UUID merchantId,
-            @Valid @RequestBody LoyalPartnerRequest request
-    ) {
-        String message = request.approved()
-                ? "Đã duyệt đối tác thân thiết"
-                : "Đã hủy trạng thái đối tác thân thiết";
-        return success(message, adminMerchantService.setLoyalPartner(merchantId, request.approved()));
+    // Duyệt đối tác thân thiết
+    @PostMapping("/{id}/trusted-partner")
+    public String approveTrustedPartner(
+            @PathVariable UUID id,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            adminService.approveTrustedPartner(id);
+            redirectAttributes.addFlashAttribute(
+                    "message",
+                    "Đã duyệt đối tác thân thiết."
+            );
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
+        }
+
+        return "redirect:/admin/merchants";
     }
 
-    private ResponseEntity<Map<String, Object>> success(String message, AdminMerchantResponse merchant) {
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", message,
-                "data", merchant
-        ));
+    // Bỏ đối tác thân thiết
+    @PostMapping("/{id}/trusted-partner/remove")
+    public String removeTrustedPartner(
+            @PathVariable UUID id,
+            RedirectAttributes redirectAttributes) {
+
+        adminService.removeTrustedPartner(id);
+        redirectAttributes.addFlashAttribute(
+                "message",
+                "Đã bỏ trạng thái đối tác thân thiết."
+        );
+
+        return "redirect:/admin/merchants";
     }
 }
