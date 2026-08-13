@@ -47,6 +47,37 @@
                                 data-bs-dismiss="alert"></button>
                     </div>
 
+                    <!-- Thông báo lý do từ chối từ Admin -->
+                    <div id="rejectionAlert"
+                         class="alert alert-warning alert-dismissible fade show d-none"
+                         role="alert">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-exclamation-triangle-fill text-warning me-2 mt-1"></i>
+                            <div>
+                                <strong>Yêu cầu đăng ký của bạn đã bị từ chối.</strong>
+                                <div class="mt-1" id="rejectionReasonText"></div>
+                                <small class="text-muted mt-1 d-block">
+                                    Bạn có thể chỉnh sửa thông tin và gửi lại yêu cầu đăng ký bên dưới.
+                                </small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Thông báo đang chờ duyệt -->
+                    <div id="pendingAlert"
+                         class="alert alert-info alert-dismissible fade show d-none"
+                         role="alert">
+                        <div class="d-flex align-items-center">
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <div>
+                                <strong>Yêu cầu đang chờ Admin phê duyệt.</strong>
+                                <div class="small text-muted mt-1">Vui lòng chờ, chúng tôi sẽ thông báo khi có kết quả.</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
                     <form id="merchantRegisterForm" novalidate>
 
                         <h5 class="fw-bold mb-3">
@@ -563,6 +594,44 @@
                     'Đăng ký Merchant';
             }
         });
+    // Kiểm tra trạng thái merchant khi vào trang
+    (async function checkMerchantStatus() {
+        try {
+            const res = await fetch("/api/merchants/my-status");
+            if (!res.ok) return; // Chưa đăng nhập hoặc lỗi khác, bỏ qua
+
+            const data = await res.json();
+
+            if (!data.registered) return; // Chưa đăng ký, hiện form bình thường
+
+            const status = data.status;
+
+            if (status === "REJECTED") {
+                // Hiện lý do từ chối
+                const reason = data.rejectionReason
+                    ? data.rejectionReason
+                    : "Admin không để lại lý do cụ thể.";
+                document.getElementById("rejectionReasonText").textContent =
+                    "Lý do: " + reason;
+                document.getElementById("rejectionAlert").classList.remove("d-none");
+                document.getElementById("rejectionAlert").scrollIntoView({
+                    behavior: "smooth", block: "center"
+                });
+
+            } else if (status === "PENDING") {
+                // Hiện thông báo đang chờ duyệt
+                document.getElementById("pendingAlert").classList.remove("d-none");
+                // Ẩn form đăng ký để tránh nộp lại
+                document.getElementById("merchantRegisterForm").style.display = "none";
+
+            } else if (status === "APPROVED") {
+                // Đã được duyệt, chuyển về trang profile
+                window.location.href = "/merchant/profile";
+            }
+        } catch (e) {
+            // Không có session / lỗi network: bỏ qua, hiện form bình thường
+        }
+    })();
 </script>
 
 </body>
