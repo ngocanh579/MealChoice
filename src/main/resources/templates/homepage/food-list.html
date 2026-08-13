@@ -18,7 +18,9 @@
         <!-- Foods Grid (30 Items / Page) -->
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="allFoodsGrid">
             <th:block th:if="${foodPage != null and !foodPage.isEmpty()}">
-                <div th:replace="~{homepage/food-card-item :: foodCard(food=${food})}"></div>
+                <th:block th:each="food : ${foodPage.content}">
+                    <div th:replace="~{homepage/food-card-item :: foodCard(food=${food})}"></div>
+                </th:block>
             </th:block>
             <div th:if="${foodPage == null or foodPage.isEmpty()}" class="col-12 text-center py-5 text-muted">
                 <i class="bi bi-egg-fried fs-1 d-block mb-2 text-secondary"></i>

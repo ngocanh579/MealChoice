@@ -21,9 +21,9 @@
         <!-- Foods Grid (8 Items - 4 Cột x 2 Hàng) -->
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
             <th:block th:if="${suggestedFoods != null and !#lists.isEmpty(suggestedFoods)}">
-                <div class="col" th:each="food : ${suggestedFoods}" th:if="${food != null}">
+                <th:block th:each="food : ${suggestedFoods}">
                     <div th:replace="~{homepage/food-card-item :: foodCard(food=${food})}"></div>
-                </div>
+                </th:block>
             </th:block>
 
             <div th:if="${suggestedFoods == null or #lists.isEmpty(suggestedFoods)}" class="col-12 text-center py-5 text-muted">

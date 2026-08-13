@@ -66,7 +66,9 @@
             <!-- Food Grid (50 Items / Page) -->
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="foodResultsGrid">
                 <th:block th:if="${foodPage != null and !foodPage.isEmpty()}">
-                    <div th:replace="~{homepage/food-card-item :: foodCard(food=${food})}"></div>
+                    <th:block th:each="food : ${foodPage.content}">
+                        <div th:replace="~{homepage/food-card-item :: foodCard(food=${food})}"></div>
+                    </th:block>
                 </th:block>
 
                 <!-- Empty State -->

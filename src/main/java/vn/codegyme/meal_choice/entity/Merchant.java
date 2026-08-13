@@ -12,6 +12,8 @@ import org.hibernate.type.SqlTypes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 @Table(name = "merchants")
@@ -74,4 +76,12 @@ public class Merchant {
             orphanRemoval = true
     )
     private List<MerchantAddress> addresses = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "merchant_likes",
+        joinColumns = @JoinColumn(name = "merchant_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> likedByUsers = new HashSet<>();
 }
