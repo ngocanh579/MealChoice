@@ -22,6 +22,9 @@ public class Category {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
+    @Transient
+    private String imageUrl;
+
     public Category(String name) {
         this.name = name;
     }

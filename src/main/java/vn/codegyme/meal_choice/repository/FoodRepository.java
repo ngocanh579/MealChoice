@@ -10,6 +10,7 @@ import vn.codegyme.meal_choice.entity.Food;
 
 import java.util.UUID;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FoodRepository extends JpaRepository<Food, Long> {
@@ -57,4 +58,8 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     // 11. Lấy danh sách ID món ăn mà một User (dựa trên userId) đã thích
     @Query("SELECT f.id FROM Food f JOIN f.likedByUsers u WHERE u.id = :userId")
     List<Long> findLikedFoodIdsByUserId(@Param("userId") UUID userId);
+
+    // 12. Lấy món ăn mới nhất thuộc một danh mục cụ thể
+    @Query("SELECT f FROM Food f WHERE f.active = true AND f.category.id = :categoryId ORDER BY f.id DESC LIMIT 1")
+    Optional<Food> findLatestFoodByCategoryId(@Param("categoryId") Long categoryId);
 }

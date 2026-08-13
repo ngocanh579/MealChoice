@@ -26,7 +26,9 @@ import vn.codegyme.meal_choice.security.CustomUserDetails;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,6 +42,44 @@ public class PageController {
     private final FoodRepository foodRepository;
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
+
+    // Helper nạp ảnh đại diện cho từng Category (Ảnh có ID bé nhất của món ăn mới nhất thuộc Category)
+    private List<Category> getCategoriesWithLatestFoodImage() {
+        List<Category> categories = categoryRepository.findAll();
+        if (categories == null || categories.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Lấy danh sách món ăn active gần nhất
+        Page<Food> activePage = foodRepository.findAllByIsActiveTrueOrderByIdDesc(PageRequest.of(0, 500));
+        List<Food> allActiveFoods = activePage != null ? activePage.getContent() : Collections.emptyList();
+
+        // Nhóm món ăn mới nhất (ID lớn nhất) theo Category ID
+        Map<Long, Food> latestFoodByCategory = new HashMap<>();
+        for (Food food : allActiveFoods) {
+            if (food.getCategory() != null && food.getCategory().getId() != null) {
+                latestFoodByCategory.putIfAbsent(food.getCategory().getId(), food);
+            }
+        }
+
+        for (Category cat : categories) {
+            Food latestFood = latestFoodByCategory.get(cat.getId());
+            if (latestFood == null) {
+                Optional<Food> foodOpt = foodRepository.findLatestFoodByCategoryId(cat.getId());
+                if (foodOpt.isPresent()) {
+                    latestFood = foodOpt.get();
+                }
+            }
+
+            if (latestFood != null) {
+                cat.setImageUrl(latestFood.getImageUrl());
+            } else {
+                cat.setImageUrl("https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=80");
+            }
+        }
+
+        return categories;
+    }
 
     // Helper lấy địa chỉ khu vực của user hiện tại
     private String getUserLocation(Authentication authentication) {
@@ -91,8 +131,8 @@ public class PageController {
                            Model model) {
         try {
             addLikeStatusToModel(authentication, model);
-            // 1. Danh sách Category
-            List<Category> categories = categoryRepository.findAll();
+            // 1. Danh sách Category (với ảnh của món mới nhất thuộc danh mục)
+            List<Category> categories = getCategoriesWithLatestFoodImage();
             model.addAttribute("categories", categories != null ? categories : Collections.emptyList());
 
             // Lấy danh sách thức ăn active để xử lý
@@ -176,7 +216,7 @@ public class PageController {
         }
 
         model.addAttribute("foodPage", foodPage);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", getCategoriesWithLatestFoodImage());
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("currentUrl", "/search");
         model.addAttribute("pageTitle", "Kết Quả Tìm Kiếm");
@@ -218,7 +258,7 @@ public class PageController {
         }
 
         model.addAttribute("foodPage", foodPage);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", getCategoriesWithLatestFoodImage());
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("currentUrl", "/restaurants/near-you");
         model.addAttribute("pageTitle", "Món Ngon Gần Bạn");
@@ -254,7 +294,7 @@ public class PageController {
         }
 
         model.addAttribute("foodPage", foodPage);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", getCategoriesWithLatestFoodImage());
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("currentUrl", "/restaurants/popular");
         model.addAttribute("pageTitle", "Món Ăn Nổi Bật & Bán Chạy");
@@ -284,7 +324,7 @@ public class PageController {
         }
 
         model.addAttribute("foodPage", foodPage);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", getCategoriesWithLatestFoodImage());
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("currentUrl", "/restaurants/top-discounts");
         model.addAttribute("pageTitle", "Siêu Ưu Đãi Giảm Giá Lên Đến 50%");
@@ -312,7 +352,7 @@ public class PageController {
         }
 
         model.addAttribute("foodPage", foodPage);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", getCategoriesWithLatestFoodImage());
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("currentUrl", "/restaurants/new");
         model.addAttribute("pageTitle", "Quán Ăn & Nhà Hàng Mới");
