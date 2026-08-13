@@ -15,7 +15,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
-
 import vn.codegyme.meal_choice.security.JwtAuthFilter;
 import vn.codegyme.meal_choice.security.MerchantBlockedFilter;
 
@@ -56,6 +55,7 @@ public class SecurityConfig {
                         )
                         .permitAll()
 
+                        // Public (Xem trang chủ, tìm kiếm, nhà hàng, món ăn, danh mục, auth, static files)
 
                         // =====================================
                         // PUBLIC
@@ -63,6 +63,13 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/home",
+                                "/search/**",
+                                "/restaurants/**",
+                                "/food/**",
+                                "/foods/**",
+                                "/categories/**",
+                                "/api/foods/**",
+                                "/api/categories/**",
                                 "/login",
                                 "/register",
                                 "/activate",
@@ -74,6 +81,8 @@ public class SecurityConfig {
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
+                                "/favicon.ico",
+                                "/error",
                                 "/favicon.ico"
                         )
                         .permitAll()

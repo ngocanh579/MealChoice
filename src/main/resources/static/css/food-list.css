@@ -1,0 +1,71 @@
+/* ====================================================================
+   MEALCHOICE - FOOD LIST & SEARCH STYLESHEET
+   ==================================================================== */
+:root {
+    --primary-brand: #ff385c;
+    --primary-hover: #e02447;
+    --secondary-brand: #2b2d42;
+    --bg-light: #f8f9fa;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: #2b2d42;
+}
+
+main {
+    flex: 1;
+}
+
+.fs-7 { font-size: 0.875rem; }
+.fs-8 { font-size: 0.8rem; }
+.fs-9 { font-size: 0.725rem; }
+.letter-spacing { letter-spacing: 0.5px; }
+
+/* Card & Button Hover Animations */
+.transition-hover {
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+}
+.transition-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Food Cards */
+.food-card {
+    background-color: #fff;
+    border-radius: 16px;
+}
+.food-card-img {
+    transition: transform 0.4s ease;
+}
+.food-card:hover .food-card-img {
+    transform: scale(1.05);
+}
+.btn-wishlist {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+}
+
+/* Category Filter Bar Horizontal Scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Pagination */
+.pagination .page-item.active .page-link {
+    background-color: var(--primary-brand);
+    border-color: var(--primary-brand);
+    color: #fff;
+}
+.pagination .page-link {
+    color: #495057;
+}

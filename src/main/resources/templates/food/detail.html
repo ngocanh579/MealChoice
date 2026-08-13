@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${food.name} + ' - Chi tiết món ăn | MealChoice'">Chi Tiết Món Ăn - MealChoice</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Homepage Custom CSS (Để dùng các style card chung) -->
+    <link rel="stylesheet" th:href="@{/css/homepage.css}">
+    
+    <style>
+        /* Custom Premium styling for Detail Page */
+        .btn-wishlist-detail:hover {
+            background-color: #fff0f2 !important;
+            border-color: #ff4d6d !important;
+        }
+        .food-detail-carousel-img {
+            transition: all 0.5s ease;
+        }
+        .food-detail-carousel-img:hover {
+            transform: scale(1.02);
+        }
+        .border-dashed {
+            border-style: dashed !important;
+        }
+        .hover-shadow:hover {
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
+        }
+        /* Style adjustments for detail layout */
+        .carousel-indicators [data-bs-target] {
+            background-color: #ff4b2b;
+        }
+    </style>
+</head>
+
+<body class="bg-light" th:data-logged-in="${isLoggedIn}">
+
+    <!-- Include Navbar -->
+    <div th:replace="~{layout/navbar :: navbar}"></div>
+
+    <!-- Main Content -->
+    <main class="py-3">
+        <!-- 1. Mảnh thông tin cơ bản món ăn -->
+        <div th:replace="~{food/fragments/food-info :: foodInfo}"></div>
+
+
+
+        <!-- 3. Mảnh danh sách coupon -->
+        <div th:replace="~{food/fragments/coupon-list :: couponList}"></div>
+
+        <!-- 4. Mảnh gợi ý món dành riêng cho bạn -->
+        <div th:replace="~{food/fragments/recommended-foods :: recommendedFoods}"></div>
+
+        <!-- 5. Mảnh gợi ý mọi người cũng thích -->
+        <div th:replace="~{food/fragments/people-also-liked :: peopleAlsoLiked}"></div>
+    </main>
+
+    <!-- Include Footer -->
+    <div th:replace="~{layout/footer :: footer}"></div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script th:inline="javascript">
+        // Lấy danh sách ảnh chi tiết từ Model truyền qua
+        const detailImages = /*[[${foodImagesList}]]*/ [];
+        let currentDetailImageIndex = 0;
+
+        // Hàm đổi ảnh chính từ các ảnh nhỏ chi tiết (thumbnails)
+        function changeMainImage(el, src) {
+            const mainImg = document.getElementById('mainFoodImage');
+            if (mainImg) {
+                mainImg.style.opacity = '0';
+                setTimeout(() => {
+                    mainImg.src = src;
+                    mainImg.style.opacity = '1';
+                }, 200);
+            }
+            
+            // Cập nhật viền cho ảnh nhỏ đang chọn
+            const thumbs = document.querySelectorAll('.thumb-img-container');
+            thumbs.forEach((t, index) => {
+                t.classList.remove('border-danger');
+                t.classList.add('border-light');
+                if (t === el) {
+                    currentDetailImageIndex = index;
+                }
+            });
+            el.classList.remove('border-light');
+            el.classList.add('border-danger');
+        }
+
+        // Đổi ảnh bằng cách truyền index
+        function changeMainImageByIndex(index) {
+            if (!detailImages || detailImages.length === 0) return;
+            const thumbs = document.querySelectorAll('.thumb-img-container');
+            if (thumbs.length > index) {
+                changeMainImage(thumbs[index], detailImages[index]);
+            }
+        }
+
+        // Mũi tên qua trái
+        function prevDetailImage(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!detailImages || detailImages.length <= 1) return;
+            currentDetailImageIndex = (currentDetailImageIndex - 1 + detailImages.length) % detailImages.length;
+            changeMainImageByIndex(currentDetailImageIndex);
+        }
+
+        // Mũi tên qua phải
+        function nextDetailImage(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!detailImages || detailImages.length <= 1) return;
+            currentDetailImageIndex = (currentDetailImageIndex + 1) % detailImages.length;
+            changeMainImageByIndex(currentDetailImageIndex);
+        }
+    </script>
+</body>
+
+</html>

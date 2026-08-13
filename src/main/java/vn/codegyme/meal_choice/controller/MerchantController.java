@@ -21,6 +21,7 @@ import vn.codegyme.meal_choice.service.MerchantService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -54,26 +55,42 @@ public class MerchantController {
         public ResponseEntity<Map<String, Object>> getMyMerchantStatus(
                 Authentication authentication) {
 
-                String userEmail = authentication.getName();
-
-                User user = userRepository.findByEmail(userEmail)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Không tìm thấy tài khoản"));
-
                 Map<String, Object> response = new HashMap<>();
 
+                if (authentication == null || !authentication.isAuthenticated()
+                        || "anonymousUser".equals(authentication.getPrincipal())
+                        || "anonymousUser".equals(authentication.getName())) {
+                    response.put("registered", false);
+                    response.put("status", null);
+                    return ResponseEntity.ok(response);
+                }
+
+                String userEmail = authentication.getName();
+                Optional<User> userOpt = userRepository.findByEmail(userEmail);
+                if (userOpt.isEmpty()) {
+                    response.put("registered", false);
+                    response.put("status", null);
+                    return ResponseEntity.ok(response);
+                }
+
+                User user = userOpt.get();
                 Merchant merchant = merchantRepository
                         .findByUser_Id(user.getId())
                         .orElse(null);
 
                 if (merchant == null) {
+                    response.put("registered", false);
+                    response.put("status", null);
 
                         response.put("registered", false);
                         response.put("status", null);
                         response.put("rejectionReason", null);
 
                 } else {
+                    response.put("registered", true);
+                    response.put(
+                            "status",
+                            merchant.getMerchantStatus() != null ? merchant.getMerchantStatus().name() : null);
 
                         response.put("registered", true);
                         response.put(

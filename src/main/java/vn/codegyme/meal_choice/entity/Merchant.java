@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 @Table(name = "merchants")
@@ -80,13 +82,11 @@ public class Merchant {
     )
     private List<MerchantAddress> addresses = new ArrayList<>();
 
-    @Column()
-    private String rejectReason;
-    @OneToMany(
-            mappedBy = "merchant",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "merchant_likes",
+        joinColumns = @JoinColumn(name = "merchant_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private List<Food> foods = new ArrayList<>();
-
+    private Set<User> likedByUsers = new HashSet<>();
 }

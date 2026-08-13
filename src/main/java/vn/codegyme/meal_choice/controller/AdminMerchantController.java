@@ -21,7 +21,9 @@ public class AdminMerchantController {
 
     // Danh sách merchant
     @GetMapping
-    public String showMerchantList(@RequestParam(required = false) MerchantStatus status, Model model) {
+    public String showMerchantList(
+            @RequestParam(name = "status", required = false) MerchantStatus status,
+            Model model) {
 
         model.addAttribute("merchants", status == null ? adminService.getAllMerchants() : adminService.getMerchantsByStatus(status));
 
@@ -32,7 +34,9 @@ public class AdminMerchantController {
 
     // Xem chi tiết merchant
     @GetMapping("/{id}")
-    public String showMerchantDetail(@PathVariable UUID id, Model model) {
+    public String showMerchantDetail(
+            @PathVariable(name = "id") UUID id,
+            Model model) {
 
         model.addAttribute("merchant", adminService.getMerchantById(id));
 
@@ -46,7 +50,9 @@ public class AdminMerchantController {
 
     // Duyệt
     @PostMapping("/{id}/approve")
-    public String approve(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
+    public String approve(
+            @PathVariable(name = "id") UUID id,
+            RedirectAttributes redirectAttributes) {
 
         adminService.approveMerchant(id);
         redirectAttributes.addFlashAttribute("message", "Đã duyệt đăng ký merchant.");
@@ -56,7 +62,9 @@ public class AdminMerchantController {
 
     // Từ chối
     @PostMapping("/{id}/reject")
-    public String reject(@PathVariable UUID id, @RequestParam String rejectReason, RedirectAttributes redirectAttributes) {
+    public String reject(
+            @PathVariable(name = "id") UUID id,
+            RedirectAttributes redirectAttributes) {
 
         adminService.rejectMerchant(id, rejectReason);
         redirectAttributes.addFlashAttribute("message", "Đã từ chối đăng ký merchant.");
@@ -67,8 +75,7 @@ public class AdminMerchantController {
     // Khóa /lý do khóa/ mở khóa/
     @PostMapping("/{id}/toggle-lock")
     public String toggleLock(
-            @PathVariable UUID id,
-            @RequestParam(required = false) String lockReason,
+            @PathVariable(name = "id") UUID id,
             RedirectAttributes redirectAttributes) {
 
         try {
@@ -96,7 +103,9 @@ public class AdminMerchantController {
 
     // Duyệt đối tác thân thiết
     @PostMapping("/{id}/trusted-partner")
-    public String approveTrustedPartner(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
+    public String approveTrustedPartner(
+            @PathVariable(name = "id") UUID id,
+            RedirectAttributes redirectAttributes) {
 
         try {
             adminService.approveTrustedPartner(id);
@@ -110,7 +119,9 @@ public class AdminMerchantController {
 
     // Bỏ đối tác thân thiết
     @PostMapping("/{id}/trusted-partner/remove")
-    public String removeTrustedPartner(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
+    public String removeTrustedPartner(
+            @PathVariable(name = "id") UUID id,
+            RedirectAttributes redirectAttributes) {
 
         adminService.removeTrustedPartner(id);
         redirectAttributes.addFlashAttribute("message", "Đã bỏ trạng thái đối tác thân thiết.");

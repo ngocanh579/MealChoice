@@ -1,0 +1,75 @@
+<!-- Fragment Card Món Ăn -->
+<div th:fragment="foodCard(food)" class="col" th:if="${food != null}" xmlns:th="http://www.thymeleaf.org">
+    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden food-card position-relative transition-hover">
+        <div class="position-absolute top-0 start-0 m-3 z-2 d-flex flex-column gap-1">
+            <span th:if="${food.discountPercentage != null}"
+                class="badge bg-danger text-white rounded-pill px-2.5 py-1.5 shadow-sm fw-semibold"
+                th:text="'-' + ${food.discountPercentage} + '%'">-20%</span>
+            <span th:if="${food.tag != null and !#strings.isEmpty(food.tag)}"
+                class="badge bg-dark bg-opacity-75 text-white rounded-pill px-2 py-1 shadow-sm fs-8"
+                th:text="${food.tag}">Nổi bật</span>
+        </div>
+
+        <button type="button"
+            class="btn btn-light rounded-circle shadow-sm position-absolute top-0 end-0 m-3 z-2 p-2 d-flex align-items-center justify-content-center text-danger border-0 btn-wishlist"
+            th:data-food-id="${food.id}"
+            style="width: 36px; height: 36px;" 
+            th:title="${likedFoodIds != null and likedFoodIds.contains(food.id)} ? 'Bỏ yêu thích' : 'Yêu thích'">
+            <i th:class="${likedFoodIds != null and likedFoodIds.contains(food.id)} ? 'bi bi-heart-fill fs-6' : 'bi bi-heart fs-6'"></i>
+        </button>
+
+        <a th:href="@{/foods/{id}(id=${food.id})}">
+            <div class="ratio ratio-4x3 position-relative overflow-hidden bg-light">
+                <img th:src="${food.imageUrl != null and !#strings.isEmpty(food.imageUrl)} ? ${food.imageUrl} : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'"
+                    class="card-img-top object-fit-cover food-card-img" th:alt="${food.name != null ? food.name : 'Món ăn'}"
+                    loading="lazy">
+            </div>
+        </a>
+
+        <div class="card-body p-3 d-flex flex-column">
+            <a th:href="@{/foods/{id}(id=${food.id})}" class="text-decoration-none text-dark">
+                <h6 class="card-title fw-bold text-dark mb-1 text-truncate"
+                    th:text="${food.name != null ? food.name : 'Tên món ăn'}"
+                    th:title="${food.name != null ? food.name : 'Tên món ăn'}">Tên món ăn</h6>
+            </a>
+            <p class="card-text text-muted fs-8 mb-2 text-truncate"
+                th:text="${food.address != null ? food.address : 'Địa chỉ quán'}"
+                th:title="${food.address != null ? food.address : 'Địa chỉ quán'}"><i
+                    class="bi bi-geo-alt me-1 text-danger"></i>Địa chỉ quán</p>
+
+            <!-- Rating & Prep Time & Category Tag -->
+            <div class="d-flex align-items-center justify-content-between text-muted fs-8 mb-2 pb-2 border-bottom">
+                <div class="d-flex align-items-center gap-1.5">
+                    <span class="d-inline-flex align-items-center gap-1 text-warning fw-bold fs-8">
+                        <i class="bi bi-star-fill"></i>
+                        <span class="text-dark">4.5</span>
+                        <span class="text-muted fw-normal fs-9">(100+)</span>
+                    </span>
+                    <span class="text-muted mx-1">•</span>
+                    <span class="d-flex align-items-center gap-1">
+                        <i class="bi bi-clock-history text-primary"></i>
+                        <span
+                            th:text="${food.preparationTime != null ? food.preparationTime + 'p' : '15-25p'}">15-25p</span>
+                    </span>
+                </div>
+                <span class="badge bg-light text-secondary border rounded-pill px-2" th:text="${food.categoryName}">Món
+                    chính</span>
+            </div>
+            <div class="mt-auto pt-1">
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold fs-6 text-danger"
+                        th:text="${food.formattedDiscountPrice != null ? food.formattedDiscountPrice : food.formattedPrice}">45.000
+                        đ</span>
+                    <span th:if="${food.formattedDiscountPrice != null}"
+                        class="text-muted text-decoration-line-through fs-8" th:text="${food.formattedPrice}">60.000
+                        đ</span>
+                </div>
+                <div
+                    class="mt-2 pt-2 border-top border-light-subtle d-flex align-items-center gap-1 text-danger fs-8 fw-semibold">
+                    <span class="badge bg-danger bg-opacity-10 text-danger rounded-1 px-1.5 py-0.5">ƯU ĐÃI</span>
+                    <span class="text-truncate" th:text="${food.couponDescription}">Freeship + Giảm 20%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
