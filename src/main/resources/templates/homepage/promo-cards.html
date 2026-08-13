@@ -1,5 +1,5 @@
 <!-- Promo Nổi Bật -->
-<section th:fragment="promoCards" class="promo-section py-4 mb-5" xmlns:th="http://www.thymeleaf.org">
+<section th:fragment="promoCards" th:if="${foodPage == null or foodPage.number == 0}" class="promo-section py-4 mb-5" xmlns:th="http://www.thymeleaf.org">
     <div class="container">
         <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
             <!-- Promo 1 -->
@@ -61,7 +61,7 @@
                             </div>
                             <div>
                                 <h5 class="fw-bold text-white mb-1">GIAO SIÊU TỐC</h5>
-                                <p class="text-white-50 fs-8 mb-0">Giao nhanh từ các quán gần bạn nhất</p>
+                                <p class="text-white-50 fs-8 mb-0">Nhận món nóng hổi chỉ 20-30 phút</p>
                             </div>
                         </div>
                     </div>
@@ -70,20 +70,20 @@
 
             <!-- Promo 4 -->
             <div class="col">
-                <a href="/restaurants/popular" class="text-decoration-none">
+                <a href="/restaurants/trusted" class="text-decoration-none">
                     <div
-                        class="promo-card card border-0 rounded-4 overflow-hidden shadow-sm h-100 position-relative text-white transition-hover bg-gradient-dark">
-                        <img src="https://images.unsplash.com/photo-1559847844-5315695dadae?w=600&auto=format&fit=crop&q=80"
-                            class="card-img h-100 object-fit-cover promo-bg-img" alt="Món nổi bật">
-                        <div class="card-img-overlay d-flex flex-column justify-content-between p-4 bg-overlay-dark">
+                        class="promo-card card border-0 rounded-4 overflow-hidden shadow-sm h-100 position-relative text-white transition-hover bg-gradient-orange">
+                        <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&auto=format&fit=crop&q=80"
+                            class="card-img h-100 object-fit-cover promo-bg-img" alt="Đối tác thân thiết">
+                        <div class="card-img-overlay d-flex flex-column justify-content-between p-4 bg-overlay-orange">
                             <div>
                                 <span
-                                    class="badge bg-info text-dark rounded-pill px-2.5 py-1 text-uppercase fw-bold fs-9 letter-spacing">THỊNH
-                                    HÀNH</span>
+                                    class="badge bg-primary rounded-pill px-2.5 py-1 text-uppercase fw-bold fs-9 letter-spacing">CHẤT
+                                    LƯỢNG</span>
                             </div>
                             <div>
-                                <h5 class="fw-bold text-white mb-1">MÓN NỔI BẬT</h5>
-                                <p class="text-white-50 fs-8 mb-0">Các quán ăn được đánh giá cao nhất</p>
+                                <h5 class="fw-bold text-white mb-1">ĐỐI TÁC CHỌN LỌC</h5>
+                                <p class="text-white-50 fs-8 mb-0">Thương hiệu uy tín, đảm bảo an toàn</p>
                             </div>
                         </div>
                     </div>

@@ -25,21 +25,24 @@
     <!-- Include Navbar -->
     <div th:replace="~{layout/navbar :: navbar}"></div>
 
-    <!-- Main Content: Lắp ghép 5 module chuẩn Clean Architecture từ templates/homepage/ -->
+    <!-- Main Content -->
     <main>
-        <!-- 1. Hero Banner, Quick Search & Category Slider -->
+        <!-- 1. Hero Banner, Quick Search & Category Slider (Luôn hiển thị ở mọi trang) -->
         <div th:replace="~{homepage/hero-banner :: heroBanner}"></div>
 
-        <!-- 2. 4 Khối Promo Nổi Bật -->
-        <div th:replace="~{homepage/promo-cards :: promoCards}"></div>
+        <!-- Các khối chỉ hiển thị ở Trang 1 (page == 0) -->
+        <th:block th:if="${foodPage == null or foodPage.number == 0}">
+            <!-- 2. 4 Khối Promo Nổi Bật -->
+            <div th:replace="~{homepage/promo-cards :: promoCards}"></div>
 
-        <!-- 3. Khối 8 Món Ăn Gợi Ý Gần Bạn Nhất -->
-        <div th:replace="~{homepage/suggested-foods :: suggestedFoods}"></div>
+            <!-- 3. Khối 8 Món Ăn Gợi Ý Gần Bạn Nhất -->
+            <div th:replace="~{homepage/suggested-foods :: suggestedFoods}"></div>
 
-        <!-- 4. Khối 8 Món Ăn Giảm Giá Nhiều Nhất (2 hàng x 4 cột) -->
-        <div th:replace="~{homepage/top-discount-foods :: topDiscountFoods}"></div>
+            <!-- 4. Khối 8 Món Ăn Giảm Giá Nhiều Nhất -->
+            <div th:replace="~{homepage/top-discount-foods :: topDiscountFoods}"></div>
+        </th:block>
 
-        <!-- 5. Danh Sách Toàn Bộ Món Ăn (Phân trang 30 món/trang) -->
+        <!-- 5. Danh Sách Toàn Bộ Món Ăn: "Gợi ý món ăn hôm nay" (Phân trang 30 món/trang) -->
         <div th:replace="~{homepage/food-list :: foodList}"></div>
     </main>
 

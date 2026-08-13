@@ -10,7 +10,7 @@ import java.util.UUID;
 @Data
 public class FoodResponse {
 
-    private UUID id;
+    private Long id;
 
     private UUID merchantAddressId;
 
@@ -34,7 +34,7 @@ public class FoodResponse {
 
     private Boolean isRecommended;
 
-    private List<UUID> categoryIds;
+    private List<Long> categoryIds;
 
     private List<String> imageUrls;
 

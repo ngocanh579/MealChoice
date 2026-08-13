@@ -20,7 +20,7 @@ public class FoodCreateRequest {
     private UUID merchantAddressId;
 
     @NotEmpty(message = "Vui lòng chọn ít nhất một danh mục")
-    private List<UUID> categoryIds;
+    private List<Long> categoryIds;
 
     @NotBlank(message = "Ảnh món ăn không được để trống")
     private String imageUrl;

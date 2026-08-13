@@ -11,7 +11,6 @@ import vn.codegyme.meal_choice.repository.FoodRepository;
 import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -46,13 +45,13 @@ public class FoodService {
         Food food = Food.builder()
                 .merchant(merchant)
                 .merchantAddress(address)
-                .foodCategories(categories)
-                .foodName(request.getFoodName())
+                .category(!categories.isEmpty() ? categories.get(0) : null)
+                .name(request.getFoodName())
                 .preparationTime(request.getPreparationTime())
-                .foodNote(request.getFoodNote())
-                .price(request.getPrice())
-                .discountPrice(request.getDiscountPrice())
-                .serviceFee(request.getServiceFee() != null ? request.getServiceFee() : BigDecimal.ZERO)
+                .note(request.getFoodNote())
+                .price(request.getPrice() != null ? request.getPrice().doubleValue() : 0.0)
+                .discountPrice(request.getDiscountPrice() != null ? request.getDiscountPrice().doubleValue() : null)
+                .serviceFee(request.getServiceFee() != null ? request.getServiceFee().doubleValue() : 0.0)
                 .isRecommended(false)
                 .views(0)
                 .orderCount(0)
@@ -74,7 +73,7 @@ public class FoodService {
     }
 
     // Lấy chi tiết món
-    public FoodResponse getFood(UUID merchantId, UUID foodId) {
+    public FoodResponse getFood(UUID merchantId, Long foodId) {
         Food food = foodRepository.findByIdAndMerchant_IdAndDeletedAtIsNull(foodId, merchantId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy món ăn"));
 
@@ -83,7 +82,7 @@ public class FoodService {
 
     // Cập nhật món ăn
     @Transactional
-    public FoodResponse updateFood(UUID merchantId, UUID foodId, FoodCreateRequest request) {
+    public FoodResponse updateFood(UUID merchantId, Long foodId, FoodCreateRequest request) {
         Merchant merchant = getApprovedMerchant(merchantId);
 
         Food food = foodRepository.findByIdAndMerchant_IdAndDeletedAtIsNull(foodId, merchantId)
@@ -105,19 +104,20 @@ public class FoodService {
         food.setMerchant(merchant);
         food.setMerchantAddress(address);
         food.setFoodCategories(categories);
+        food.setCategory(!categories.isEmpty() ? categories.get(0) : null);
         food.setFoodName(request.getFoodName());
         food.setPreparationTime(request.getPreparationTime());
         food.setFoodNote(request.getFoodNote());
-        food.setPrice(request.getPrice());
-        food.setDiscountPrice(request.getDiscountPrice());
-        food.setServiceFee(request.getServiceFee() != null ? request.getServiceFee() : BigDecimal.ZERO);
+        food.setPrice(request.getPrice() != null ? request.getPrice().doubleValue() : 0.0);
+        food.setDiscountPrice(request.getDiscountPrice() != null ? request.getDiscountPrice().doubleValue() : null);
+        food.setServiceFee(request.getServiceFee() != null ? request.getServiceFee().doubleValue() : 0.0);
 
         return mapToResponse(foodRepository.save(food));
     }
 
     // Xóa mềm món ăn
     @Transactional
-    public void deleteFood(UUID merchantId, UUID foodId) {
+    public void deleteFood(UUID merchantId, Long foodId) {
         Merchant merchant = getApprovedMerchant(merchantId);
 
         Food food = foodRepository.findByIdAndMerchant_IdAndDeletedAtIsNull(foodId, merchantId)
@@ -140,7 +140,7 @@ public class FoodService {
         return merchant;
     }
 
-    // Entity → Response
+    // Map Entity sang Response DTO
     private FoodResponse mapToResponse(Food food) {
         FoodResponse response = new FoodResponse();
 
@@ -154,26 +154,30 @@ public class FoodService {
         response.setFoodName(food.getFoodName());
         response.setPreparationTime(food.getPreparationTime());
         response.setFoodNote(food.getFoodNote());
-        response.setPrice(food.getPrice());
-        response.setDiscountPrice(food.getDiscountPrice());
-        response.setServiceFee(food.getServiceFee());
+        response.setPrice(food.getPriceAsBigDecimal());
+        response.setDiscountPrice(food.getDiscountPriceAsBigDecimal());
+        response.setServiceFee(food.getServiceFeeAsBigDecimal());
         response.setViews(food.getViews());
         response.setOrderCount(food.getOrderCount());
         response.setIsRecommended(food.getIsRecommended());
 
-        response.setCategoryIds(
-                food.getFoodCategories()
-                        .stream()
-                        .map(FoodCategory::getId)
-                        .toList()
-        );
+        if (food.getFoodCategories() != null) {
+            response.setCategoryIds(
+                    food.getFoodCategories()
+                            .stream()
+                            .map(FoodCategory::getId)
+                            .toList()
+            );
+        }
 
-        response.setImageUrls(
-                food.getImages()
-                        .stream()
-                        .map(FoodImage::getImageUrl)
-                        .toList()
-        );
+        if (food.getImages() != null) {
+            response.setImageUrls(
+                    food.getImages()
+                            .stream()
+                            .map(FoodImage::getImageUrl)
+                            .toList()
+            );
+        }
 
         response.setCreatedAt(food.getCreatedAt());
         response.setUpdatedAt(food.getUpdatedAt());

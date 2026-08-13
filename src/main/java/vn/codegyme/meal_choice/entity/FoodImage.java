@@ -2,11 +2,8 @@ package vn.codegyme.meal_choice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "food_images")
@@ -18,10 +15,8 @@ import java.util.UUID;
 public class FoodImage {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(length = 36)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "food_id", nullable = false)
@@ -30,6 +25,7 @@ public class FoodImage {
     @Column(name = "image_url", nullable = false, length = 500)
     private String imageUrl;
 
+    @Builder.Default
     @Column(name = "is_primary", nullable = false)
     private Boolean isPrimary = false;
 
@@ -38,14 +34,9 @@ public class FoodImage {
 
     @PrePersist
     protected void onCreate() {
-        if (id == null) {
-            id = UUID.randomUUID();
-        }
-
         if (isPrimary == null) {
             isPrimary = false;
         }
-
         createdAt = LocalDateTime.now();
     }
 }

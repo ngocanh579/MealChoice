@@ -94,10 +94,10 @@ public class SecurityConfig {
 
                         // Mở trang đăng ký Merchant
                         .requestMatchers(
-                                HttpMethod.GET,
-                                "/merchant/register"
+                                "/merchant/register",
+                                "/merchants/register"
                         )
-                        .hasRole("USER")
+                        .authenticated()
 
 
                         // Gửi đăng ký Merchant
@@ -105,7 +105,7 @@ public class SecurityConfig {
                                 HttpMethod.POST,
                                 "/api/merchants/register"
                         )
-                        .hasRole("USER")
+                        .authenticated()
 
 
                         // =====================================
@@ -123,6 +123,7 @@ public class SecurityConfig {
                         // =====================================
                         .requestMatchers(
                                 "/merchant/**",
+                                "/merchants/**",
                                 "/api/merchant/**"
                         )
                         .hasAnyRole(

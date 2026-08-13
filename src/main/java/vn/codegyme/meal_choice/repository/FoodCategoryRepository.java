@@ -5,15 +5,13 @@ import org.springframework.stereotype.Repository;
 import vn.codegyme.meal_choice.entity.FoodCategory;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface FoodCategoryRepository
-        extends JpaRepository<FoodCategory, UUID> {
+public interface FoodCategoryRepository extends JpaRepository<FoodCategory, Long> {
 
-    // tìm category theo tên
     Optional<FoodCategory> findByCategoryName(String categoryName);
 
-    // kiểm tra category đã tồn tại
+    Optional<FoodCategory> findByCategoryNameIgnoreCase(String categoryName);
+
     boolean existsByCategoryName(String categoryName);
 }

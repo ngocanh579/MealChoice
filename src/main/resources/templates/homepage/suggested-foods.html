@@ -1,5 +1,5 @@
 <!-- Fragment 8 Món Ăn Gợi Ý Gần Khách Hàng Nhất -->
-<section th:fragment="suggestedFoods" class="suggested-section py-4 mb-5" xmlns:th="http://www.thymeleaf.org">
+<section th:fragment="suggestedFoods" th:if="${foodPage == null or foodPage.number == 0}" class="suggested-section py-4 mb-5" xmlns:th="http://www.thymeleaf.org">
     <div class="container">
         <!-- Section Header -->
         <div class="d-flex flex-wrap align-items-end justify-content-between mb-4 gap-2">

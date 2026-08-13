@@ -1,5 +1,5 @@
 <!-- Fragment 8 Món Ăn Giảm Giá Nhiều Nhất (2 hàng x 4 cột) -->
-<section th:fragment="topDiscountFoods" class="top-discount-section py-4 mb-5" xmlns:th="http://www.thymeleaf.org">
+<section th:fragment="topDiscountFoods" th:if="${foodPage == null or foodPage.number == 0}" class="top-discount-section py-4 mb-5" xmlns:th="http://www.thymeleaf.org">
     <div class="container bg-white rounded-4 shadow-sm p-4">
         <!-- Section Header -->
         <div class="d-flex flex-wrap align-items-end justify-content-between mb-4 gap-2 border-bottom pb-3">
@@ -9,7 +9,7 @@
                         <i class="bi bi-fire me-1"></i>Siêu Sale Giảm Đến 50%
                     </span>
                 </div>
-                <h3 class="fw-bold text-dark mb-0">8 Món Ăn Giảm Giá Nhiều Nhất</h3>
+                <h3 class="fw-bold text-dark mb-0">Món Ăn Giảm Giá Nhiều Nhất</h3>
                 <p class="text-muted fs-8 mb-0 mt-1">Săn món ngon giảm giá sâu nhất từ các quán ăn được yêu thích</p>
             </div>
             <a href="/restaurants/top-discounts" class="btn btn-danger btn-sm rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1 shadow-sm">

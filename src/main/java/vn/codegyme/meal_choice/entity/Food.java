@@ -3,16 +3,13 @@ package vn.codegyme.meal_choice.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "foods")
@@ -21,7 +18,6 @@ import java.util.HashSet;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Food {
 
     @Id
@@ -57,12 +53,135 @@ public class Food {
     private String tag;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "merchant_id", nullable = true)
     private Merchant merchant;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "merchant_address_id", nullable = true)
+    private MerchantAddress merchantAddress;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "category_id", nullable = true)
+    private FoodCategory category;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "food", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Size(max = 10, message = "Một món ăn chỉ có thể có tối đa 10 hình ảnh")
+    private List<FoodImage> foodImages = new ArrayList<>();
 
     @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean active = true;
+
+    @Builder.Default
+    @Column(name = "is_recommended")
+    private Boolean isRecommended = false;
+
+    @Builder.Default
+    private Integer views = 0;
+
+    @Builder.Default
+    @Column(name = "order_count")
+    private Integer orderCount = 0;
+
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "food_likes",
+            joinColumns = @JoinColumn(name = "food_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> likedByUsers = new HashSet<>();
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Helper methods / aliases
+    public String getFoodName() {
+        return name;
+    }
+
+    public void setFoodName(String foodName) {
+        this.name = foodName;
+    }
+
+    public String getFoodNote() {
+        return note;
+    }
+
+    public void setFoodNote(String foodNote) {
+        this.note = foodNote;
+    }
+
+    public List<FoodImage> getImages() {
+        return foodImages != null ? foodImages : new ArrayList<>();
+    }
+
+    public List<FoodCategory> getFoodCategories() {
+        if (category != null) {
+            return List.of(category);
+        }
+        return List.of();
+    }
+
+    public void setFoodCategories(List<FoodCategory> categories) {
+        if (categories != null && !categories.isEmpty()) {
+            this.category = categories.get(0);
+        }
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price != null ? price.doubleValue() : null;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public void setDiscountPrice(BigDecimal discountPrice) {
+        this.discountPrice = discountPrice != null ? discountPrice.doubleValue() : null;
+    }
+
+    public void setDiscountPrice(Double discountPrice) {
+        this.discountPrice = discountPrice;
+    }
+
+    public void setServiceFee(BigDecimal serviceFee) {
+        this.serviceFee = serviceFee != null ? serviceFee.doubleValue() : null;
+    }
+
+    public void setServiceFee(Double serviceFee) {
+        this.serviceFee = serviceFee;
+    }
+
+    public BigDecimal getPriceAsBigDecimal() {
+        return price != null ? BigDecimal.valueOf(price) : BigDecimal.ZERO;
+    }
+
+    public BigDecimal getDiscountPriceAsBigDecimal() {
+        return discountPrice != null ? BigDecimal.valueOf(discountPrice) : null;
+    }
+
+    public BigDecimal getServiceFeeAsBigDecimal() {
+        return serviceFee != null ? BigDecimal.valueOf(serviceFee) : BigDecimal.ZERO;
+    }
 
     public Boolean isActive() {
         return active != null ? active : true;
@@ -76,23 +195,22 @@ public class Food {
         this.active = active;
     }
 
-    @Builder.Default
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "food_likes",
-            joinColumns = @JoinColumn(name = "food_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private Set<User> likedByUsers = new HashSet<>();
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    public String getAddress() {
+        if (address != null && !address.isBlank()) {
+            return address;
+        }
+        if (merchantAddress != null && merchantAddress.getMerchantAddress() != null) {
+            return merchantAddress.getMerchantAddress();
+        }
+        return "";
+    }
 
     // Trả về ảnh có ID bé nhất từ danh sách foodImages, nếu trống thì trả về imageUrl gốc
     public String getImageUrl() {
         if (foodImages != null && !foodImages.isEmpty()) {
             return foodImages.stream()
-                    .min(java.util.Comparator.comparing(FoodImage::getId))
+                    .filter(img -> img != null && img.getImageUrl() != null && !img.getImageUrl().isBlank())
+                    .min(java.util.Comparator.comparing(img -> img.getId() != null ? img.getId().toString() : ""))
                     .map(FoodImage::getImageUrl)
                     .orElse(imageUrl);
         }
@@ -161,5 +279,4 @@ public class Food {
             return "Freeship Xtra";
         }
     }
-
 }

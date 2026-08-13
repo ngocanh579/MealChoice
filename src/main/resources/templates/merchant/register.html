@@ -644,97 +644,66 @@
                     'Đăng ký Merchant';
             }
         });
-<<<<<<< HEAD
-    // Kiểm tra trạng thái merchant khi vào trang
-    (async function checkMerchantStatus() {
-        try {
-            const res = await fetch("/api/merchants/my-status");
-            if (!res.ok) return; // Chưa đăng nhập hoặc lỗi khác, bỏ qua
 
-            const data = await res.json();
+        // Kiểm tra trạng thái merchant khi vào trang
+        (async function checkMerchantStatus() {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = 'Bearer ' + token;
+                }
+                const res = await fetch("/api/merchants/my-status", { headers });
+                if (!res.ok) return;
 
-            if (!data.registered) return; // Chưa đăng ký, hiện form bình thường
+                const data = await res.json();
+                if (!data.registered) return;
 
-            const status = data.status;
-
-            if (status === "REJECTED") {
-                // Hiện lý do từ chối
-                const reason = data.rejectionReason
-                    ? data.rejectionReason
-                    : "Admin không để lại lý do cụ thể.";
-                document.getElementById("rejectionReasonText").textContent =
-                    "Lý do: " + reason;
-                document.getElementById("rejectionAlert").classList.remove("d-none");
-                document.getElementById("rejectionAlert").scrollIntoView({
-                    behavior: "smooth", block: "center"
-                });
-
-            } else if (status === "PENDING") {
-                // Hiện thông báo đang chờ duyệt
-                document.getElementById("pendingAlert").classList.remove("d-none");
-                // Ẩn form đăng ký để tránh nộp lại
-                document.getElementById("merchantRegisterForm").style.display = "none";
-
-            } else if (status === "APPROVED") {
-                // Đã được duyệt, chuyển về trang profile
-                window.location.href = "/merchant/profile";
+                const status = data.status;
+                if (status === "REJECTED") {
+                    const reason = data.rejectionReason ? data.rejectionReason : "Admin không để lại lý do cụ thể.";
+                    const reasonEl = document.getElementById("rejectionReasonText");
+                    if (reasonEl) reasonEl.textContent = "Lý do: " + reason;
+                    const alertEl = document.getElementById("rejectionAlert");
+                    if (alertEl) {
+                        alertEl.classList.remove("d-none");
+                        alertEl.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }
+                } else if (status === "PENDING") {
+                    const pendingEl = document.getElementById("pendingAlert");
+                    if (pendingEl) pendingEl.classList.remove("d-none");
+                    const formEl = document.getElementById("merchantRegisterForm");
+                    if (formEl) formEl.style.display = "none";
+                } else if (status === "APPROVED") {
+                    window.location.href = "/merchant/profile";
+                }
+            } catch (e) {
+                console.warn("Không kiểm tra được trạng thái merchant:", e);
             }
-        } catch (e) {
-            // Không có session / lỗi network: bỏ qua, hiện form bình thường
-        }
-    })();
-</script>
-=======
->>>>>>> truong
-
+        })();
 
         // Hiển thị thông báo thành công
         function showSuccess(message) {
-
-            const alert =
-                document.getElementById(
-                    "successAlert"
-                );
-
-            document.getElementById(
-                "successMessage"
-            ).textContent = message;
-
-            alert.classList.remove("d-none");
-
-            document
-                .getElementById("errorAlert")
-                .classList.add("d-none");
-
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
+            const alert = document.getElementById("successAlert");
+            if (alert) {
+                document.getElementById("successMessage").textContent = message;
+                alert.classList.remove("d-none");
+            }
+            const errAlert = document.getElementById("errorAlert");
+            if (errAlert) errAlert.classList.add("d-none");
+            window.scrollTo({ top: 0, behavior: "smooth" });
         }
-
 
         // Hiển thị thông báo lỗi
         function showError(message) {
-
-            const alert =
-                document.getElementById(
-                    "errorAlert"
-                );
-
-            document.getElementById(
-                "errorMessage"
-            ).textContent = message;
-
-            alert.classList.remove("d-none");
-
-            document
-                .getElementById("successAlert")
-                .classList.add("d-none");
-
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
+            const alert = document.getElementById("errorAlert");
+            if (alert) {
+                document.getElementById("errorMessage").textContent = message;
+                alert.classList.remove("d-none");
+            }
+            const succAlert = document.getElementById("successAlert");
+            if (succAlert) succAlert.classList.add("d-none");
+            window.scrollTo({ top: 0, behavior: "smooth" });
         }
     });
 </script>

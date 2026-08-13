@@ -189,9 +189,31 @@ public class FoodController {
             // 6. Truyền location của user
             model.addAttribute("userLocation", getUserLocation(authentication));
 
-            // 7. Kiểm tra trạng thái đăng nhập
-            boolean isLoggedIn = authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName());
+            // 7. Kiểm tra trạng thái đăng nhập & thông tin User
+            boolean isLoggedIn = false;
+            String userDisplayName = null;
+            boolean isAdmin = false;
+            boolean isMerchant = false;
+
+            if (authentication != null && authentication.isAuthenticated()
+                    && !"anonymousUser".equals(authentication.getPrincipal())
+                    && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+                Optional<User> userOpt = userRepository.findByEmail(userDetails.getUsername());
+                if (userOpt.isPresent()) {
+                    isLoggedIn = true;
+                    User user = userOpt.get();
+                    userDisplayName = user.getDisplayName();
+                    isAdmin = user.getRoles() != null && user.getRoles().stream()
+                            .anyMatch(r -> r.getName() != null && r.getName().name().contains("ADMIN"));
+                    isMerchant = user.getRoles() != null && user.getRoles().stream()
+                            .anyMatch(r -> r.getName() != null && r.getName().name().contains("MERCHANT"));
+                }
+            }
+
             model.addAttribute("isLoggedIn", isLoggedIn);
+            model.addAttribute("userDisplayName", userDisplayName);
+            model.addAttribute("isAdmin", isAdmin);
+            model.addAttribute("isMerchant", isMerchant);
 
         } catch (Exception e) {
             log.error("Lỗi khi tải trang chi tiết món ăn: {}", e.getMessage(), e);

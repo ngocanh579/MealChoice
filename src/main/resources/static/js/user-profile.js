@@ -41,7 +41,7 @@ async function silentRefresh() {
     if (!refreshToken) return;
 
     try {
-        const response = await fetch('/api/auth/refresh', {
+        const response = await fetch('/api/auth/refresh-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refreshToken })
@@ -49,16 +49,19 @@ async function silentRefresh() {
 
         if (response.ok) {
             const data = await response.json();
-            localStorage.setItem('accessToken', data.accessToken);
-        } else {
-            // Refresh token hết hạn (sau 7 ngày) → logout thật sự
+            if (data.accessToken) {
+                localStorage.setItem('accessToken', data.accessToken);
+                document.cookie = `accessToken=${data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
+            }
+        } else if (response.status === 401 || response.status === 403) {
+            // Refresh token hết hạn → logout
             console.warn('Refresh token hết hạn, đăng xuất...');
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             window.location.href = '/login';
         }
     } catch (e) {
-        console.error('Silent refresh thất bại:', e);
+        console.warn('Silent refresh tạm thời thất bại:', e);
     }
 }
 

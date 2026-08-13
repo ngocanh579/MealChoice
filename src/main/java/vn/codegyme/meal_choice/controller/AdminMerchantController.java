@@ -64,6 +64,7 @@ public class AdminMerchantController {
     @PostMapping("/{id}/reject")
     public String reject(
             @PathVariable(name = "id") UUID id,
+            @RequestParam(name = "reason", required = false) String rejectReason,
             RedirectAttributes redirectAttributes) {
 
         adminService.rejectMerchant(id, rejectReason);
@@ -76,6 +77,7 @@ public class AdminMerchantController {
     @PostMapping("/{id}/toggle-lock")
     public String toggleLock(
             @PathVariable(name = "id") UUID id,
+            @RequestParam(name = "lockReason", required = false) String lockReason,
             RedirectAttributes redirectAttributes) {
 
         try {

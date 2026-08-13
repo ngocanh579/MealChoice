@@ -60,10 +60,17 @@ public class Merchant {
             length = 30
     )
     private MerchantStatus merchantStatus;
-    @Column(length = 500)
+
+    @Column(name = "lock_reason", length = 500)
     private String lockReason;
 
     private LocalDateTime lockedAt;
+
+    @Column(name = "reject_reason", length = 500)
+    private String rejectReason;
+
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
 
     @Column(name = "is_trusted_partner", nullable = false)
     private boolean trustedPartner = false;
