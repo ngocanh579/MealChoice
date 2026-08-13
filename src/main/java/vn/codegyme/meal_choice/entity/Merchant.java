@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -57,6 +58,10 @@ public class Merchant {
             length = 30
     )
     private MerchantStatus merchantStatus;
+    @Column(length = 500)
+    private String lockReason;
+
+    private LocalDateTime lockedAt;
 
     @Column(name = "is_trusted_partner", nullable = false)
     private boolean trustedPartner = false;
@@ -75,6 +80,15 @@ public class Merchant {
     )
     private List<MerchantAddress> addresses = new ArrayList<>();
 
+<<<<<<< HEAD
     @Column()
     private String rejectReason;
+=======
+    @OneToMany(
+            mappedBy = "merchant",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Food> foods = new ArrayList<>();
+>>>>>>> truong
 }

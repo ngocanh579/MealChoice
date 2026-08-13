@@ -1,4 +1,4 @@
-package vn.codegyme.meal_choice.dto;
+package vn.codegyme.meal_choice.dto.merchant;
 
 import lombok.Data;
 import vn.codegyme.meal_choice.entity.MerchantStatus;

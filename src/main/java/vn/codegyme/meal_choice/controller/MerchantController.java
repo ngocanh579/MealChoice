@@ -6,11 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import vn.codegyme.meal_choice.dto.MerchantAddressRequest;
-import vn.codegyme.meal_choice.dto.MerchantAddressResponse;
-import vn.codegyme.meal_choice.dto.MerchantRegisterRequest;
-import vn.codegyme.meal_choice.dto.MerchantResponse;
-import vn.codegyme.meal_choice.dto.MerchantUpdateRequest;
+import vn.codegyme.meal_choice.dto.merchant.MerchantAddressRequest;
+import vn.codegyme.meal_choice.dto.merchant.MerchantAddressResponse;
+import vn.codegyme.meal_choice.dto.merchant.MerchantRegisterRequest;
+import vn.codegyme.meal_choice.dto.merchant.MerchantResponse;
+import vn.codegyme.meal_choice.dto.merchant.MerchantUpdateRequest;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.User;
 import vn.codegyme.meal_choice.repository.MerchantRepository;

@@ -1,642 +1,672 @@
-<!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kênh Nhà Hàng - Hồ Sơ Merchant</title>
+<div th:replace="~{layout/navbar :: navbar}"></div>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-</head>
-
-<body class="bg-light">
-
-    <!-- Navbar -->
-    <div th:replace="~{layout/navbar :: navbar}"></div>
-
-    <div class="container py-4">
-
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-            <div>
-                <h3 class="fw-bold mb-1 text-danger">
-                    <i class="bi bi-shop me-2"></i>Kênh Quản Lý Nhà Hàng
-                </h3>
-                <p class="text-muted mb-0">
-                    Xem, chỉnh sửa thông tin nhà hàng và quản lý danh sách địa chỉ hoạt động.
-                </p>
-            </div>
-
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-primary rounded-pill px-3 fw-semibold shadow-sm"
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h3 class="fw-bold mb-1 text-danger"><i class="bi bi-shop me-2"></i>Kênh Quản Lý Nhà Hàng</h3>
+            <p class="text-muted mb-0">Xem, chỉnh sửa thông tin nhà hàng và quản lý danh sách địa chỉ hoạt động.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary rounded-pill px-3 fw-semibold shadow-sm"
                     data-bs-toggle="modal" data-bs-target="#editMerchantModal">
-                    <i class="bi bi-pencil-square me-1"></i> Sửa Thông Tin
-                </button>
-                <a href="/" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold">
-                    <i class="bi bi-house me-1"></i> Trang Chủ
-                </a>
+                <i class="bi bi-pencil-square me-1"></i>Sửa Thông Tin
+            </button>
+            <a href="/" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold">
+                <i class="bi bi-house me-1"></i>Trang Chủ
+            </a>
+        </div>
+    </div>
+
+    <div id="alertContainer" class="mb-3"></div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white py-3 border-0">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-info-circle-fill text-danger me-2"></i>Thông Tin Nhà Hàng</h5>
+                <span th:if="${merchant.trustedPartner}" class="badge bg-primary rounded-pill px-3 py-2">
+                    <i class="bi bi-patch-check-fill me-1"></i>Đối tác thân thiết
+                </span>
             </div>
         </div>
-
-        <!-- Alert Container -->
-        <div id="alertContainer" class="mb-3"></div>
-
-        <!-- Thông tin Nhà hàng Card -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-header bg-white py-3 border-0">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0 text-dark">
-                        <i class="bi bi-info-circle-fill text-danger me-2"></i>Thông Tin Nhà Hàng
-                    </h5>
-                    <span th:if="${merchant.trustedPartner}" class="badge bg-primary rounded-pill px-3 py-2">
-                        <i class="bi bi-patch-check-fill me-1"></i>Đối tác thân thiết
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <label class="text-muted small d-block">Tên nhà hàng</label>
+                    <div class="fw-bold fs-5" th:text="${merchant.merchantRestaurantName}">Quán Cơm Gà</div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label class="text-muted small d-block">Email liên hệ</label>
+                    <div class="fw-semibold" th:text="${merchant.merchantEmail}">merchant@email.com</div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label class="text-muted small d-block">Số điện thoại</label>
+                    <div class="fw-semibold" th:text="${merchant.merchantPhone}">0900000000</div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label class="text-muted small d-block">Trạng thái duyệt</label>
+                    <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
+                          class="badge bg-warning text-dark px-3 py-2 rounded-pill">
+                        <i class="bi bi-clock me-1"></i>Chờ duyệt
+                    </span>
+                    <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}"
+                          class="badge bg-success px-3 py-2 rounded-pill">
+                        <i class="bi bi-check-circle me-1"></i>Đã duyệt
+                    </span>
+                    <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).REJECTED}"
+                          class="badge bg-danger px-3 py-2 rounded-pill">
+                        <i class="bi bi-x-circle me-1"></i>Từ chối
+                    </span>
+                    <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}"
+                          class="badge bg-secondary px-3 py-2 rounded-pill">
+                        <i class="bi bi-lock me-1"></i>Đã khóa
                     </span>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="card-body">
-                <div class="row g-4">
-                    <!-- Tên nhà hàng -->
-                    <div class="col-md-6 col-lg-3">
-                        <label class="text-muted small d-block">Tên nhà hàng</label>
-                        <div class="fw-bold fs-5 text-dark" th:text="${merchant.merchantRestaurantName}">Quan Com Ga
-                        </div>
-                    </div>
-
-                    <!-- Email -->
-                    <div class="col-md-6 col-lg-3">
-                        <label class="text-muted small d-block">Email liên hệ</label>
-                        <div class="fw-semibold text-dark" th:text="${merchant.merchantEmail}">merchant@email.com</div>
-                    </div>
-
-                    <!-- Số điện thoại -->
-                    <div class="col-md-6 col-lg-3">
-                        <label class="text-muted small d-block">Số điện thoại</label>
-                        <div class="fw-semibold text-dark" th:text="${merchant.merchantPhone}">0900000000</div>
-                    </div>
-
-                    <!-- Trạng thái -->
-                    <div class="col-md-6 col-lg-3">
-                        <label class="text-muted small d-block">Trạng thái duyệt</label>
-                        <span
-                            th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
-                            class="badge bg-warning text-dark px-3 py-2 rounded-pill">
-                            <i class="bi bi-clock me-1"></i>Chờ duyệt
-                        </span>
-                        <span
-                            th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}"
-                            class="badge bg-success px-3 py-2 rounded-pill">
-                            <i class="bi bi-check-circle me-1"></i>Đã duyệt
-                        </span>
-                        <span
-                            th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).REJECTED}"
-                            class="badge bg-danger px-3 py-2 rounded-pill">
-                            <i class="bi bi-x-circle me-1"></i>Từ chối
-                        </span>
-                        <span
-                            th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}"
-                            class="badge bg-secondary px-3 py-2 rounded-pill">
-                            <i class="bi bi-lock me-1"></i>Đã khóa
-                        </span>
-                    </div>
-                </div>
-            </div>
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="fw-bold mb-0"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Địa Chỉ Hoạt Động</h5>
+            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold"
+                    data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                <i class="bi bi-plus-circle me-1"></i>Thêm Địa Chỉ Mới
+            </button>
         </div>
 
-        <!-- Địa chỉ Nhà hàng Card -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div
-                class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 class="fw-bold mb-0 text-dark">
-                    <i class="bi bi-geo-alt-fill text-danger me-2"></i>Địa Chỉ Hoạt Động
-                </h5>
-                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold"
-                    data-bs-toggle="modal" data-bs-target="#addAddressModal">
-                    <i class="bi bi-plus-circle me-1"></i>Thêm Địa Chỉ Mới
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(merchant.addresses)}" class="text-center text-muted py-5">
+                <i class="bi bi-geo-alt fs-1 d-block mb-3 text-secondary"></i>
+                <p class="mb-2">Nhà hàng của bạn chưa đăng ký địa chỉ nào.</p>
+                <button type="button" class="btn btn-danger rounded-pill btn-sm px-3"
+                        data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                    + Thêm địa chỉ ngay
                 </button>
             </div>
 
-            <div class="card-body">
-                <div th:if="${#lists.isEmpty(merchant.addresses)}" class="text-center text-muted py-5">
-                    <i class="bi bi-geo-alt fs-1 d-block mb-3 text-secondary"></i>
-                    <p class="mb-2 fs-6">Nhà hàng của bạn chưa đăng ký địa chỉ nào.</p>
-                    <button type="button" class="btn btn-danger rounded-pill btn-sm px-3" data-bs-toggle="modal"
-                        data-bs-target="#addAddressModal">
-                        + Thêm địa chỉ ngay
-                    </button>
-                </div>
-
-                <div th:unless="${#lists.isEmpty(merchant.addresses)}">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="width: 60px;">STT</th>
-                                    <th>Địa chỉ chi tiết</th>
-                                    <th>Giờ mở cửa</th>
-                                    <th>Giờ đóng cửa</th>
-                                    <th class="text-end" style="width: 140px;">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="address, stat : ${merchant.addresses}">
-                                    <td class="fw-bold text-muted" th:text="${stat.count}">1</td>
-                                    <td class="fw-semibold" th:text="${address.merchantAddress}">Số 123 Đường ABC</td>
-                                    <td>
-                                        <span class="badge bg-light text-dark border">
-                                            <i class="bi bi-clock me-1 text-success"></i><span
-                                                th:text="${address.merchantOpenTime}">08:00</span>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-light text-dark border">
-                                            <i class="bi bi-clock-history me-1 text-danger"></i><span
-                                                th:text="${address.merchantCloseTime}">22:00</span>
-                                        </span>
-                                    </td>
-                                    <td class="text-end">
-                                        <button type="button" class="btn btn-outline-primary btn-sm rounded-circle me-1"
-                                            th:data-merchant-id="${merchant.id}" th:data-address-id="${address.id}"
-                                            th:data-address="${address.merchantAddress}"
-                                            th:data-open-time="${address.merchantOpenTime}"
-                                            th:data-close-time="${address.merchantCloseTime}"
-                                            onclick="openEditAddressModal(this)" title="Sửa địa chỉ">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button type="button"
-                                            class="btn btn-outline-danger btn-sm rounded-circle delete-address-btn"
-                                            th:data-merchant-id="${merchant.id}" th:data-address-id="${address.id}"
-                                            onclick="deleteAddress(this)" title="Xóa địa chỉ">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+            <div th:unless="${#lists.isEmpty(merchant.addresses)}">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width:60px">STT</th>
+                            <th>Địa chỉ chi tiết</th>
+                            <th>Giờ mở cửa</th>
+                            <th>Giờ đóng cửa</th>
+                            <th class="text-end" style="width:140px">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="address,stat : ${merchant.addresses}">
+                            <td class="fw-bold text-muted" th:text="${stat.count}">1</td>
+                            <td class="fw-semibold" th:text="${address.merchantAddress}">Số 123 Đường ABC</td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    <i class="bi bi-clock me-1 text-success"></i>
+                                    <span th:text="${address.merchantOpenTime}">08:00</span>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    <i class="bi bi-clock-history me-1 text-danger"></i>
+                                    <span th:text="${address.merchantCloseTime}">22:00</span>
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button"
+                                        class="btn btn-outline-primary btn-sm rounded-circle me-1"
+                                        th:data-merchant-id="${merchant.id}"
+                                        th:data-address-id="${address.id}"
+                                        th:data-address="${address.merchantAddress}"
+                                        th:data-province-code="${address.provinceCode}"
+                                        th:data-ward-code="${address.wardCode}"
+                                        th:data-open-time="${address.merchantOpenTime}"
+                                        th:data-close-time="${address.merchantCloseTime}"
+                                        onclick="openEditAddressModal(this)"
+                                        title="Sửa địa chỉ">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-danger btn-sm rounded-circle delete-address-btn"
+                                        th:data-merchant-id="${merchant.id}"
+                                        th:data-address-id="${address.id}"
+                                        onclick="deleteAddress(this)"
+                                        title="Xóa địa chỉ">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-
     </div>
+</div>
 
-    <!-- Modal Chỉnh Sửa Thông Tin Merchant -->
-    <div class="modal fade" id="editMerchantModal" tabindex="-1" aria-labelledby="editMerchantModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold" id="editMerchantModalLabel">
-                        <i class="bi bi-pencil-square text-danger me-2"></i>Chỉnh Sửa Thông Tin Nhà Hàng
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="editMerchantForm" th:data-merchant-id="${merchant.id}">
-                    <div class="modal-body py-4">
-                        <div class="mb-3">
-                            <label for="editRestaurantName" class="form-label fw-semibold">Tên nhà hàng <span
-                                    class="text-danger">*</span></label>
-                            <input type="text" class="form-control rounded-3" id="editRestaurantName"
-                                th:value="${merchant.merchantRestaurantName}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Địa chỉ chính <span
-                                    class="text-muted fw-normal fs-7">(Không bắt buộc)</span></label>
-                            <div class="row g-2 mb-2">
-                                <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="mainProvinceSelect">
-                                        <option value="" selected disabled>Tỉnh/Thành phố</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="mainDistrictSelect" disabled>
-                                        <option value="" selected disabled>Quận/Huyện</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="mainWardSelect" disabled>
-                                        <option value="" selected disabled>Phường/Xã</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <input type="text" class="form-control rounded-3" id="mainStreetInput"
-                                placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)">
-                            <input type="hidden" id="editAddress" 
-                                th:value="${!#lists.isEmpty(merchant.addresses) ? merchant.addresses[0].merchantAddress : ''}">
-                            <div class="form-text">Chọn lại nếu muốn cập nhật địa chỉ chính.</div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6 mb-3">
-                                <label for="editOpenTime" class="form-label fw-semibold">Giờ mở cửa <span
-                                        class="text-muted fw-normal fs-7">(Tùy chọn)</span></label>
-                                <input type="time" class="form-control rounded-3" id="editOpenTime"
-                                    th:value="${!#lists.isEmpty(merchant.addresses) && merchant.addresses[0].merchantOpenTime != null ? merchant.addresses[0].merchantOpenTime : ''}">
-                            </div>
-                            <div class="col-6 mb-3">
-                                <label for="editCloseTime" class="form-label fw-semibold">Giờ đóng cửa <span
-                                        class="text-muted fw-normal fs-7">(Tùy chọn)</span></label>
-                                <input type="time" class="form-control rounded-3" id="editCloseTime"
-                                    th:value="${!#lists.isEmpty(merchant.addresses) && merchant.addresses[0].merchantCloseTime != null ? merchant.addresses[0].merchantCloseTime : ''}">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-light rounded-pill px-4"
-                            data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">Lưu thay đổi</button>
-                    </div>
-                </form>
+<!-- Sửa Merchant -->
+<div class="modal fade" id="editMerchantModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-pencil-square text-danger me-2"></i>Chỉnh Sửa Thông Tin Nhà Hàng
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
+            <form id="editMerchantForm" th:data-merchant-id="${merchant.id}">
+                <div class="modal-body py-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên nhà hàng <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" id="editRestaurantName"
+                               th:value="${merchant.merchantRestaurantName}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Địa chỉ chính</label>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-4">
+                                <select class="form-select rounded-3" id="mainProvinceSelect">
+                                    <option value="" selected disabled>Tỉnh/Thành phố</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select rounded-3" id="mainDistrictSelect" disabled>
+                                    <option value="" selected disabled>Quận/Huyện</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select rounded-3" id="mainWardSelect" disabled>
+                                    <option value="" selected disabled>Phường/Xã</option>
+                                </select>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control rounded-3" id="mainStreetInput"
+                               placeholder="Số nhà, Tên đường">
+                        <input type="hidden" id="editAddress">
+                        <input type="hidden" id="editProvinceCode">
+                        <input type="hidden" id="editWardCode">
+                        <div class="form-text">Chọn lại nếu muốn cập nhật địa chỉ chính.</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold">Giờ mở cửa</label>
+                            <input type="time" class="form-control rounded-3" id="editOpenTime"
+                                   th:value="${!#lists.isEmpty(merchant.addresses) ? merchant.addresses[0].merchantOpenTime : ''}">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold">Giờ đóng cửa</label>
+                            <input type="time" class="form-control rounded-3" id="editCloseTime"
+                                   th:value="${!#lists.isEmpty(merchant.addresses) ? merchant.addresses[0].merchantCloseTime : ''}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">Lưu thay đổi</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <!-- Modal Thêm Địa Chỉ Mới -->
-    <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold" id="addAddressModalLabel">
-                        <i class="bi bi-geo-alt-fill text-danger me-2"></i>Thêm Địa Chỉ Mới
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="addAddressForm" th:data-merchant-id="${merchant.id}">
-                    <div class="modal-body py-4">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Địa chỉ nhà hàng <span
-                                    class="text-danger">*</span></label>
-                            <div class="row g-2 mb-2">
-                                <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="newProvinceSelect" required>
-                                        <option value="" selected disabled>Tỉnh/Thành phố</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="newDistrictSelect" required disabled>
-                                        <option value="" selected disabled>Quận/Huyện</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="newWardSelect" required disabled>
-                                        <option value="" selected disabled>Phường/Xã</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <input type="text" class="form-control rounded-3" id="newStreetInput"
-                                placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)" required>
-                            <input type="hidden" id="newAddress">
-                        </div>
-                        <div class="row">
-                            <div class="col-6 mb-3">
-                                <label for="newOpenTime" class="form-label fw-semibold">Giờ mở cửa <span
-                                        class="text-muted fw-normal fs-7">(Tùy chọn)</span></label>
-                                <input type="time" class="form-control rounded-3" id="newOpenTime" value="08:00">
-                            </div>
-                            <div class="col-6 mb-3">
-                                <label for="newCloseTime" class="form-label fw-semibold">Giờ đóng cửa <span
-                                        class="text-muted fw-normal fs-7">(Tùy chọn)</span></label>
-                                <input type="time" class="form-control rounded-3" id="newCloseTime" value="22:00">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-light rounded-pill px-4"
-                            data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">+ Thêm địa
-                            chỉ</button>
-                    </div>
-                </form>
+<!-- Thêm địa chỉ -->
+<div class="modal fade" id="addAddressModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-geo-alt-fill text-danger me-2"></i>Thêm Địa Chỉ Mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
+            <form id="addAddressForm" th:data-merchant-id="${merchant.id}">
+                <div class="modal-body py-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Địa chỉ nhà hàng <span class="text-danger">*</span></label>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-4">
+                                <select class="form-select rounded-3" id="newProvinceSelect" required>
+                                    <option value="" selected disabled>Tỉnh/Thành phố</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select rounded-3" id="newDistrictSelect" required disabled>
+                                    <option value="" selected disabled>Quận/Huyện</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select rounded-3" id="newWardSelect" required disabled>
+                                    <option value="" selected disabled>Phường/Xã</option>
+                                </select>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control rounded-3" id="newStreetInput"
+                               placeholder="Số nhà, Tên đường" required>
+                        <input type="hidden" id="newAddress">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold">Giờ mở cửa</label>
+                            <input type="time" class="form-control rounded-3" id="newOpenTime" value="08:00">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold">Giờ đóng cửa</label>
+                            <input type="time" class="form-control rounded-3" id="newCloseTime" value="22:00">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">+ Thêm địa chỉ</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <!-- Modal Sửa Địa Chỉ Từng Dòng -->
-    <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold" id="editAddressModalLabel">
-                        <i class="bi bi-pencil-square text-primary me-2"></i>Chỉnh Sửa Địa Chỉ Nhà Hàng
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Sửa từng địa chỉ -->
+<form id="editAddressForm">
+    <input type="hidden" id="editAddressMerchantId">
+    <input type="hidden" id="editAddressId">
+
+    <div class="modal-body py-4">
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Địa chỉ nhà hàng</label>
+            <div class="row g-2 mb-2">
+                <div class="col-md-4">
+                    <select class="form-select rounded-3" id="editProvinceSelect">
+                        <option value="" selected disabled>Tỉnh/Thành phố</option>
+                    </select>
                 </div>
-                <form id="editAddressForm">
-                    <input type="hidden" id="editAddressMerchantId">
-                    <input type="hidden" id="editAddressId">
-                    <div class="modal-body py-4">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Địa chỉ nhà hàng <span
-                                    class="text-muted fw-normal fs-7">(Chọn lại nếu muốn sửa)</span></label>
-                            <div class="row g-2 mb-2">
-                                <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="editProvinceSelect">
-                                        <option value="" selected disabled>Tỉnh/Thành phố</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="editDistrictSelect" disabled>
-                                        <option value="" selected disabled>Quận/Huyện</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="editWardSelect" disabled>
-                                        <option value="" selected disabled>Phường/Xã</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <input type="text" class="form-control rounded-3" id="editStreetInput"
-                                placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)">
-                            <input type="hidden" id="editAddressDetail">
-                        </div>
-                        <div class="row">
-                            <div class="col-6 mb-3">
-                                <label for="editAddressOpenTime" class="form-label fw-semibold">Giờ mở cửa <span
-                                        class="text-muted fw-normal fs-7">(Tùy chọn)</span></label>
-                                <input type="time" class="form-control rounded-3" id="editAddressOpenTime">
-                            </div>
-                            <div class="col-6 mb-3">
-                                <label for="editAddressCloseTime" class="form-label fw-semibold">Giờ đóng cửa <span
-                                        class="text-muted fw-normal fs-7">(Tùy chọn)</span></label>
-                                <input type="time" class="form-control rounded-3" id="editAddressCloseTime">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-light rounded-pill px-4"
-                            data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Lưu địa chỉ</button>
-                    </div>
-                </form>
+                <div class="col-md-4">
+                    <select class="form-select rounded-3" id="editDistrictSelect" disabled>
+                        <option value="" selected disabled>Quận/Huyện</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select rounded-3" id="editWardSelect" disabled>
+                        <option value="" selected disabled>Phường/Xã</option>
+                    </select>
+                </div>
+            </div>
+
+            <input type="text" class="form-control rounded-3" id="editStreetInput"
+                   placeholder="Số nhà, Tên đường">
+            <input type="hidden" id="editAddressDetail">
+        </div>
+
+        <div class="row">
+            <div class="col-6 mb-3">
+                <label class="form-label fw-semibold">Giờ mở cửa</label>
+                <input type="time" class="form-control rounded-3" id="editAddressOpenTime">
+            </div>
+            <div class="col-6 mb-3">
+                <label class="form-label fw-semibold">Giờ đóng cửa</label>
+                <input type="time" class="form-control rounded-3" id="editAddressCloseTime">
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <div th:replace="~{layout/footer :: footer}"></div>
+    <div class="modal-footer border-0 pt-0 d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-danger rounded-pill px-4"
+                id="deleteAddressFromModal">
+            <i class="bi bi-trash me-1"></i>Xóa địa chỉ
+        </button>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-light rounded-pill px-4"
+                    data-bs-dismiss="modal">
+                Hủy
+            </button>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                <i class="bi bi-check-circle me-1"></i>Lưu địa chỉ
+            </button>
+        </div>
+    </div>
+</form>
 
-    <script>
-        // Hiển thị thông báo Alert
-        function showAlert(type, message) {
-            const container = document.getElementById('alertContainer');
-            if (!container) return;
-            container.innerHTML = `
-                <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show rounded-3 shadow-sm" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const API = "https://provinces.open-api.vn/api/";
+
+    function showAlert(type, message) {
+        const c = document.getElementById("alertContainer");
+        if (!c) return;
+        c.innerHTML = `<div class="alert alert-${type === "success" ? "success" : "danger"} alert-dismissible fade show rounded-3 shadow-sm">${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+    }
+
+    function timeValue(id) {
+        const v = document.getElementById(id)?.value;
+        return v ? v + ":00" : null;
+    }
+
+    async function getJson(url) {
+        const r = await fetch(url);
+        if (!r.ok) throw new Error("Không thể tải dữ liệu địa chỉ.");
+        return r.json();
+    }
+
+    function addressPayload(prefix) {
+        const province = document.getElementById(prefix + "ProvinceSelect");
+        const district = document.getElementById(prefix + "DistrictSelect");
+        const ward = document.getElementById(prefix + "WardSelect");
+        const street = document.getElementById(prefix + "StreetInput");
+
+        if (!province || !district || !ward || !street) return null;
+        if (!province.value || !district.value || !ward.value || !street.value.trim()) return null;
+
+        const address = `${street.value.trim()}, ${ward.options[ward.selectedIndex].text}, ${district.options[district.selectedIndex].text}, ${province.options[province.selectedIndex].text}`;
+
+        return {
+            merchantAddress: address,
+            provinceCode: province.value,
+            districtCode: district.value,
+            wardCode: ward.value
+        };
+    }
+
+    function setupAddressDropdowns(prefix) {
+        const province = document.getElementById(prefix + "ProvinceSelect");
+        const district = document.getElementById(prefix + "DistrictSelect");
+        const ward = document.getElementById(prefix + "WardSelect");
+        const street = document.getElementById(prefix + "StreetInput");
+        const hidden = document.getElementById(
+            prefix === "new" ? "newAddress" :
+                prefix === "edit" ? "editAddressDetail" : "editAddress"
+        );
+
+        if (!province || !district || !ward || !street) return;
+
+        const update = () => {
+            const data = addressPayload(prefix);
+            if (hidden) hidden.value = data?.merchantAddress || "";
+            if (prefix === "main" && data) {
+                document.getElementById("editProvinceCode").value = data.provinceCode;
+                document.getElementById("editWardCode").value = data.wardCode;
+            }
+        };
+
+        if (prefix !== "edit") {
+            getJson(API + "?depth=1").then(data => {
+                province.innerHTML = '<option value="" selected disabled>Tỉnh/Thành phố</option>' +
+                    data.map(x => `<option value="${x.code}">${x.name}</option>`).join("");
+            }).catch(console.error);
         }
 
-        // Lắng nghe sự kiện Sửa thông tin Merchant
-        document.getElementById('editMerchantForm')?.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const merchantId = this.getAttribute('data-merchant-id');
-            const restaurantName = document.getElementById('editRestaurantName').value.trim();
-            const address = document.getElementById('editAddress').value.trim();
-            let openTime = document.getElementById('editOpenTime').value;
-            let closeTime = document.getElementById('editCloseTime').value;
-
-            if (openTime && openTime.length === 5) openTime += ':00';
-            if (closeTime && closeTime.length === 5) closeTime += ':00';
-
-            const payload = {
-                merchantRestaurantName: restaurantName,
-                merchantAddress: address || null,
-                merchantOpenTime: openTime || null,
-                merchantCloseTime: closeTime || null
-            };
+        province.addEventListener("change", async (e) => {
+            if (!e.isTrusted) return;
+            district.disabled = true;
+            ward.disabled = true;
+            district.innerHTML = '<option value="" selected disabled>Quận/Huyện</option>';
+            ward.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
 
             try {
-                const response = await fetch(`/api/merchants/${merchantId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    const modalEl = document.getElementById('editMerchantModal');
-                    if (modalEl) {
-                        const modal = bootstrap.Modal.getInstance(modalEl);
-                        if (modal) modal.hide();
-                    }
-                    showAlert('success', '✅ Cập nhật thông tin nhà hàng thành công!');
-                    setTimeout(() => window.location.reload(), 800);
-                } else {
-                    const errText = await response.text();
-                    showAlert('error', '❌ Lỗi cập nhật: ' + errText);
-                }
-            } catch (error) {
-                console.error("Lỗi cập nhật:", error);
-                showAlert('error', '❌ Đã có lỗi xảy ra khi kết nối server.');
+                const data = await getJson(`${API}p/${province.value}?depth=2`);
+                district.innerHTML = '<option value="" selected disabled>Quận/Huyện</option>' +
+                    data.districts.map(x => `<option value="${x.code}">${x.name}</option>`).join("");
+                district.disabled = false;
+            } catch (err) {
+                console.error(err);
             }
+            update();
         });
 
-        // Lắng nghe sự kiện Thêm địa chỉ mới
-        document.getElementById('addAddressForm')?.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const merchantId = this.getAttribute('data-merchant-id');
-            const address = document.getElementById('newAddress').value.trim();
-            let openTime = document.getElementById('newOpenTime').value;
-            let closeTime = document.getElementById('newCloseTime').value;
-
-            if (openTime && openTime.length === 5) openTime += ':00';
-            if (closeTime && closeTime.length === 5) closeTime += ':00';
+        district.addEventListener("change", async (e) => {
+            if (!e.isTrusted) return;
+            ward.disabled = true;
+            ward.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
 
             try {
-                const response = await fetch(`/api/merchants/${merchantId}/addresses`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        merchantAddress: address,
-                        merchantOpenTime: openTime || null,
-                        merchantCloseTime: closeTime || null
-                    })
-                });
-
-                if (response.ok) {
-                    const modalEl = document.getElementById('addAddressModal');
-                    if (modalEl) {
-                        const modal = bootstrap.Modal.getInstance(modalEl);
-                        if (modal) modal.hide();
-                    }
-                    showAlert('success', '✅ Thêm địa chỉ mới thành công!');
-                    setTimeout(() => window.location.reload(), 800);
-                } else {
-                    const errText = await response.text();
-                    showAlert('error', '❌ Lỗi thêm địa chỉ: ' + errText);
-                }
-            } catch (error) {
-                console.error("Lỗi thêm địa chỉ:", error);
-                showAlert('error', '❌ Đã có lỗi xảy ra khi kết nối server.');
+                const data = await getJson(`${API}d/${district.value}?depth=2`);
+                ward.innerHTML = '<option value="" selected disabled>Phường/Xã</option>' +
+                    data.wards.map(x => `<option value="${x.code}">${x.name}</option>`).join("");
+                ward.disabled = false;
+            } catch (err) {
+                console.error(err);
             }
+            update();
         });
 
-        // Mở Modal Sửa Địa Chỉ Từng Dòng
-        function openEditAddressModal(btn) {
-            const merchantId = btn.getAttribute('data-merchant-id');
-            const addressId = btn.getAttribute('data-address-id');
-            const address = btn.getAttribute('data-address');
-            const openTime = btn.getAttribute('data-open-time');
-            const closeTime = btn.getAttribute('data-close-time');
+        ward.addEventListener("change", update);
+        street.addEventListener("input", update);
+    }
 
-            document.getElementById('editAddressMerchantId').value = merchantId;
-            document.getElementById('editAddressId').value = addressId;
-            document.getElementById('editAddressDetail').value = address || '';
-            document.getElementById('editAddressOpenTime').value = openTime ? openTime.substring(0, 5) : '';
-            document.getElementById('editAddressCloseTime').value = closeTime ? closeTime.substring(0, 5) : '';
+    /* Tải dữ liệu chính xác 100% không bị treo ô Huyện/Xã */
+    async function loadAddressDropdowns(prefix, provinceCode, districtCode, wardCode) {
+        const province = document.getElementById(prefix + "ProvinceSelect");
+        const district = document.getElementById(prefix + "DistrictSelect");
+        const ward = document.getElementById(prefix + "WardSelect");
 
-            const modal = new bootstrap.Modal(document.getElementById('editAddressModal'));
-            modal.show();
+        if (!province || !district || !ward) return;
+
+        try {
+            const provinces = await getJson(API + "?depth=1");
+            province.innerHTML = '<option value="" selected disabled>Tỉnh/Thành phố</option>' +
+                provinces.map(x => `<option value="${x.code}">${x.name}</option>`).join("");
+
+            if (!provinceCode) return;
+            province.value = String(provinceCode);
+
+            const provinceData = await getJson(`${API}p/${provinceCode}?depth=2`);
+            const districts = provinceData.districts || [];
+
+            district.innerHTML = '<option value="" selected disabled>Quận/Huyện</option>' +
+                districts.map(x => `<option value="${x.code}">${x.name}</option>`).join("");
+            district.disabled = false;
+
+            // Tải danh sách tất cả các huyện song song để tìm đúng districtCode
+            if (!districtCode && wardCode) {
+                const districtRequests = districts.map(d => getJson(`${API}d/${d.code}?depth=2`).catch(() => null));
+                const districtResults = await Promise.all(districtRequests);
+
+                for (const dData of districtResults) {
+                    if (dData && (dData.wards || []).some(w => String(w.code) === String(wardCode))) {
+                        districtCode = dData.code;
+                        break;
+                    }
+                }
+            }
+
+            if (!districtCode) return;
+            district.value = String(districtCode);
+
+            const districtData = await getJson(`${API}d/${districtCode}?depth=2`);
+            const wards = districtData.wards || [];
+
+            ward.innerHTML = '<option value="" selected disabled>Phường/Xã</option>' +
+                wards.map(x => `<option value="${x.code}">${x.name}</option>`).join("");
+            ward.disabled = false;
+
+            if (wardCode) {
+                ward.value = String(wardCode);
+            }
+        } catch (error) {
+            console.error("Lỗi nạp danh sách địa chỉ:", error);
+        }
+    }
+
+    async function openEditAddressModal(btn) {
+        const merchantId = btn.dataset.merchantId;
+        const addressId = btn.dataset.addressId;
+        const address = btn.dataset.address || "";
+        const provinceCode = btn.dataset.provinceCode;
+        const districtCode = btn.dataset.districtCode;
+        const wardCode = btn.dataset.wardCode;
+
+        document.getElementById("editAddressMerchantId").value = merchantId;
+        document.getElementById("editAddressId").value = addressId;
+        document.getElementById("editAddressDetail").value = address;
+        document.getElementById("editAddressOpenTime").value = btn.dataset.openTime?.substring(0, 5) || "";
+        document.getElementById("editAddressCloseTime").value = btn.dataset.closeTime?.substring(0, 5) || "";
+
+        const streetInput = document.getElementById("editStreetInput");
+        if (streetInput) {
+            streetInput.value = address.split(",")[0]?.trim() || "";
         }
 
-        // Lắng nghe sự kiện Submit Sửa Địa Chỉ
-        document.getElementById('editAddressForm')?.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const merchantId = document.getElementById('editAddressMerchantId').value;
-            const addressId = document.getElementById('editAddressId').value;
-            const address = document.getElementById('editAddressDetail').value.trim();
-            let openTime = document.getElementById('editAddressOpenTime').value;
-            let closeTime = document.getElementById('editAddressCloseTime').value;
+        const district = document.getElementById("editDistrictSelect");
+        const ward = document.getElementById("editWardSelect");
+        district.innerHTML = '<option value="" selected disabled>Đang tải Quận/Huyện...</option>';
+        ward.innerHTML = '<option value="" selected disabled>Đang tải Phường/Xã...</option>';
+        district.disabled = true;
+        ward.disabled = true;
 
-            if (openTime && openTime.length === 5) openTime += ':00';
-            if (closeTime && closeTime.length === 5) closeTime += ':00';
+        new bootstrap.Modal(document.getElementById("editAddressModal")).show();
 
-            try {
-                const response = await fetch(`/api/merchants/${merchantId}/addresses/${addressId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        merchantAddress: address,
-                        merchantOpenTime: openTime || null,
-                        merchantCloseTime: closeTime || null
-                    })
-                });
+        await loadAddressDropdowns("edit", provinceCode, districtCode, wardCode);
+    }
 
-                if (response.ok) {
-                    const modalEl = document.getElementById('editAddressModal');
-                    if (modalEl) {
-                        const modal = bootstrap.Modal.getInstance(modalEl);
-                        if (modal) modal.hide();
-                    }
-                    showAlert('success', '✅ Cập nhật địa chỉ thành công!');
-                    setTimeout(() => window.location.reload(), 800);
-                } else {
-                    const errText = await response.text();
-                    showAlert('error', '❌ Lỗi cập nhật địa chỉ: ' + errText);
-                }
-            } catch (error) {
-                console.error("Lỗi cập nhật địa chỉ:", error);
-                showAlert('error', '❌ Đã có lỗi xảy ra khi kết nối server.');
-            }
-        });
+    /* Sửa thông tin Merchant */
+    document.getElementById("editMerchantForm")?.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const id = this.dataset.merchantId;
+        const address = addressPayload("main");
 
-        // Xóa địa chỉ Merchant
-        async function deleteAddress(btn) {
-            const merchantId = btn.getAttribute('data-merchant-id');
-            const addressId = btn.getAttribute('data-address-id');
+        const payload = {
+            merchantRestaurantName: document.getElementById("editRestaurantName").value.trim(),
+            merchantAddress: address?.merchantAddress || null,
+            provinceCode: address?.provinceCode || null,
+            wardCode: address?.wardCode || null,
+            merchantOpenTime: timeValue("editOpenTime"),
+            merchantCloseTime: timeValue("editCloseTime")
+        };
 
-            if (!confirm("Bạn có chắc chắn muốn xóa địa chỉ này không?")) return;
-
-            try {
-                const response = await fetch(`/api/merchants/${merchantId}/addresses/${addressId}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    showAlert('success', '✅ Đã xóa địa chỉ thành công!');
-                    setTimeout(() => window.location.reload(), 800);
-                } else {
-                    const errText = await response.text();
-                    showAlert('error', '❌ Lỗi xóa địa chỉ: ' + errText);
-                }
-            } catch (error) {
-                console.error("Lỗi xóa địa chỉ:", error);
-                showAlert('error', '❌ Đã có lỗi xảy ra khi kết nối server.');
-            }
+        if (!payload.merchantRestaurantName) {
+            showAlert("error", "❌ Tên nhà hàng không được để trống!");
+            return;
         }
-        // API Address helper function
-        function setupAddressDropdowns(prefix) {
-            const host = "https://provinces.open-api.vn/api/";
-            const provinceSelect = document.getElementById(prefix + "ProvinceSelect");
-            const districtSelect = document.getElementById(prefix + "DistrictSelect");
-            const wardSelect = document.getElementById(prefix + "WardSelect");
-            const streetInput = document.getElementById(prefix + "StreetInput");
-            
-            let hiddenId = '';
-            if (prefix === 'new') hiddenId = 'newAddress';
-            else if (prefix === 'edit') hiddenId = 'editAddressDetail';
-            else if (prefix === 'main') hiddenId = 'editAddress';
-            const hiddenAddress = document.getElementById(hiddenId);
 
-            if (!provinceSelect || !hiddenAddress) return;
-
-            const updateHiddenAddress = () => {
-                if (provinceSelect.value && districtSelect.value && wardSelect.value && streetInput.value.trim()) {
-                    hiddenAddress.value = streetInput.value.trim() + ", " + 
-                        wardSelect.options[wardSelect.selectedIndex].text + ", " + 
-                        districtSelect.options[districtSelect.selectedIndex].text + ", " + 
-                        provinceSelect.options[provinceSelect.selectedIndex].text;
-                }
-            };
-
-            streetInput.addEventListener("input", updateHiddenAddress);
-
-            fetch(host + "?depth=1")
-                .then(response => response.json())
-                .then(data => {
-                    let options = '<option value="" selected disabled>Tỉnh/Thành phố</option>';
-                    data.forEach(item => {
-                        options += `<option value="${item.code}">${item.name}</option>`;
-                    });
-                    provinceSelect.innerHTML = options;
-                });
-
-            provinceSelect.addEventListener("change", function() {
-                districtSelect.disabled = false;
-                wardSelect.disabled = true;
-                wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
-                updateHiddenAddress();
-                
-                fetch(host + "p/" + this.value + "?depth=2")
-                    .then(response => response.json())
-                    .then(data => {
-                        let options = '<option value="" selected disabled>Quận/Huyện</option>';
-                        data.districts.forEach(item => {
-                            options += `<option value="${item.code}">${item.name}</option>`;
-                        });
-                        districtSelect.innerHTML = options;
-                    });
+        try {
+            const r = await fetch(`/api/merchants/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             });
 
-            districtSelect.addEventListener("change", function() {
-                wardSelect.disabled = false;
-                updateHiddenAddress();
-                
-                fetch(host + "d/" + this.value + "?depth=2")
-                    .then(response => response.json())
-                    .then(data => {
-                        let options = '<option value="" selected disabled>Phường/Xã</option>';
-                        data.wards.forEach(item => {
-                            options += `<option value="${item.code}">${item.name}</option>`;
-                        });
-                        wardSelect.innerHTML = options;
-                    });
-            });
+            if (!r.ok) throw new Error(await r.text());
 
-            wardSelect.addEventListener("change", updateHiddenAddress);
+            bootstrap.Modal.getInstance(document.getElementById("editMerchantModal"))?.hide();
+            showAlert("success", "✅ Cập nhật thông tin nhà hàng thành công!");
+            setTimeout(() => location.reload(), 800);
+        } catch (err) {
+            showAlert("error", "❌ Lỗi cập nhật: " + err.message);
+        }
+    });
+
+    /* Thêm địa chỉ */
+    document.getElementById("addAddressForm")?.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const id = this.dataset.merchantId;
+        const address = addressPayload("new");
+
+        if (!address) {
+            showAlert("error", "❌ Vui lòng chọn đầy đủ tỉnh/thành phố, quận/huyện, phường/xã và nhập số nhà!");
+            return;
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            setupAddressDropdowns('new');
-            setupAddressDropdowns('edit');
-            setupAddressDropdowns('main');
-        });
-    </script>
-</body>
+        const payload = {
+            ...address,
+            merchantOpenTime: timeValue("newOpenTime"),
+            merchantCloseTime: timeValue("newCloseTime"),
+            isDefault: false
+        };
 
-</html>
+        try {
+            const r = await fetch(`/api/merchants/${id}/addresses`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!r.ok) throw new Error(await r.text());
+
+            bootstrap.Modal.getInstance(document.getElementById("addAddressModal"))?.hide();
+            showAlert("success", "✅ Thêm địa chỉ mới thành công!");
+            setTimeout(() => location.reload(), 800);
+        } catch (err) {
+            showAlert("error", "❌ Lỗi thêm địa chỉ: " + err.message);
+        }
+    });
+
+    /* Sửa địa chỉ */
+    document.getElementById("editAddressForm")?.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const merchantId = document.getElementById("editAddressMerchantId").value;
+        const addressId = document.getElementById("editAddressId").value;
+        const address = addressPayload("edit");
+
+        if (!address) {
+            showAlert("error", "❌ Vui lòng chọn đầy đủ tỉnh/thành phố, quận/huyện, phường/xã và nhập số nhà!");
+            return;
+        }
+
+        const payload = {
+            ...address,
+            merchantOpenTime: timeValue("editAddressOpenTime"),
+            merchantCloseTime: timeValue("editAddressCloseTime"),
+            isDefault: false
+        };
+
+        try {
+            const r = await fetch(`/api/merchants/${merchantId}/addresses/${addressId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!r.ok) throw new Error(await r.text());
+
+            bootstrap.Modal.getInstance(document.getElementById("editAddressModal"))?.hide();
+            showAlert("success", "✅ Cập nhật địa chỉ thành công!");
+            setTimeout(() => location.reload(), 800);
+        } catch (err) {
+            showAlert("error", "❌ Lỗi cập nhật địa chỉ: " + err.message);
+        }
+    });
+
+    /* Xóa địa chỉ */
+    document.getElementById("deleteAddressFromModal")?.addEventListener("click",async function(){
+        const merchantId=document.getElementById("editAddressMerchantId").value;
+        const addressId=document.getElementById("editAddressId").value;
+
+        if(!merchantId||!addressId){
+            showAlert("error","❌ Không xác định được địa chỉ cần xóa!");
+            return;
+        }
+
+        const confirmDelete=confirm("Bạn có chắc chắn muốn xóa địa chỉ này không?");
+
+        if(!confirmDelete)return;
+
+        try{
+            const r=await fetch(`/api/merchants/${merchantId}/addresses/${addressId}`,{
+                method:"DELETE"
+            });
+
+            if(!r.ok)throw new Error(await r.text());
+
+            bootstrap.Modal.getInstance(
+                document.getElementById("editAddressModal")
+            )?.hide();
+
+            showAlert("success","✅ Xóa địa chỉ thành công!");
+
+            setTimeout(()=>location.reload(),800);
+        }catch(e){
+            showAlert("error","❌ Xóa địa chỉ thất bại: "+e.message);
+        }
+    });
+</script>

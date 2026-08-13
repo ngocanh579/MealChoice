@@ -151,34 +151,60 @@
                             <label class="form-label fw-semibold">
                                 Địa chỉ nhà hàng <span class="text-danger">*</span>
                             </label>
-                            
+
                             <div class="row g-2 mb-2">
+
+                                <!-- Tỉnh -->
                                 <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="provinceSelect" required>
-                                        <option value="" selected disabled>Tỉnh/Thành phố</option>
+                                    <select class="form-select rounded-3"
+                                            id="provinceSelect"
+                                            name="provinceCode"
+                                            required>
+                                        <option value="" selected disabled>
+                                            Tỉnh/Thành phố
+                                        </option>
                                     </select>
                                 </div>
+
+                                <!-- Quận/Huyện -->
                                 <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="districtSelect" required disabled>
-                                        <option value="" selected disabled>Quận/Huyện</option>
+                                    <select class="form-select rounded-3"
+                                            id="districtSelect"
+                                            name="districtCode"
+                                            required
+                                            disabled>
+                                        <option value="" selected disabled>
+                                            Quận/Huyện
+                                        </option>
                                     </select>
                                 </div>
+
+                                <!-- Phường/Xã -->
                                 <div class="col-md-4">
-                                    <select class="form-select rounded-3" id="wardSelect" required disabled>
-                                        <option value="" selected disabled>Phường/Xã</option>
+                                    <select class="form-select rounded-3"
+                                            id="wardSelect"
+                                            name="wardCode"
+                                            required
+                                            disabled>
+                                        <option value="" selected disabled>
+                                            Phường/Xã
+                                        </option>
                                     </select>
                                 </div>
+
                             </div>
-                            
+
+                            <!-- Địa chỉ chi tiết -->
                             <input type="text"
                                    class="form-control rounded-3 mt-2"
                                    id="streetInput"
+                                   name="merchantAddress"
                                    placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)"
                                    required>
 
-                            <input type="hidden" id="merchantAddress" name="merchantAddress">
-
-                            <div id="merchantAddressError" class="text-danger mt-1 d-none" style="font-size: 0.875em;">
+                            <div id="merchantAddressError"
+                                 class="text-danger mt-1 d-none"
+                                 style="font-size:.875em;">
                                 Vui lòng chọn đầy đủ địa chỉ.
                             </div>
                         </div>
@@ -277,323 +303,348 @@
 <div th:replace="~{layout/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-    function showSuccess(message) {
-        const errorAlert = document.getElementById("errorAlert");
-        const successAlert = document.getElementById("successAlert");
-
-        document.getElementById("successMessage").textContent = message;
-
-        errorAlert.classList.add("d-none");
-        successAlert.classList.remove("d-none");
-
-        successAlert.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-        });
-    }
-
-    function showError(message) {
-        const successAlert = document.getElementById("successAlert");
-        const errorAlert = document.getElementById("errorAlert");
-
-        document.getElementById("errorMessage").textContent = message;
-
-        successAlert.classList.add("d-none");
-        errorAlert.classList.remove("d-none");
-
-        errorAlert.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-        });
-    }
-
-    function clearValidation() {
-        document.querySelectorAll(
-            "#merchantRegisterForm .is-invalid"
-        ).forEach(function(input) {
-            input.classList.remove("is-invalid");
-        });
-    }
-
-    function validateRequiredFields() {
-        clearValidation();
-
-        const restaurantName =
-            document.getElementById("merchantRestaurantName");
-
-        const email =
-            document.getElementById("merchantEmail");
-
-        const phone =
-            document.getElementById("merchantPhone");
-
-        const address = document.getElementById("merchantAddress");
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("merchantRegisterForm");
         const province = document.getElementById("provinceSelect");
         const district = document.getElementById("districtSelect");
         const ward = document.getElementById("wardSelect");
         const street = document.getElementById("streetInput");
-        const addressError = document.getElementById("merchantAddressError");
-        addressError.classList.add("d-none");
+        const registerButton = document.getElementById("registerButton");
 
-        const password =
-            document.getElementById("password");
+        const API_URL = "https://provinces.open-api.vn/api/v1";
 
-        const confirmPassword =
-            document.getElementById("confirmPassword");
+        // Load tỉnh/thành phố
+        fetch(`${API_URL}/?depth=1`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(
+                        "Không thể tải tỉnh/thành phố"
+                    );
+                }
 
-        if (!restaurantName.value.trim()) {
-            restaurantName.classList.add("is-invalid");
-            restaurantName.focus();
-            return false;
-        }
-
-        if (!email.value.trim()) {
-            email.classList.add("is-invalid");
-            email.focus();
-            return false;
-        }
-
-        const emailRegex =
-            /^[A-Za-z0-9._-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/;
-
-        if (!emailRegex.test(email.value.trim())) {
-            email.classList.add("is-invalid");
-            document.getElementById("merchantEmailError").textContent =
-                "Email không đúng định dạng. Ví dụ: merchant@gmail.com";
-            email.focus();
-            return false;
-        }
-
-        if (!phone.value.trim()) {
-            phone.classList.add("is-invalid");
-            phone.focus();
-            return false;
-        }
-
-        if (!province.value || !district.value || !ward.value || !street.value.trim()) {
-            if (!province.value) province.classList.add("is-invalid");
-            if (!district.value) district.classList.add("is-invalid");
-            if (!ward.value) ward.classList.add("is-invalid");
-            if (!street.value.trim()) street.classList.add("is-invalid");
-            
-            addressError.classList.remove("d-none");
-            
-            if (!province.value) province.focus();
-            else if (!district.value) district.focus();
-            else if (!ward.value) ward.focus();
-            else street.focus();
-            
-            return false;
-        }
-        
-        // Gộp địa chỉ
-        const provinceText = province.options[province.selectedIndex].text;
-        const districtText = district.options[district.selectedIndex].text;
-        const wardText = ward.options[ward.selectedIndex].text;
-        
-        address.value = street.value.trim() + ", " + wardText + ", " + districtText + ", " + provinceText;
-
-        if (!password.value) {
-            password.classList.add("is-invalid");
-            password.focus();
-            return false;
-        }
-
-        if (!confirmPassword.value) {
-            confirmPassword.classList.add("is-invalid");
-            confirmPassword.focus();
-            return false;
-        }
-
-        if (password.value !== confirmPassword.value) {
-            confirmPassword.classList.add("is-invalid");
-
-            document.getElementById("confirmPasswordError").textContent =
-                "Mật khẩu nhập lại không đúng.";
-
-            confirmPassword.focus();
-
-            return false;
-        }
-
-        return true;
-    }
-
-    document.querySelectorAll(
-        "#merchantRegisterForm input, #merchantRegisterForm textarea, #merchantRegisterForm select"
-    ).forEach(function(input) {
-        input.addEventListener("change", function() {
-            if (this.value && this.value.trim() !== '') {
-                this.classList.remove("is-invalid");
-            }
-        });
-        input.addEventListener("input", function() {
-            if (this.value && this.value.trim() !== '') {
-                this.classList.remove("is-invalid");
-            }
-        });
-    });
-
-    // API Lấy dữ liệu Tỉnh/Thành phố (provinces.open-api.vn)
-    const host = "https://provinces.open-api.vn/api/";
-    const provinceSelect = document.getElementById("provinceSelect");
-    const districtSelect = document.getElementById("districtSelect");
-    const wardSelect = document.getElementById("wardSelect");
-
-    fetch(host + "?depth=1")
-        .then(response => response.json())
-        .then(data => {
-            let options = '<option value="" selected disabled>Tỉnh/Thành phố</option>';
-            data.forEach(item => {
-                options += `<option value="${item.code}">${item.name}</option>`;
-            });
-            provinceSelect.innerHTML = options;
-        });
-
-    provinceSelect.addEventListener("change", function() {
-        districtSelect.disabled = false;
-        wardSelect.disabled = true;
-        wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
-        
-        fetch(host + "p/" + this.value + "?depth=2")
-            .then(response => response.json())
+                return response.json();
+            })
             .then(data => {
-                let options = '<option value="" selected disabled>Quận/Huyện</option>';
-                data.districts.forEach(item => {
-                    options += `<option value="${item.code}">${item.name}</option>`;
+                province.innerHTML =
+                    '<option value="" selected disabled>Tỉnh/Thành phố</option>';
+
+                data.forEach(item => {
+                    province.innerHTML +=
+                        `<option value="${item.code}">
+                            ${item.name}
+                        </option>`;
                 });
-                districtSelect.innerHTML = options;
+            })
+            .catch(error => {
+                console.error(
+                    "Lỗi tải tỉnh/thành phố:",
+                    error
+                );
+
+                showError(
+                    "Không thể tải danh sách tỉnh/thành phố."
+                );
             });
-    });
 
-    districtSelect.addEventListener("change", function() {
-        wardSelect.disabled = false;
-        
-        fetch(host + "d/" + this.value + "?depth=2")
-            .then(response => response.json())
-            .then(data => {
-                let options = '<option value="" selected disabled>Phường/Xã</option>';
-                data.wards.forEach(item => {
-                    options += `<option value="${item.code}">${item.name}</option>`;
-                });
-                wardSelect.innerHTML = options;
-            });
-    });
 
-    document.getElementById("merchantRegisterForm")
-        .addEventListener("submit", async function(event) {
+        // Load quận/huyện theo tỉnh
+        province.addEventListener("change", function () {
+            const provinceCode = this.value;
 
-            event.preventDefault();
+            district.disabled = true;
+            ward.disabled = true;
 
-            if (!validateRequiredFields()) {
+            district.innerHTML =
+                '<option value="" selected disabled>Quận/Huyện</option>';
+
+            ward.innerHTML =
+                '<option value="" selected disabled>Phường/Xã</option>';
+
+            if (!provinceCode) {
                 return;
             }
 
-            const merchantRestaurantName =
-                document.getElementById("merchantRestaurantName")
-                    .value.trim();
+            fetch(`${API_URL}/p/${provinceCode}?depth=2`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(
+                            "Không thể tải quận/huyện"
+                        );
+                    }
 
-            const merchantEmail =
-                document.getElementById("merchantEmail")
-                    .value.trim();
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.districts) {
+                        throw new Error(
+                            "Tỉnh không có dữ liệu quận/huyện"
+                        );
+                    }
 
-            const merchantPhone =
-                document.getElementById("merchantPhone")
-                    .value.trim();
+                    data.districts.forEach(item => {
+                        district.innerHTML +=
+                            `<option value="${item.code}">
+                                ${item.name}
+                            </option>`;
+                    });
+
+                    district.disabled = false;
+                })
+                .catch(error => {
+                    console.error(
+                        "Lỗi tải quận/huyện:",
+                        error
+                    );
+
+                    showError(
+                        "Không thể tải danh sách quận/huyện."
+                    );
+                });
+        });
+
+
+        // Load phường/xã theo quận/huyện
+        district.addEventListener("change", function () {
+            const districtCode = this.value;
+
+            ward.disabled = true;
+
+            ward.innerHTML =
+                '<option value="" selected disabled>Phường/Xã</option>';
+
+            if (!districtCode) {
+                return;
+            }
+
+            fetch(`${API_URL}/d/${districtCode}?depth=2`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(
+                            "Không thể tải phường/xã"
+                        );
+                    }
+
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.wards) {
+                        throw new Error(
+                            "Quận/huyện không có dữ liệu phường/xã"
+                        );
+                    }
+
+                    data.wards.forEach(item => {
+                        ward.innerHTML +=
+                            `<option value="${item.code}">
+                                ${item.name}
+                            </option>`;
+                    });
+
+                    ward.disabled = false;
+                })
+                .catch(error => {
+                    console.error(
+                        "Lỗi tải phường/xã:",
+                        error
+                    );
+
+                    showError(
+                        "Không thể tải danh sách phường/xã."
+                    );
+                });
+        });
+
+
+        // Đăng ký Merchant
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const restaurantName =
+                document
+                    .getElementById(
+                        "merchantRestaurantName"
+                    )
+                    .value
+                    .trim();
+
+            const email =
+                document
+                    .getElementById("merchantEmail")
+                    .value
+                    .trim();
+
+            const phone =
+                document
+                    .getElementById("merchantPhone")
+                    .value
+                    .trim();
+
+            const provinceCode = province.value;
+            const districtCode = district.value;
+            const wardCode = ward.value;
 
             const merchantAddress =
-                document.getElementById("merchantAddress")
-                    .value.trim();
+                street.value.trim();
 
             const password =
-                document.getElementById("password")
-                    .value;
+                document.getElementById("password").value;
 
             const confirmPassword =
-                document.getElementById("confirmPassword")
+                document
+                    .getElementById("confirmPassword")
                     .value;
 
-            const request = {
-                merchantRestaurantName: merchantRestaurantName,
-                merchantEmail: merchantEmail,
-                merchantPhone: merchantPhone,
-                merchantAddress: merchantAddress,
-                password: password,
-                confirmPassword: confirmPassword
+
+            // Kiểm tra dữ liệu bắt buộc
+            if (
+                !restaurantName ||
+                !email ||
+                !phone ||
+                !provinceCode ||
+                !districtCode ||
+                !wardCode ||
+                !merchantAddress ||
+                !password ||
+                !confirmPassword
+            ) {
+                showError(
+                    "Vui lòng nhập đầy đủ thông tin bắt buộc."
+                );
+
+                return;
+            }
+
+
+            // Kiểm tra mật khẩu
+            if (password !== confirmPassword) {
+                showError(
+                    "Mật khẩu xác nhận không khớp."
+                );
+
+                return;
+            }
+
+
+            // Lấy tên địa chỉ
+            const provinceName =
+                province
+                    .options[
+                    province.selectedIndex
+                    ]
+                    .text;
+
+            const districtName =
+                district
+                    .options[
+                    district.selectedIndex
+                    ]
+                    .text;
+
+            const wardName =
+                ward
+                    .options[
+                    ward.selectedIndex
+                    ]
+                    .text;
+
+
+            // Tạo địa chỉ đầy đủ
+            const fullAddress =
+                `${merchantAddress}, ${wardName}, ${districtName}, ${provinceName}`;
+
+
+            // Payload gửi Backend
+            const payload = {
+                merchantRestaurantName:
+                restaurantName,
+
+                merchantEmail:
+                email,
+
+                merchantPhone:
+                phone,
+
+                merchantAddress:
+                fullAddress,
+
+                provinceCode:
+                provinceCode,
+
+                districtCode:
+                districtCode,
+
+                wardCode:
+                wardCode,
+
+                password:
+                password,
+
+                confirmPassword:
+                confirmPassword
             };
 
-            const button =
-                document.getElementById("registerButton");
 
-            button.disabled = true;
+            console.log(
+                "Payload đăng ký Merchant:",
+                payload
+            );
 
-            button.innerHTML =
+
+            registerButton.disabled = true;
+
+            registerButton.innerHTML =
                 '<span class="spinner-border spinner-border-sm me-2"></span>' +
                 'Đang đăng ký...';
 
-            try {
-                const response =
-                    await fetch("/api/merchants/register", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(request)
-                    });
 
-                const message =
-                    await response.text();
+            try {
+                const response = await fetch(
+                    "/api/merchants/register",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify(payload)
+                    }
+                );
 
                 if (response.ok) {
-                    showSuccess(
-                        message ||
-                        "Đăng ký Merchant thành công. Vui lòng chờ Admin phê duyệt."
-                    );
+                    showSuccess("Đăng ký Merchant thành công! Vui lòng chờ Admin phê duyệt.");
 
-                    setTimeout(function() {
+                    setTimeout(() => {
                         window.location.href = "/";
                     }, 1000);
-
-
                 } else {
-                    let errorMessage =
-                        message ||
-                        "Đăng ký Merchant thất bại.";
-
-                    try {
-                        const json =
-                            JSON.parse(message);
-
-                        if (json.message) {
-                            errorMessage =
-                                json.message;
-                        }
-                    } catch (e) {
-                    }
-
-                    showError(errorMessage);
+                    const errorText = await response.text();
+                    showError(errorText || "Đăng ký Merchant thất bại.");
                 }
 
             } catch (error) {
+
                 console.error(
                     "Lỗi đăng ký Merchant:",
                     error
                 );
 
                 showError(
-                    "Không thể kết nối đến server."
+                    "Đã xảy ra lỗi khi kết nối đến server."
                 );
 
             } finally {
-                button.disabled = false;
 
-                button.innerHTML =
+                registerButton.disabled = false;
+
+                registerButton.innerHTML =
                     '<i class="bi bi-shop me-2"></i>' +
                     'Đăng ký Merchant';
             }
         });
+<<<<<<< HEAD
     // Kiểm tra trạng thái merchant khi vào trang
     (async function checkMerchantStatus() {
         try {
@@ -633,6 +684,59 @@
         }
     })();
 </script>
+=======
+>>>>>>> truong
 
+
+        // Hiển thị thông báo thành công
+        function showSuccess(message) {
+
+            const alert =
+                document.getElementById(
+                    "successAlert"
+                );
+
+            document.getElementById(
+                "successMessage"
+            ).textContent = message;
+
+            alert.classList.remove("d-none");
+
+            document
+                .getElementById("errorAlert")
+                .classList.add("d-none");
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        }
+
+
+        // Hiển thị thông báo lỗi
+        function showError(message) {
+
+            const alert =
+                document.getElementById(
+                    "errorAlert"
+                );
+
+            document.getElementById(
+                "errorMessage"
+            ).textContent = message;
+
+            alert.classList.remove("d-none");
+
+            document
+                .getElementById("successAlert")
+                .classList.add("d-none");
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        }
+    });
+</script>
 </body>
 </html>

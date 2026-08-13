@@ -4,10 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.codegyme.meal_choice.dto.MerchantAddressResponse;
-import vn.codegyme.meal_choice.dto.MerchantRegisterRequest;
-import vn.codegyme.meal_choice.dto.MerchantResponse;
-import vn.codegyme.meal_choice.dto.MerchantUpdateRequest;
+import vn.codegyme.meal_choice.dto.merchant.MerchantAddressResponse;
+import vn.codegyme.meal_choice.dto.merchant.MerchantRegisterRequest;
+import vn.codegyme.meal_choice.dto.merchant.MerchantResponse;
+import vn.codegyme.meal_choice.dto.merchant.MerchantUpdateRequest;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.MerchantAddress;
 import vn.codegyme.meal_choice.entity.MerchantStatus;
@@ -116,11 +116,27 @@ public class MerchantService {
             merchant.setMerchantStatus(MerchantStatus.PENDING);
             merchantRepository.save(merchant);
 
+<<<<<<< HEAD
             MerchantAddress merchantAddress = new MerchantAddress();
             merchantAddress.setMerchant(merchant);
             merchantAddress.setMerchantAddress(request.getMerchantAddress());
             merchantAddressRepository.save(merchantAddress);
         }
+=======
+        merchantAddress.setProvinceCode(
+                request.getProvinceCode());
+
+        merchantAddress.setDistrictCode(
+                request.getDistrictCode());
+
+        merchantAddress.setWardCode(
+                request.getWardCode());
+
+        merchantAddress.setDefault(true);
+
+        merchantAddressRepository.save(
+                merchantAddress);
+>>>>>>> truong
 
         emailService.sendMerchantRegisterEmail(
                 request.getMerchantEmail(),
@@ -158,6 +174,15 @@ public class MerchantService {
 
         address.setMerchantAddress(
                 request.getMerchantAddress());
+
+        address.setProvinceCode(
+                request.getProvinceCode());
+
+        address.setDistrictCode(
+                request.getDistrictCode());
+
+        address.setWardCode(
+                request.getWardCode());
 
         address.setMerchantOpenTime(
                 request.getMerchantOpenTime());
@@ -205,6 +230,15 @@ public class MerchantService {
 
                             res.setId(addr.getId());
 
+                            res.setProvinceCode(
+                                    addr.getProvinceCode());
+
+                            res.setDistrictCode(
+                                    addr.getDistrictCode());
+
+                            res.setWardCode(
+                                    addr.getWardCode());
+
                             res.setMerchantAddress(
                                     addr.getMerchantAddress());
 
@@ -213,6 +247,9 @@ public class MerchantService {
 
                             res.setMerchantCloseTime(
                                     addr.getMerchantCloseTime());
+
+                            res.setDefault(
+                                    addr.isDefault());
 
                             return res;
                         })

@@ -15,7 +15,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+
 import vn.codegyme.meal_choice.security.JwtAuthFilter;
+import vn.codegyme.meal_choice.security.MerchantBlockedFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -24,24 +26,40 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
+    // THÊM FILTER NÀY
+    private final MerchantBlockedFilter merchantBlockedFilter;
+
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
 
         http
+
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(auth -> auth
 
+                        // =====================================
                         // OPTIONS
-                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        // =====================================
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        )
                         .permitAll()
 
-                        // Public
+
+                        // =====================================
+                        // PUBLIC
+                        // =====================================
                         .requestMatchers(
                                 "/",
                                 "/home",
@@ -49,74 +67,131 @@ public class SecurityConfig {
                                 "/register",
                                 "/activate",
                                 "/api/auth/**",
+
+                                // Trang báo Merchant bị khóa
+                                "/merchant-blocked",
+
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
                                 "/favicon.ico"
-                        ).permitAll()
+                        )
+                        .permitAll()
 
-                        // User đã đăng nhập được mở trang đăng ký Merchant
+
+                        // =====================================
+                        // USER ĐĂNG KÝ MERCHANT
+                        // =====================================
+
+                        // Mở trang đăng ký Merchant
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/merchant/register"
-                        ).hasRole("USER")
+                        )
+                        .hasRole("USER")
 
-                        // User đăng ký Merchant
+
+                        // Gửi đăng ký Merchant
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/merchants/register"
-                        ).hasRole("USER")
+                        )
+                        .hasRole("USER")
 
-                        // Admin
+
+                        // =====================================
+                        // ADMIN
+                        // =====================================
                         .requestMatchers(
                                 "/admin/**",
                                 "/api/admin/**"
-                        ).hasRole("ADMIN")
+                        )
+                        .hasRole("ADMIN")
 
-                        // Merchant
+
+                        // =====================================
+                        // MERCHANT
+                        // =====================================
                         .requestMatchers(
                                 "/merchant/**",
                                 "/api/merchant/**"
-                        ).hasAnyRole("MERCHANT", "ADMIN")
+                        )
+                        .hasAnyRole(
+                                "MERCHANT",
+                                "ADMIN"
+                        )
 
-                        // API lấy thông tin Merchant
+
+                        // =====================================
+                        // API THÔNG TIN MERCHANT PUBLIC
+                        // =====================================
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/merchants/**"
-                        ).permitAll()
+                        )
+                        .permitAll()
 
-                        // User
+
+                        // =====================================
+                        // USER
+                        // =====================================
                         .requestMatchers(
                                 "/user/**",
                                 "/api/user/**"
-                        ).authenticated()
+                        )
+                        .authenticated()
 
-                        // Các request còn lại
+
+                        // =====================================
+                        // CÁC REQUEST CÒN LẠI
+                        // =====================================
                         .anyRequest()
                         .authenticated()
                 )
 
-                // Nếu chưa đăng nhập mà truy cập trang cần đăng nhập
-                // thì chuyển về /login
+
+                // =========================================
+                // CHƯA ĐĂNG NHẬP -> /login
+                // =========================================
                 .exceptionHandling(ex -> ex
                         .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("/login"),
-                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+                                new LoginUrlAuthenticationEntryPoint(
+                                        "/login"
+                                ),
+                                new MediaTypeRequestMatcher(
+                                        MediaType.TEXT_HTML
+                                )
                         )
                 )
 
-                // JWT -> không sử dụng session
+
+                // =========================================
+                // JWT -> STATELESS
+                // =========================================
                 .sessionManagement(sess ->
                         sess.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
 
-                // JWT Filter
+
+                // =========================================
+                // FILTER 1: XÁC THỰC JWT
+                // =========================================
                 .addFilterBefore(
                         jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class
+                )
+
+
+                // =========================================
+                // FILTER 2: KIỂM TRA MERCHANT BỊ KHÓA
+                // =========================================
+                .addFilterAfter(
+                        merchantBlockedFilter,
+                        JwtAuthFilter.class
                 );
+
 
         return http.build();
     }
