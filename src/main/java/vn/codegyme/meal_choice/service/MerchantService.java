@@ -39,23 +39,6 @@ public class MerchantService {
                         new RuntimeException(
                                 "Không tìm thấy tài khoản người dùng"));
 
-        if (merchantRepository.existsByUserId(user.getId())) {
-            throw new RuntimeException(
-                    "Tài khoản này đã đăng ký Merchant");
-        }
-
-        if (merchantRepository.existsByMerchantEmail(
-                request.getMerchantEmail())) {
-            throw new RuntimeException(
-                    "Email Merchant đã tồn tại");
-        }
-
-        if (merchantRepository.existsByMerchantPhone(
-                request.getMerchantPhone())) {
-            throw new RuntimeException(
-                    "Số điện thoại đã tồn tại");
-        }
-
         if (!request.getPassword()
                 .equals(request.getConfirmPassword())) {
             throw new RuntimeException(
@@ -69,34 +52,75 @@ public class MerchantService {
                     "Mật khẩu tài khoản không đúng");
         }
 
-        Merchant merchant = new Merchant();
+        // Kiểm tra merchant cũ của user
+        Merchant merchant = merchantRepository
+                .findByUser_Id(user.getId())
+                .orElse(null);
 
-        merchant.setMerchantRestaurantName(
-                request.getMerchantRestaurantName());
+        if (merchant != null) {
+            // Chỉ cho phép đăng ký lại nếu đang bị từ chối
+            if (merchant.getMerchantStatus() != MerchantStatus.REJECTED) {
+                throw new RuntimeException(
+                        "Tài khoản này đã đăng ký Merchant");
+            }
 
-        merchant.setMerchantEmail(
-                request.getMerchantEmail());
+            // Kiểm tra trùng email/phone với merchant KHÁC (loại trừ chính mình)
+            if (!merchant.getMerchantEmail().equals(request.getMerchantEmail())
+                    && merchantRepository.existsByMerchantEmail(request.getMerchantEmail())) {
+                throw new RuntimeException("Email Merchant đã tồn tại");
+            }
 
-        merchant.setMerchantPhone(
-                request.getMerchantPhone());
+            if (!merchant.getMerchantPhone().equals(request.getMerchantPhone())
+                    && merchantRepository.existsByMerchantPhone(request.getMerchantPhone())) {
+                throw new RuntimeException("Số điện thoại đã tồn tại");
+            }
 
-        merchant.setUser(user);
+            // Cập nhật lại thông tin merchant cũ
+            merchant.setMerchantRestaurantName(request.getMerchantRestaurantName());
+            merchant.setMerchantEmail(request.getMerchantEmail());
+            merchant.setMerchantPhone(request.getMerchantPhone());
+            merchant.setMerchantStatus(MerchantStatus.PENDING);
+            merchant.setRejectReason(null); // Xóa lý do từ chối cũ
+            merchantRepository.save(merchant);
 
-        merchant.setMerchantStatus(
-                MerchantStatus.PENDING);
+            // Cập nhật địa chỉ (dùng địa chỉ đầu tiên nếu có, tạo mới nếu chưa có)
+            List<MerchantAddress> addresses =
+                    merchantAddressRepository.findByMerchantId(merchant.getId());
 
-        merchantRepository.save(merchant);
+            MerchantAddress merchantAddress;
+            if (!addresses.isEmpty()) {
+                merchantAddress = addresses.get(0);
+            } else {
+                merchantAddress = new MerchantAddress();
+                merchantAddress.setMerchant(merchant);
+            }
+            merchantAddress.setMerchantAddress(request.getMerchantAddress());
+            merchantAddressRepository.save(merchantAddress);
 
-        MerchantAddress merchantAddress =
-                new MerchantAddress();
+        } else {
+            // Đăng ký lần đầu — kiểm tra trùng email/phone
+            if (merchantRepository.existsByMerchantEmail(request.getMerchantEmail())) {
+                throw new RuntimeException("Email Merchant đã tồn tại");
+            }
 
-        merchantAddress.setMerchant(merchant);
+            if (merchantRepository.existsByMerchantPhone(request.getMerchantPhone())) {
+                throw new RuntimeException("Số điện thoại đã tồn tại");
+            }
 
-        merchantAddress.setMerchantAddress(
-                request.getMerchantAddress());
+            // Tạo merchant mới
+            merchant = new Merchant();
+            merchant.setMerchantRestaurantName(request.getMerchantRestaurantName());
+            merchant.setMerchantEmail(request.getMerchantEmail());
+            merchant.setMerchantPhone(request.getMerchantPhone());
+            merchant.setUser(user);
+            merchant.setMerchantStatus(MerchantStatus.PENDING);
+            merchantRepository.save(merchant);
 
-        merchantAddressRepository.save(
-                merchantAddress);
+            MerchantAddress merchantAddress = new MerchantAddress();
+            merchantAddress.setMerchant(merchant);
+            merchantAddress.setMerchantAddress(request.getMerchantAddress());
+            merchantAddressRepository.save(merchantAddress);
+        }
 
         emailService.sendMerchantRegisterEmail(
                 request.getMerchantEmail(),
