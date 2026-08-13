@@ -74,4 +74,7 @@ public class Merchant {
             orphanRemoval = true
     )
     private List<MerchantAddress> addresses = new ArrayList<>();
+
+    @Column()
+    private String rejectReason;
 }

@@ -182,17 +182,57 @@
 
                                         </form>
 
-                                        <!-- Từ chối -->
-                                        <form
+                                        <!-- Từ chối (mở modal) -->
+                                        <button
                                             th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
-                                            th:action="@{/admin/merchants/{id}/reject(id=${merchant.id})}"
-                                            method="post">
+                                            type="button"
+                                            class="btn btn-sm btn-danger"
+                                            data-bs-toggle="modal"
+                                            th:data-bs-target="'#rejectModal-' + ${merchant.id}">
+                                            Từ chối
+                                        </button>
 
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                Từ chối
-                                            </button>
+                                        <!-- Modal nhập lý do từ chối -->
+                                        <div
+                                            th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
+                                            class="modal fade"
+                                            th:id="'rejectModal-' + ${merchant.id}"
+                                            tabindex="-1"
+                                            aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
 
-                                        </form>
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Từ chối merchant</h5>
+                                                        <button type="button" class="btn-close"
+                                                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+
+                                                    <form th:action="@{/admin/merchants/{id}/reject(id=${merchant.id})}"
+                                                          method="post">
+                                                        <div class="modal-body">
+                                                            <p class="mb-2">
+                                                                Nhập lý do từ chối đăng ký của
+                                                                <strong th:text="${merchant.merchantRestaurantName}"></strong>:
+                                                            </p>
+                                                            <textarea name="rejectReason"
+                                                                      class="form-control"
+                                                                      rows="4"
+                                                                      placeholder="Ví dụ: Thông tin không hợp lệ, thiếu giấy tờ..."
+                                                                      required></textarea>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary"
+                                                                    data-bs-dismiss="modal">Hủy</button>
+                                                            <button type="submit" class="btn btn-danger">
+                                                                Xác nhận từ chối
+                                                            </button>
+                                                        </div>
+                                                    </form>
+
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         <!-- Khóa -->
                                         <form

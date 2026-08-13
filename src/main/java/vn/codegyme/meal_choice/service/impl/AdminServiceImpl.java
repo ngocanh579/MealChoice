@@ -80,11 +80,12 @@ public class AdminServiceImpl implements AdminService {
 
     // Từ chối merchant
     @Override
-    public void rejectMerchant(UUID id) {
+    public void rejectMerchant(UUID id, String reason) {
         Merchant merchant = findMerchant(id);
 
         merchant.setMerchantStatus(MerchantStatus.REJECTED);
         merchant.setTrustedPartner(false);
+        merchant.setRejectReason(reason);
         merchantRepository.save(merchant);
     }
 
