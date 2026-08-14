@@ -41,13 +41,32 @@
                     </ul>
                 </li>
 
-                <!-- Giỏ hàng -->
-                <li class="nav-item me-2">
-                    <a class="btn btn-outline-dark rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-2" href="/cart">
+                <!-- Giỏ hàng Dropdown -->
+                <li class="nav-item dropdown me-2" id="navbarCartDropdown">
+                    <a class="btn btn-outline-dark rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-2 dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
                         <i class="bi bi-basket2-fill text-success"></i>
                         <span>Giỏ hàng</span>
-                        <span class="badge bg-success rounded-pill">2</span>
+                        <span class="badge bg-success rounded-pill" id="navbarCartCount">0</span>
                     </a>
+                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-3" style="width: 320px; z-index: 1100;">
+                        <h6 class="fw-bold text-dark border-bottom pb-2 mb-2">Giỏ hàng của bạn</h6>
+                        <!-- Danh sách sản phẩm trong giỏ hàng navbar -->
+                        <div id="navbarCartItems" class="overflow-y-auto mb-2" style="max-height: 220px;">
+                            <!-- Sẽ render động từ localStorage bằng JS -->
+                        </div>
+                        <div class="border-top pt-2 mb-2 fs-7" id="navbarCartSummary">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Tổng tiền:</span>
+                                <strong class="text-danger" id="navbarCartTotal">0 đ</strong>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <!-- Nút thanh toán nhanh giỏ hàng -->
+                            <button class="btn btn-danger btn-sm rounded-pill w-100 fw-bold py-2" id="btnNavbarCheckout" style="background: linear-gradient(135deg, #ff416c, #ff4b2b); border: none;">
+                                Thanh toán
+                            </button>
+                        </div>
+                    </div>
                 </li>
 
                 <!-- Khu vực Admin -->
@@ -160,7 +179,6 @@
             </div>
         </div>
     </div>
-
     <!-- Script xử lý logic Navbar -->
     <script th:src="@{/js/navbar.js}"></script>
 </nav>

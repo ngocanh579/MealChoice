@@ -51,23 +51,48 @@
 
     <!-- Main Content -->
     <main class="py-3">
-        <!-- 1. Mảnh thông tin cơ bản món ăn -->
-        <div th:replace="~{food/fragments/food-info :: foodInfo}"></div>
+        <div class="container py-4">
+            <div class="row g-4">
+                <!-- Cột Trái: Thông tin món ăn & Coupon (Mặc định full-width col-lg-12) -->
+                <div class="col-12 col-lg-12" id="detailLeftColumn">
+                    <!-- 1. Mảnh thông tin cơ bản món ăn -->
+                    <div th:replace="~{food/fragments/food-info :: foodInfo}"></div>
 
+                    <!-- 3. Mảnh danh sách coupon -->
+                    <div th:replace="~{food/fragments/coupon-list :: couponList}"></div>
+                </div>
+            </div>
 
+            <!-- Offcanvas Đặt hàng ngay (Drawer bên phải) -->
+            <div class="offcanvas offcanvas-end border-0 shadow-lg rounded-start-4" tabindex="-1" id="quickOrderOffcanvas" aria-labelledby="quickOrderOffcanvasLabel" style="width: 420px; z-index: 1050;" th:insert="~{food/fragments/quick-order-sidebar :: quickOrderSidebar}">
+            </div>
 
-        <!-- 3. Mảnh danh sách coupon -->
-        <div th:replace="~{food/fragments/coupon-list :: couponList}"></div>
+            <!-- Các phần đề xuất bên dưới (Full-width) -->
+            <div class="mt-4">
+                <!-- 4. Mảnh gợi ý món dành riêng cho bạn -->
+                <div th:replace="~{food/fragments/recommended-foods :: recommendedFoods}"></div>
 
-        <!-- 4. Mảnh gợi ý món dành riêng cho bạn -->
-        <div th:replace="~{food/fragments/recommended-foods :: recommendedFoods}"></div>
-
-        <!-- 5. Mảnh gợi ý mọi người cũng thích -->
-        <div th:replace="~{food/fragments/people-also-liked :: peopleAlsoLiked}"></div>
+                <!-- 5. Mảnh gợi ý mọi người cũng thích -->
+                <div th:replace="~{food/fragments/people-also-liked :: peopleAlsoLiked}"></div>
+            </div>
+        </div>
     </main>
 
     <!-- Include Footer -->
     <div th:replace="~{layout/footer :: footer}"></div>
+
+    <!-- Toast thông báo thêm vào giỏ hàng thành công -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1300;">
+        <div id="cartToast" class="toast align-items-center text-white bg-success border-0 rounded-3 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Đã thêm món ăn vào giỏ hàng thành công!</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -76,6 +101,15 @@
         // Lấy danh sách ảnh chi tiết từ Model truyền qua
         const detailImages = /*[[${foodImagesList}]]*/ [];
         let currentDetailImageIndex = 0;
+
+        // Trạng thái món ăn hiện tại
+        const currentFood = {
+            id: /*[[${food.id}]]*/ 0,
+            name: /*[[${food.name}]]*/ "",
+            price: /*[[${food.price}]]*/ 0,
+            discountPrice: /*[[${food.discountPrice != null ? food.discountPrice : food.price}]]*/ 0,
+            serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0
+        };
 
         // Hàm đổi ảnh chính từ các ảnh nhỏ chi tiết (thumbnails)
         function changeMainImage(el, src) {
@@ -127,6 +161,53 @@
             currentDetailImageIndex = (currentDetailImageIndex + 1) % detailImages.length;
             changeMainImageByIndex(currentDetailImageIndex);
         }
+
+        // Hàm hiển thị offcanvas thanh toán nhanh
+        function showCheckoutSidebar(mode = 'view_cart') {
+            const offcanvasEl = document.getElementById('quickOrderOffcanvas');
+            if (offcanvasEl) {
+                if (typeof initDrawer === 'function') {
+                    initDrawer(mode);
+                }
+                const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl) || new bootstrap.Offcanvas(offcanvasEl);
+                bsOffcanvas.show();
+            }
+        }
+
+        // Khởi tạo các sự kiện khi DOM đã load
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnMainAddToCart = document.getElementById('btnMainAddToCart');
+            const btnMainAddToNavbarCart = document.getElementById('btnMainAddToNavbarCart');
+
+            if (btnMainAddToCart) {
+                btnMainAddToCart.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Chỉ hiển thị offcanvas đặt hàng với chế độ Mua Ngay
+                    showCheckoutSidebar('buy_now');
+                });
+            }
+
+            if (btnMainAddToNavbarCart) {
+                btnMainAddToNavbarCart.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Thêm sản phẩm vào giỏ hàng toàn cục
+                    if (typeof addToCartGlobal === 'function') {
+                        addToCartGlobal(currentFood.id, currentFood.name, currentFood.price, currentFood.discountPrice, currentFood.serviceFee);
+                    }
+                    
+                    // Hiển thị toast thông báo thành công
+                    const toastEl = document.getElementById('cartToast');
+                    if (toastEl) {
+                        const toastBody = toastEl.querySelector('.toast-body span');
+                        if (toastBody) {
+                            toastBody.innerText = `Đã thêm "${currentFood.name}" vào giỏ hàng!`;
+                        }
+                        const toast = new bootstrap.Toast(toastEl);
+                        toast.show();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 

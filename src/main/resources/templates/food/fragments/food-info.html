@@ -1,5 +1,5 @@
 <!-- Fragment Thông tin cơ bản món ăn -->
-<div th:fragment="foodInfo" class="container py-4" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="foodInfo" class="pb-3" xmlns:th="http://www.thymeleaf.org">
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white p-4">
         <div class="row g-4 align-items-start">
             <!-- Cột Trái: Ảnh đại diện lớn và hàng ảnh nhỏ chi tiết -->
@@ -128,18 +128,25 @@
                 </div>
 
                 <!-- CTA Add to Cart / Order button -->
-                <div class="mt-auto d-flex gap-3 align-items-center">
-                    <!-- Nút Đặt Mua -->
-                    <button class="btn btn-danger btn-lg rounded-pill px-4 py-3 fw-bold flex-grow-1 shadow-sm transition-hover d-flex align-items-center justify-content-center gap-2"
+                <div class="mt-auto d-flex gap-3 align-items-center flex-wrap">
+                    <!-- Nút Đặt Mua Ngay -->
+                    <button id="btnMainAddToCart" class="btn btn-danger btn-lg rounded-pill px-4 py-3 fw-bold flex-grow-1 shadow-sm transition-hover d-flex align-items-center justify-content-center gap-2"
                             style="background: linear-gradient(135deg, #ff416c, #ff4b2b); border: none;">
-                        <i class="bi bi-cart-plus-fill fs-5"></i>
+                        <i class="bi bi-cart-fill fs-5"></i>
                         <span>Đặt Mua Ngay</span>
+                    </button>
+
+                    <!-- Nút Thêm vào giỏ hàng -->
+                    <button id="btnMainAddToNavbarCart" class="btn btn-outline-danger btn-lg rounded-pill px-4 py-3 fw-bold flex-grow-1 transition-hover d-flex align-items-center justify-content-center gap-2"
+                            style="border-width: 2px;">
+                        <i class="bi bi-cart-plus fs-5"></i>
+                        <span>Thêm vào giỏ hàng</span>
                     </button>
                     
                     <!-- Nút Vào Cửa Hàng -->
                     <a th:if="${food.merchant != null}" 
                        th:href="@{/search(keyword=${food.merchant.merchantRestaurantName})}"
-                       class="btn btn-outline-danger btn-lg rounded-pill px-4 py-3 fw-bold transition-hover d-flex align-items-center justify-content-center gap-2"
+                       class="btn btn-outline-secondary btn-lg rounded-pill px-4 py-3 fw-bold transition-hover d-flex align-items-center justify-content-center gap-2"
                        style="border-width: 2px;">
                         <i class="bi bi-shop"></i>
                         <span>Vào Cửa Hàng</span>

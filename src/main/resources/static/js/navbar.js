@@ -270,3 +270,148 @@ document.addEventListener('click', function(e) {
         });
     }
 });
+
+// ==========================================
+// LOGIC GIỎ HÀNG TOÀN CỤC (GLOBAL CART LOGIC)
+// ==========================================
+
+function getGlobalCart() {
+    try {
+        const cartStr = localStorage.getItem('mealchoice_cart');
+        return cartStr ? JSON.parse(cartStr) : [];
+    } catch (e) {
+        console.error("Lỗi đọc giỏ hàng từ localStorage:", e);
+        return [];
+    }
+}
+
+function saveGlobalCart(cart) {
+    try {
+        localStorage.setItem('mealchoice_cart', JSON.stringify(cart));
+        window.dispatchEvent(new Event('cartUpdated'));
+    } catch (e) {
+        console.error("Lỗi lưu giỏ hàng vào localStorage:", e);
+    }
+}
+
+function addToCartGlobal(id, name, price, discountPrice, serviceFee = 0) {
+    const cart = getGlobalCart();
+    const existing = cart.find(item => item.id === id);
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        cart.push({ id, name, price, discountPrice, serviceFee, quantity: 1 });
+    }
+    saveGlobalCart(cart);
+    updateNavbarCartUI();
+}
+
+function changeQuantityGlobal(id, delta) {
+    const cart = getGlobalCart();
+    const index = cart.findIndex(item => item.id === id);
+    if (index !== -1) {
+        cart[index].quantity += delta;
+        if (cart[index].quantity <= 0) {
+            cart.splice(index, 1);
+        }
+    }
+    saveGlobalCart(cart);
+    updateNavbarCartUI();
+}
+
+function formatCurrencyGlobal(val) {
+    return new Intl.NumberFormat('vi-VN').format(Math.round(val)) + ' đ';
+}
+
+function updateNavbarCartUI() {
+    const navbarCartCount = document.getElementById('navbarCartCount');
+    const navbarCartItems = document.getElementById('navbarCartItems');
+    const navbarCartTotal = document.getElementById('navbarCartTotal');
+    const btnNavbarCheckout = document.getElementById('btnNavbarCheckout');
+
+    if (!navbarCartCount) return;
+
+    const cart = getGlobalCart();
+    let totalItems = 0;
+    let sumTotal = 0;
+
+    if (navbarCartItems) {
+        navbarCartItems.innerHTML = '';
+    }
+
+    if (cart.length === 0) {
+        navbarCartCount.innerText = '0';
+        if (navbarCartItems) {
+            navbarCartItems.innerHTML = `
+                <div class="text-center py-4 text-muted fs-8">
+                    <i class="bi bi-basket fs-2 d-block opacity-50 mb-1"></i>
+                    <span>Giỏ hàng trống</span>
+                </div>
+            `;
+        }
+        if (btnNavbarCheckout) {
+            btnNavbarCheckout.disabled = true;
+            btnNavbarCheckout.classList.add('opacity-50');
+        }
+    } else {
+        if (btnNavbarCheckout) {
+            btnNavbarCheckout.disabled = false;
+            btnNavbarCheckout.classList.remove('opacity-50');
+        }
+
+        cart.forEach(item => {
+            totalItems += item.quantity;
+            const itemPrice = item.discountPrice != null ? item.discountPrice : item.price;
+            sumTotal += itemPrice * item.quantity;
+
+            if (navbarCartItems) {
+                const div = document.createElement('div');
+                div.className = 'd-flex align-items-center justify-content-between mb-2 pb-2 border-bottom border-light-subtle fs-8';
+                div.innerHTML = `
+                    <div class="pe-2 overflow-hidden flex-grow-1" style="max-width: 180px;">
+                        <span class="d-block fw-semibold text-dark text-truncate" title="${item.name}">${item.name}</span>
+                        <span class="text-danger fw-bold">${formatCurrencyGlobal(itemPrice)}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+                        <button class="btn btn-xs btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center border-1"
+                                style="width: 18px; height: 18px; font-weight: bold; line-height: 1; padding: 0;"
+                                onclick="changeQuantityGlobal(${item.id}, -1); event.stopPropagation();">
+                            -
+                        </button>
+                        <span class="fw-bold text-dark" style="min-width: 12px; text-align: center;">${item.quantity}</span>
+                        <button class="btn btn-xs btn-outline-danger rounded-circle d-flex align-items-center justify-content-center border-1"
+                                style="width: 18px; height: 18px; font-weight: bold; line-height: 1; padding: 0;"
+                                onclick="changeQuantityGlobal(${item.id}, 1); event.stopPropagation();">
+                            +
+                        </button>
+                    </div>
+                `;
+                navbarCartItems.appendChild(div);
+            }
+        });
+
+        navbarCartCount.innerText = totalItems;
+    }
+
+    if (navbarCartTotal) {
+        navbarCartTotal.innerText = formatCurrencyGlobal(sumTotal);
+    }
+}
+
+// Khởi tạo các sự kiện cho Navbar Cart
+document.addEventListener('DOMContentLoaded', () => {
+    updateNavbarCartUI();
+
+    const btnNavbarCheckout = document.getElementById('btnNavbarCheckout');
+    if (btnNavbarCheckout) {
+        btnNavbarCheckout.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const cart = getGlobalCart();
+            if (cart.length === 0) return;
+            
+            alert('Chức năng thanh toán đang được phát triển!');
+        });
+    }
+});
+
