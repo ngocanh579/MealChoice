@@ -163,7 +163,7 @@ public class MerchantBlockedFilter extends OncePerRequestFilter {
              * API thì không nên redirect HTML.
              */
             if (request.getRequestURI()
-                    .startsWith("/api/merchant/")) {
+                    .startsWith("/api/merchants/")) {
 
                 response.setStatus(
                         HttpServletResponse.SC_FORBIDDEN
@@ -191,7 +191,8 @@ public class MerchantBlockedFilter extends OncePerRequestFilter {
              * chuyển sang trang thông báo bị khóa.
              */
             response.sendRedirect(
-                    "/merchant-blocked"
+                    request.getContextPath()
+                            + "/home?merchantBlocked=true"
             );
 
             return;

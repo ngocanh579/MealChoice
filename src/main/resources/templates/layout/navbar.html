@@ -94,11 +94,30 @@
                 </li>
 
                 <!-- Merchant đã được duyệt -->
-                <li class="nav-item" id="merchantRoleNav" th:classappend="${isMerchant} ? '' : 'd-none'">
-                    <a class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-1 fw-semibold" href="/merchant/profile">
+                <li class="nav-item"
+                    id="merchantRoleNav"
+                    th:classappend="${isMerchant} ? '' : 'd-none'">
+                    <a th:if="${currentMerchantBlocked != true}"
+                       class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-1 fw-semibold"
+                       th:href="@{/merchant/profile}">
                         <i class="bi bi-shop"></i>
-                        <span>Kênh Merchant</span>
+                        <span>
+                            Kênh Merchant
+                        </span>
                     </a>
+                    <button th:if="${currentMerchantBlocked == true}"
+                            type="button"
+                            class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-1 fw-semibold"
+                            data-bs-toggle="modal"
+                            data-bs-target="#merchantBlockedModal">
+
+                        <i class="bi bi-lock-fill"></i>
+
+                        <span>
+                            Kênh Merchant
+                        </span>
+
+                    </button>
                 </li>
 
                 <!-- Người chưa đăng nhập -->
@@ -142,41 +161,6 @@
                     </ul>
                 </li>
             </ul>
-        </div>
-    </div>
-
-    <!-- POPUP MERCHANT BỊ KHÓA -->
-    <div class="modal fade" id="merchantBlockedModal" tabindex="-1" aria-labelledby="merchantBlockedModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="merchantBlockedModalLabel">
-                        <i class="bi bi-lock-fill me-2"></i>
-                        Kênh Merchant đã bị khóa
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="text-center mb-3">
-                        <i class="bi bi-lock-fill text-danger" style="font-size: 3.5rem;"></i>
-                    </div>
-                    <h5 class="text-center fw-bold mb-3">Merchant của bạn hiện đang bị khóa</h5>
-                    <p class="text-muted text-center">Bạn tạm thời không thể truy cập các chức năng của Kênh Merchant.</p>
-                    <div class="alert alert-danger mt-4">
-                        <div class="fw-semibold mb-2">
-                            <i class="bi bi-exclamation-circle me-1"></i>
-                            Lý do khóa
-                        </div>
-                        <div th:text="${merchantLockReason != null && !#strings.isEmpty(merchantLockReason) ? merchantLockReason : 'Không có thông tin lý do khóa.'}">
-                            Không có thông tin lý do khóa.
-                        </div>
-                    </div>
-                    <p class="small text-muted mb-0">Nếu cần hỗ trợ hoặc cho rằng đây là sự nhầm lẫn, vui lòng liên hệ quản trị viên.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                </div>
-            </div>
         </div>
     </div>
     <!-- Script xử lý logic Navbar -->
