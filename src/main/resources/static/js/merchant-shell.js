@@ -3,7 +3,7 @@
   const sidebar = document.querySelector('.merchant-sidebar');
   const backdrop = document.querySelector('[data-merchant-sidebar-backdrop]');
   const toggleButtons = Array.from(
-    document.querySelectorAll('[data-merchant-sidebar-toggle]')
+      document.querySelectorAll('[data-merchant-sidebar-toggle]')
   );
   const noticeRoot = document.querySelector('[data-merchant-notice]');
   const noticeBackdrop = document.querySelector('[data-merchant-notice-backdrop]');
@@ -54,11 +54,11 @@
     noticeRoot.dataset.variant = variant;
 
     noticeIcon.innerHTML =
-      variant === 'success'
-        ? '<i class="bi bi-check-circle-fill"></i>'
-        : variant === 'danger'
-          ? '<i class="bi bi-exclamation-triangle-fill"></i>'
-          : '<i class="bi bi-info-circle-fill"></i>';
+        variant === 'success'
+            ? '<i class="bi bi-check-circle-fill"></i>'
+            : variant === 'danger'
+                ? '<i class="bi bi-exclamation-triangle-fill"></i>'
+                : '<i class="bi bi-info-circle-fill"></i>';
 
     noticeRoot.hidden = false;
     noticeBackdrop.hidden = false;
