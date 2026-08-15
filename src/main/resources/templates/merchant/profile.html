@@ -12,7 +12,7 @@
 <div th:replace="~{merchant/layout :: shell('Thông tin Merchant và địa chỉ', 'profile', ~{::content})}">
     <section th:fragment="content" class="d-flex flex-column gap-4">
 
-        <!-- HEADER TỐI GIẢN (ĐỒNG BỘ TOÀN HỆ THỐNG) -->
+        <!-- HEADER TỐI GIẢN -->
         <div class="d-flex align-items-center justify-content-between mb-1">
             <div>
                 <h2 class="fw-bold text-dark mb-1">Hồ sơ nhà hàng</h2>
@@ -62,23 +62,23 @@
 
                     <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
                           class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill font-size-12">
-                    <i class="bi bi-clock me-1"></i>Chờ duyệt
-                </span>
+                        <i class="bi bi-clock me-1"></i>Chờ duyệt
+                    </span>
 
                     <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}"
                           class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill font-size-12">
-                    <i class="bi bi-check-circle me-1"></i>Đã duyệt
-                </span>
+                        <i class="bi bi-check-circle me-1"></i>Đã duyệt
+                    </span>
 
                     <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).REJECTED}"
                           class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill font-size-12">
-                    <i class="bi bi-x-circle me-1"></i>Từ chối
-                </span>
+                        <i class="bi bi-x-circle me-1"></i>Từ chối
+                    </span>
 
                     <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}"
                           class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2 rounded-pill font-size-12">
-                    <i class="bi bi-lock me-1"></i>Đã khóa
-                </span>
+                        <i class="bi bi-lock me-1"></i>Đã khóa
+                    </span>
                 </div>
             </div>
 
@@ -138,31 +138,22 @@
 
                     <tbody>
                     <tr th:each="address,stat : ${merchant.addresses}">
-                        <td class="ps-3 fw-bold text-muted font-size-14" th:text="${stat.count}">
-                            1
-                        </td>
-
-                        <td class="fw-semibold text-dark py-3" th:text="${address.merchantAddress}">
-                            Số 123 Đường ABC
-                        </td>
-
+                        <td class="ps-3 fw-bold text-muted font-size-14" th:text="${stat.count}">1</td>
+                        <td class="fw-semibold text-dark py-3" th:text="${address.merchantAddress}">Số 123 Đường ABC</td>
                         <td>
-                        <span class="badge bg-light text-dark border font-size-12 fw-medium px-2 py-1">
-                            <i class="bi bi-clock me-1 text-success"></i>
-                            <span th:text="${address.merchantOpenTime}">08:00</span>
-                        </span>
+                            <span class="badge bg-light text-dark border font-size-12 fw-medium px-2 py-1">
+                                <i class="bi bi-clock me-1 text-success"></i>
+                                <span th:text="${address.merchantOpenTime}">08:00</span>
+                            </span>
                         </td>
-
                         <td>
-                        <span class="badge bg-light text-dark border font-size-12 fw-medium px-2 py-1">
-                            <i class="bi bi-clock-history me-1 text-danger"></i>
-                            <span th:text="${address.merchantCloseTime}">22:00</span>
-                        </span>
+                            <span class="badge bg-light text-dark border font-size-12 fw-medium px-2 py-1">
+                                <i class="bi bi-clock-history me-1 text-danger"></i>
+                                <span th:text="${address.merchantCloseTime}">22:00</span>
+                            </span>
                         </td>
-
                         <td class="text-center pe-3">
                             <div class="d-flex align-items-center justify-content-center gap-1">
-                                <!-- XEM -->
                                 <button type="button"
                                         class="btn btn-sm btn-light border text-secondary rounded-2"
                                         th:data-address="${address.merchantAddress}"
@@ -173,7 +164,6 @@
                                     <i class="bi bi-eye"></i>
                                 </button>
 
-                                <!-- SỬA -->
                                 <button type="button"
                                         class="btn btn-sm btn-light border text-primary rounded-2"
                                         th:data-merchant-id="${merchant.id}"
@@ -189,7 +179,6 @@
                                     <i class="bi bi-pencil"></i>
                                 </button>
 
-                                <!-- XÓA -->
                                 <button type="button"
                                         class="btn btn-sm btn-light border text-danger rounded-2"
                                         th:data-merchant-id="${merchant.id}"
@@ -209,11 +198,10 @@
     </section>
 </div>
 
-<!-- MODAL SỬA THÔNG TIN NHÀ HÀNG -->
+<!-- MODAL SỬA THÔNG TIN NHÀ HÀNG (TÊN) -->
 <div class="modal fade" id="editMerchantModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow">
-
             <div class="modal-header border-bottom px-4 pt-4 pb-3">
                 <h5 class="modal-title fw-bold text-dark">
                     <i class="bi bi-pencil-square text-danger me-2"></i>Sửa thông tin nhà hàng
@@ -224,7 +212,7 @@
             <form id="editMerchantForm" th:data-merchant-id="${merchant.id}">
                 <div class="modal-body px-4 py-4">
 
-                    <!-- TÊN -->
+                    <!-- TÊN NHÀ HÀNG -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Tên nhà hàng <span class="text-danger">*</span></label>
                         <input type="text"
@@ -234,7 +222,7 @@
                                required>
                     </div>
 
-                    <!-- EMAIL -->
+                    <!-- EMAIL (READONLY) -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-muted">Email liên hệ</label>
                         <input type="email"
@@ -244,7 +232,7 @@
                         <div class="form-text font-size-12">Email tài khoản không thể chỉnh sửa.</div>
                     </div>
 
-                    <!-- SĐT -->
+                    <!-- SĐT (READONLY) -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-muted">Số điện thoại</label>
                         <input type="text"
@@ -262,9 +250,7 @@
                 </div>
 
                 <div class="modal-footer border-top px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">
-                        Hủy
-                    </button>
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">Hủy</button>
                     <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
                         <i class="bi bi-check-lg me-1"></i>Lưu thay đổi
                     </button>
@@ -317,27 +303,23 @@
                                id="newStreetInput"
                                placeholder="Số nhà, Tên đường..."
                                required>
-
-                        <input type="hidden" id="newAddress">
                     </div>
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Giờ mở cửa</label>
-                            <input type="time" class="form-control bg-light border-0" id="newOpenTime" value="08:00">
+                            <label class="form-label fw-semibold">Giờ mở cửa <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control bg-light border-0" id="newOpenTime" value="08:00" required>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Giờ đóng cửa</label>
-                            <input type="time" class="form-control bg-light border-0" id="newCloseTime" value="22:00">
+                            <label class="form-label fw-semibold">Giờ đóng cửa <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control bg-light border-0" id="newCloseTime" value="22:00" required>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-footer border-top px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">
-                        Hủy
-                    </button>
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">Hủy</button>
                     <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
                         <i class="bi bi-plus-lg me-1"></i>Thêm địa chỉ
                     </button>
@@ -379,9 +361,7 @@
             </div>
 
             <div class="modal-footer border-top px-4 py-3">
-                <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">
-                    Đóng
-                </button>
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>
@@ -433,27 +413,23 @@
                                id="editStreetInput"
                                placeholder="Số nhà, Tên đường..."
                                required>
-
-                        <input type="hidden" id="editAddressDetail">
                     </div>
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Giờ mở cửa</label>
-                            <input type="time" class="form-control bg-light border-0" id="editAddressOpenTime">
+                            <label class="form-label fw-semibold">Giờ mở cửa <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control bg-light border-0" id="editAddressOpenTime" required>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Giờ đóng cửa</label>
-                            <input type="time" class="form-control bg-light border-0" id="editAddressCloseTime">
+                            <label class="form-label fw-semibold">Giờ đóng cửa <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control bg-light border-0" id="editAddressCloseTime" required>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-footer border-top px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">
-                        Hủy
-                    </button>
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">Hủy</button>
                     <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
                         <i class="bi bi-check-lg me-1"></i>Lưu thay đổi
                     </button>
@@ -470,157 +446,155 @@
 <script>
     const API = "https://provinces.open-api.vn/api/";
 
-    // Thông báo
+    // Hiển thị thông báo Toast / Alert
     function showAlert(type, message) {
         const container = document.getElementById("alertContainer");
         if (!container) return;
 
         container.innerHTML = `
-        <div class="alert alert-${type === "success" ? "success" : "danger"} alert-dismissible fade show rounded-3 shadow-sm">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
+            <div class="alert alert-${type === "success" ? "success" : "danger"} alert-dismissible fade show rounded-3 shadow-sm">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
     }
 
-    // Lấy giá trị thời gian
-    function timeValue(id) {
-        const input = document.getElementById(id);
-        if (!input || !input.value) return null;
-        return input.value + ":00";
-    }
-
-    // Gọi API
+    // Gọi API Tỉnh Thành
     async function getJson(url) {
         const response = await fetch(url);
-
         if (!response.ok) {
             throw new Error("Không thể tải dữ liệu địa chỉ.");
         }
-
         return response.json();
     }
 
-    // Tạo dữ liệu địa chỉ
+    // Gửi request AJAX tới Backend
+    async function request(url, options = {}) {
+        const defaultHeaders = { 'Content-Type': 'application/json' };
+        options.headers = { ...defaultHeaders, ...options.headers };
+
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const errorText = await response.text();
+            try {
+                const errorObj = JSON.parse(errorText);
+                throw new Error(errorObj.message || "Đã xảy ra lỗi");
+            } catch (e) {
+                throw new Error(errorText || "Đã xảy ra lỗi");
+            }
+        }
+        return response;
+    }
+
+    // Lấy giá trị giờ với định dạng HH:mm:ss
+    function timeValue(id) {
+        const value = document.getElementById(id)?.value;
+        return value ? (value.length === 5 ? `${value}:00` : value) : null;
+    }
+
+    // Format hiển thị HH:mm
+    function formatTime(value) {
+        return value && value !== "--" ? value.substring(0, 5) : "--";
+    }
+
+    // Tạo payload địa chỉ
     function addressPayload(prefix) {
-        const province = document.getElementById(prefix + "ProvinceSelect");
-        const district = document.getElementById(prefix + "DistrictSelect");
-        const ward = document.getElementById(prefix + "WardSelect");
-        const street = document.getElementById(prefix + "StreetInput");
+        const province = document.getElementById(`${prefix}ProvinceSelect`);
+        const district = document.getElementById(`${prefix}DistrictSelect`);
+        const ward = document.getElementById(`${prefix}WardSelect`);
+        const street = document.getElementById(`${prefix}StreetInput`);
 
-        if (!province || !district || !ward || !street) {
+        if (!province || !district || !ward || !street ||
+            !province.value || !district.value || !ward.value || !street.value.trim()) {
             return null;
         }
 
-        if (!province.value || !district.value || !ward.value || !street.value.trim()) {
-            return null;
-        }
-
-        const address = [
-            street.value.trim(),
-            ward.options[ward.selectedIndex].text,
-            district.options[district.selectedIndex].text,
-            province.options[province.selectedIndex].text
-        ].join(", ");
+        const getName = select => select.options[select.selectedIndex].text;
 
         return {
-            merchantAddress: address,
+            merchantAddress: [
+                street.value.trim(),
+                getName(ward),
+                getName(district),
+                getName(province)
+            ].join(", "),
             provinceCode: province.value,
             districtCode: district.value,
             wardCode: ward.value
         };
     }
 
-    // Load danh sách tỉnh
+    // Load Tỉnh/Thành phố
     async function loadProvinces(prefix) {
-        const province = document.getElementById(prefix + "ProvinceSelect");
-
+        const province = document.getElementById(`${prefix}ProvinceSelect`);
         if (!province) return;
 
-        const data = await getJson(API + "?depth=1");
-
+        const data = await getJson(`${API}?depth=1`);
         province.innerHTML =
             '<option value="" selected disabled>Tỉnh/Thành phố</option>' +
-            data.map(item =>
-                `<option value="${item.code}">${item.name}</option>`
-            ).join("");
+            data.map(item => `<option value="${item.code}">${item.name}</option>`).join("");
     }
 
-    // Load danh sách huyện
+    // Load Quận/Huyện
     async function loadDistricts(prefix, provinceCode) {
-        const district = document.getElementById(prefix + "DistrictSelect");
-        const ward = document.getElementById(prefix + "WardSelect");
+        const district = document.getElementById(`${prefix}DistrictSelect`);
+        const ward = document.getElementById(`${prefix}WardSelect`);
 
         if (!district || !ward || !provinceCode) return;
 
         district.disabled = true;
         ward.disabled = true;
 
-        district.innerHTML =
-            '<option value="" selected disabled>Đang tải Quận/Huyện...</option>';
-
-        ward.innerHTML =
-            '<option value="" selected disabled>Phường/Xã</option>';
+        district.innerHTML = '<option value="" selected disabled>Đang tải Quận/Huyện...</option>';
+        ward.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
 
         const data = await getJson(`${API}p/${provinceCode}?depth=2`);
 
         district.innerHTML =
             '<option value="" selected disabled>Quận/Huyện</option>' +
-            (data.districts || []).map(item =>
-                `<option value="${item.code}">${item.name}</option>`
-            ).join("");
+            (data.districts || []).map(item => `<option value="${item.code}">${item.name}</option>`).join("");
 
         district.disabled = false;
     }
 
-    // Load danh sách xã
+    // Load Phường/Xã
     async function loadWards(prefix, districtCode) {
-        const ward = document.getElementById(prefix + "WardSelect");
-
+        const ward = document.getElementById(`${prefix}WardSelect`);
         if (!ward || !districtCode) return;
 
         ward.disabled = true;
-
-        ward.innerHTML =
-            '<option value="" selected disabled>Đang tải Phường/Xã...</option>';
+        ward.innerHTML = '<option value="" selected disabled>Đang tải Phường/Xã...</option>';
 
         const data = await getJson(`${API}d/${districtCode}?depth=2`);
 
         ward.innerHTML =
             '<option value="" selected disabled>Phường/Xã</option>' +
-            (data.wards || []).map(item =>
-                `<option value="${item.code}">${item.name}</option>`
-            ).join("");
+            (data.wards || []).map(item => `<option value="${item.code}">${item.name}</option>`).join("");
 
         ward.disabled = false;
     }
 
-    // Khởi tạo dropdown
+    // Khởi tạo các sự kiện dropdown Tỉnh/Huyện/Xã
     function setupAddressDropdowns(prefix) {
-        const province = document.getElementById(prefix + "ProvinceSelect");
-        const district = document.getElementById(prefix + "DistrictSelect");
-        const ward = document.getElementById(prefix + "WardSelect");
-        const street = document.getElementById(prefix + "StreetInput");
+        const province = document.getElementById(`${prefix}ProvinceSelect`);
+        const district = document.getElementById(`${prefix}DistrictSelect`);
 
-        if (!province || !district || !ward || !street) return;
+        if (!province || !district) return;
 
-        // Load tỉnh
         loadProvinces(prefix).catch(console.error);
 
-        // Chọn tỉnh
-        province.addEventListener("change", async function() {
+        province.addEventListener("change", async () => {
             try {
-                await loadDistricts(prefix, this.value);
+                await loadDistricts(prefix, province.value);
             } catch (error) {
                 console.error(error);
                 showAlert("error", "Không thể tải danh sách quận/huyện.");
             }
         });
 
-        // Chọn huyện
-        district.addEventListener("change", async function() {
+        district.addEventListener("change", async () => {
             try {
-                await loadWards(prefix, this.value);
+                await loadWards(prefix, district.value);
             } catch (error) {
                 console.error(error);
                 showAlert("error", "Không thể tải danh sách phường/xã.");
@@ -628,374 +602,199 @@
         });
     }
 
-    // Load lại toàn bộ dữ liệu địa chỉ khi sửa
+    // Điền dữ liệu khi Sửa Địa Chỉ
     async function loadAddressData(prefix, provinceCode, districtCode, wardCode) {
-        const province = document.getElementById(prefix + "ProvinceSelect");
-        const district = document.getElementById(prefix + "DistrictSelect");
-        const ward = document.getElementById(prefix + "WardSelect");
-
-        if (!province || !district || !ward) return;
-
         try {
-            // Load tỉnh
             await loadProvinces(prefix);
 
             if (!provinceCode) return;
+            document.getElementById(`${prefix}ProvinceSelect`).value = provinceCode;
 
-            province.value = String(provinceCode);
-
-            // Load huyện
             await loadDistricts(prefix, provinceCode);
 
             if (!districtCode) return;
+            document.getElementById(`${prefix}DistrictSelect`).value = districtCode;
 
-            district.value = String(districtCode);
-
-            // Load xã
             await loadWards(prefix, districtCode);
 
-            if (!wardCode) return;
-
-            ward.value = String(wardCode);
+            if (wardCode) {
+                document.getElementById(`${prefix}WardSelect`).value = wardCode;
+            }
         } catch (error) {
             console.error("Lỗi load địa chỉ:", error);
             showAlert("error", "Không thể tải thông tin địa chỉ.");
         }
     }
 
+    // Modal Helpers
+    function showModal(id) {
+        const element = document.getElementById(id);
+        if (element) bootstrap.Modal.getOrCreateInstance(element).show();
+    }
+
+    function hideModal(id) {
+        const element = document.getElementById(id);
+        if (element) bootstrap.Modal.getInstance(element)?.hide();
+    }
+
+    function reloadPage(message) {
+        showAlert("success", message);
+        setTimeout(() => location.reload(), 800);
+    }
+
     // Xem chi tiết địa chỉ
     function viewAddressDetail(button) {
-        const address = button.dataset.address || "--";
-        const openTime = button.dataset.openTime || "--";
-        const closeTime = button.dataset.closeTime || "--";
-
-        const addressElement = document.getElementById("viewAddress");
-        const openElement = document.getElementById("viewOpenTime");
-        const closeElement = document.getElementById("viewCloseTime");
-
-        if (addressElement) {
-            addressElement.textContent = address;
-        }
-
-        if (openElement) {
-            openElement.textContent = formatTime(openTime);
-        }
-
-        if (closeElement) {
-            closeElement.textContent = formatTime(closeTime);
-        }
-
-        const modalElement = document.getElementById("viewAddressModal");
-
-        if (modalElement) {
-            bootstrap.Modal.getOrCreateInstance(modalElement).show();
-        }
+        document.getElementById("viewAddress").textContent = button.dataset.address || "--";
+        document.getElementById("viewOpenTime").textContent = formatTime(button.dataset.openTime);
+        document.getElementById("viewCloseTime").textContent = formatTime(button.dataset.closeTime);
+        showModal("viewAddressModal");
     }
 
-    // Format thời gian
-    function formatTime(value) {
-        if (!value || value === "--") {
-            return "--";
-        }
-
-        return value.substring(0, 5);
-    }
-
-    // Mở form sửa địa chỉ
+    // Mở Modal Sửa Địa Chỉ
     async function openEditAddressModal(button) {
-        const merchantId = button.dataset.merchantId;
-        const addressId = button.dataset.addressId;
-        const address = button.dataset.address || "";
-
-        const provinceCode = button.dataset.provinceCode;
-        const districtCode = button.dataset.districtCode;
-        const wardCode = button.dataset.wardCode;
+        const {
+            merchantId,
+            addressId,
+            address = "",
+            provinceCode,
+            districtCode,
+            wardCode,
+            openTime,
+            closeTime
+        } = button.dataset;
 
         document.getElementById("editAddressMerchantId").value = merchantId;
         document.getElementById("editAddressId").value = addressId;
-        document.getElementById("editAddressDetail").value = address;
+        document.getElementById("editStreetInput").value = address.split(",")[0]?.trim() || "";
 
-        document.getElementById("editAddressOpenTime").value =
-            button.dataset.openTime
-                ? button.dataset.openTime.substring(0, 5)
-                : "";
+        document.getElementById("editAddressOpenTime").value = formatTime(openTime) === "--" ? "" : formatTime(openTime);
+        document.getElementById("editAddressCloseTime").value = formatTime(closeTime) === "--" ? "" : formatTime(closeTime);
 
-        document.getElementById("editAddressCloseTime").value =
-            button.dataset.closeTime
-                ? button.dataset.closeTime.substring(0, 5)
-                : "";
+        showModal("editAddressModal");
 
-        // Lấy phần số nhà, tên đường
-        const streetInput = document.getElementById("editStreetInput");
-
-        if (streetInput) {
-            streetInput.value = address.split(",")[0]?.trim() || "";
-        }
-
-        const modalElement = document.getElementById("editAddressModal");
-
-        if (modalElement) {
-            bootstrap.Modal.getOrCreateInstance(modalElement).show();
-        }
-
-        // Load lại tỉnh -> huyện -> xã và giữ dữ liệu cũ
-        await loadAddressData(
-            "edit",
-            provinceCode,
-            districtCode,
-            wardCode
-        );
+        await loadAddressData("edit", provinceCode, districtCode, wardCode);
     }
 
-    // Sửa thông tin nhà hàng
-    document.getElementById("editMerchantForm")
-        ?.addEventListener("submit", async function(event) {
-            event.preventDefault();
-
-            const merchantId = this.dataset.merchantId;
-
-            const restaurantName =
-                document.getElementById("editRestaurantName").value.trim();
-
-            if (!restaurantName) {
-                showAlert(
-                    "error",
-                    "❌ Tên nhà hàng không được để trống!"
-                );
-                return;
-            }
-
-            const payload = {
-                merchantRestaurantName: restaurantName
-            };
-
-            try {
-                const response = await fetch(
-                    `/api/merchant/${merchantId}`,
-                    {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(payload)
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error(await response.text());
-                }
-
-                bootstrap.Modal
-                    .getInstance(
-                        document.getElementById("editMerchantModal")
-                    )
-                    ?.hide();
-
-                showAlert(
-                    "success",
-                    "✅ Cập nhật thông tin nhà hàng thành công!"
-                );
-
-                setTimeout(() => {
-                    location.reload();
-                }, 800);
-            } catch (error) {
-                showAlert(
-                    "error",
-                    "❌ Cập nhật thông tin thất bại: " + error.message
-                );
-            }
-        });
-
-    // Thêm địa chỉ
-    document.getElementById("addAddressForm")
-        ?.addEventListener("submit", async function(event) {
-            event.preventDefault();
-
-            const merchantId = this.dataset.merchantId;
-            const address = addressPayload("new");
-
-            if (!address) {
-                showAlert(
-                    "error",
-                    "❌ Vui lòng nhập đầy đủ thông tin địa chỉ!"
-                );
-                return;
-            }
-
-            const payload = {
-                ...address,
-                merchantOpenTime: timeValue("newOpenTime"),
-                merchantCloseTime: timeValue("newCloseTime"),
-                isDefault: false
-            };
-
-            try {
-                const response = await fetch(
-                    `/api/merchant/${merchantId}/addresses`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(payload)
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error(await response.text());
-                }
-
-                bootstrap.Modal
-                    .getInstance(
-                        document.getElementById("addAddressModal")
-                    )
-                    ?.hide();
-
-                showAlert(
-                    "success",
-                    "✅ Thêm địa chỉ thành công!"
-                );
-
-                setTimeout(() => {
-                    location.reload();
-                }, 800);
-            } catch (error) {
-                showAlert(
-                    "error",
-                    "❌ Thêm địa chỉ thất bại: " + error.message
-                );
-            }
-        });
-
-    // Sửa địa chỉ
-    document.getElementById("editAddressForm")
-        ?.addEventListener("submit", async function(event) {
-            event.preventDefault();
-
-            const merchantId =
-                document.getElementById("editAddressMerchantId").value;
-
-            const addressId =
-                document.getElementById("editAddressId").value;
-
-            const address = addressPayload("edit");
-
-            if (!merchantId || !addressId) {
-                showAlert(
-                    "error",
-                    "❌ Không xác định được địa chỉ cần sửa!"
-                );
-                return;
-            }
-
-            if (!address) {
-                showAlert(
-                    "error",
-                    "❌ Vui lòng nhập đầy đủ thông tin địa chỉ!"
-                );
-                return;
-            }
-
-            const payload = {
-                ...address,
-                merchantOpenTime:
-                    timeValue("editAddressOpenTime"),
-
-                merchantCloseTime:
-                    timeValue("editAddressCloseTime"),
-
-                isDefault: false
-            };
-
-            try {
-                const response = await fetch(
-                    `/api/merchant/${merchantId}/addresses/${addressId}`,
-                    {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(payload)
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error(await response.text());
-                }
-
-                bootstrap.Modal
-                    .getInstance(
-                        document.getElementById("editAddressModal")
-                    )
-                    ?.hide();
-
-                showAlert(
-                    "success",
-                    "✅ Cập nhật địa chỉ thành công!"
-                );
-
-                setTimeout(() => {
-                    location.reload();
-                }, 800);
-            } catch (error) {
-                showAlert(
-                    "error",
-                    "❌ Cập nhật địa chỉ thất bại: " + error.message
-                );
-            }
-        });
-
-    // Xóa địa chỉ
+    // Hàm Xóa Địa Chỉ
     async function deleteAddress(button) {
-        const merchantId = button.dataset.merchantId;
-        const addressId = button.dataset.addressId;
-
-        if (!merchantId || !addressId) {
-            showAlert(
-                "error",
-                "❌ Không xác định được địa chỉ cần xóa!"
-            );
-            return;
-        }
-
-        if (!confirm("Bạn có chắc chắn muốn xóa địa chỉ này không?")) {
-            return;
-        }
+        const { merchantId, addressId } = button.dataset;
+        if (!confirm("Bạn có chắc chắn muốn xóa địa chỉ chi nhánh này không?")) return;
 
         try {
-            const response = await fetch(
-                `/api/merchant/${merchantId}/addresses/${addressId}`,
-                {
-                    method: "DELETE"
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-
-            showAlert(
-                "success",
-                "✅ Xóa địa chỉ thành công!"
-            );
-
-            setTimeout(() => {
-                location.reload();
-            }, 800);
+            // Thay đổi URL API phù hợp với Backend của bạn
+            await request(`/api/merchant/${merchantId}/addresses/${addressId}`, { method: 'DELETE' });
+            reloadPage("Xóa địa chỉ thành công!");
         } catch (error) {
-            showAlert(
-                "error",
-                "❌ Xóa địa chỉ thất bại: " + error.message
-            );
+            showAlert("error", error.message || "Xóa địa chỉ thất bại.");
         }
     }
 
-    // Khởi tạo dropdown
-    setupAddressDropdowns("new");
-    setupAddressDropdowns("edit");
+    // =========================================================================
+    // KHỞI TẠO VÀ LẮNG NGHE SỰ KIỆN SUBMIT FORM
+    // =========================================================================
+    document.addEventListener("DOMContentLoaded", () => {
+
+        // Setup dropdown cho Tỉnh/Huyện/Xã
+        setupAddressDropdowns("new");
+        setupAddressDropdowns("edit");
+
+        // 1. FORM SỬA TÊN NHÀ HÀNG (CARD 1)
+        const editMerchantForm = document.getElementById("editMerchantForm");
+        if (editMerchantForm) {
+            editMerchantForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const merchantId = editMerchantForm.dataset.merchantId;
+                const merchantRestaurantName = document.getElementById("editRestaurantName").value.trim();
+
+                if (!merchantRestaurantName) {
+                    showAlert("error", "Vui lòng nhập tên nhà hàng.");
+                    return;
+                }
+
+                // CHỈ GỬI DUY NHẤT TÊN NHÀ HÀNG - KHÔNG GỬI FIELDS ĐỊA CHỈ RỖNG
+                const payload = { merchantRestaurantName };
+
+                try {
+                    await request(`/api/merchant/${merchantId}`, {
+                        method: 'PUT', // Hoặc 'PUT' tùy API backend
+                        body: JSON.stringify(payload)
+                    });
+
+                    hideModal("editMerchantModal");
+                    reloadPage("Cập nhật tên nhà hàng thành công!");
+                } catch (error) {
+                    showAlert("error", "Cập nhật thất bại: " + error.message);
+                }
+            });
+        }
+
+        // 2. FORM THÊM ĐỊA CHỈ MỚI
+        const addAddressForm = document.getElementById("addAddressForm");
+        if (addAddressForm) {
+            addAddressForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const merchantId = addAddressForm.dataset.merchantId;
+                const addrData = addressPayload("new");
+
+                if (!addrData) {
+                    showAlert("error", "Vui lòng chọn đầy đủ Tỉnh/Huyện/Xã và nhập địa chỉ chi tiết!");
+                    return;
+                }
+
+                const payload = {
+                    ...addrData,
+                    merchantOpenTime: timeValue("newOpenTime"),
+                    merchantCloseTime: timeValue("newCloseTime")
+                };
+
+                try {
+                    await request(`/api/merchant/${merchantId}/addresses`, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+
+                    hideModal("addAddressModal");
+                    reloadPage("Thêm địa chỉ mới thành công!");
+                } catch (error) {
+                    showAlert("error", "Thêm địa chỉ thất bại: " + error.message);
+                }
+            });
+        }
+
+        // 3. FORM SỬA ĐỊA CHỈ CHI NHÁNH
+        const editAddressForm = document.getElementById("editAddressForm");
+        if (editAddressForm) {
+            editAddressForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const merchantId = document.getElementById("editAddressMerchantId").value;
+                const addressId = document.getElementById("editAddressId").value;
+
+                const addrData = addressPayload("edit");
+                if (!addrData) {
+                    showAlert("error", "Vui lòng chọn đầy đủ Tỉnh/Huyện/Xã và nhập địa chỉ chi tiết!");
+                    return;
+                }
+
+                const payload = {
+                    ...addrData,
+                    merchantOpenTime: timeValue("editAddressOpenTime"),
+                    merchantCloseTime: timeValue("editAddressCloseTime")
+                };
+
+                try {
+                    await request(`/api/merchant/${merchantId}/addresses/${addressId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(payload)
+                    });
+
+                    hideModal("editAddressModal");
+                    reloadPage("Cập nhật địa chỉ thành công!");
+                } catch (error) {
+                    showAlert("error", "Cập nhật địa chỉ thất bại: " + error.message);
+                }
+            });
+        }
+    });
 </script>
-</section>
-</div>
 </body>
 </html>
