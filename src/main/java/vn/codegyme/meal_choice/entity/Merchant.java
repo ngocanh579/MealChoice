@@ -1,14 +1,11 @@
 package vn.codegyme.meal_choice.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -57,6 +54,22 @@ public class Merchant {
             length = 30
     )
     private MerchantStatus merchantStatus;
+
+    // ===== Lock / Reject =====
+
+    @Column(name = "lock_reason", length = 500)
+    private String lockReason;
+
+    @Column(name = "locked_at")
+    private LocalDateTime lockedAt;
+
+    @Column(name = "reject_reason", length = 500)
+    private String rejectReason;
+
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
+
+    // ===== Other =====
 
     @Column(name = "is_trusted_partner", nullable = false)
     private boolean trustedPartner = false;
