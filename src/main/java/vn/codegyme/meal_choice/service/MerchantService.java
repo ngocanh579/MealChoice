@@ -34,84 +34,288 @@ public class MerchantService {
             MerchantRegisterRequest request,
             String userEmail) {
 
-        User user = userRepository.findByEmail(userEmail)
+        // =========================================
+        // 1. TÌM USER
+        // =========================================
+
+        User user = userRepository
+                .findByEmail(userEmail)
                 .orElseThrow(() ->
                         new RuntimeException(
-                                "Không tìm thấy tài khoản người dùng"));
+                                "Không tìm thấy tài khoản người dùng"
+                        )
+                );
 
-        if (merchantRepository.existsByUserId(user.getId())) {
-            throw new RuntimeException(
-                    "Tài khoản này đã đăng ký Merchant");
-        }
 
-        if (merchantRepository.existsByMerchantEmail(
-                request.getMerchantEmail())) {
-            throw new RuntimeException(
-                    "Email Merchant đã tồn tại");
-        }
-
-        if (merchantRepository.existsByMerchantPhone(
-                request.getMerchantPhone())) {
-            throw new RuntimeException(
-                    "Số điện thoại đã tồn tại");
-        }
+        // =========================================
+        // 2. KIỂM TRA MẬT KHẨU NHẬP LẠI
+        // =========================================
 
         if (!request.getPassword()
                 .equals(request.getConfirmPassword())) {
+
             throw new RuntimeException(
-                    "Mật khẩu nhập lại không đúng");
+                    "Mật khẩu nhập lại không đúng"
+            );
         }
+
+
+        // =========================================
+        // 3. KIỂM TRA MẬT KHẨU TÀI KHOẢN
+        // =========================================
 
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword())) {
+
             throw new RuntimeException(
-                    "Mật khẩu tài khoản không đúng");
+                    "Mật khẩu tài khoản không đúng"
+            );
         }
 
-        Merchant merchant = new Merchant();
 
-        merchant.setMerchantRestaurantName(
-                request.getMerchantRestaurantName());
+        // =========================================
+        // 4. KIỂM TRA MERCHANT CŨ
+        // =========================================
 
-        merchant.setMerchantEmail(
-                request.getMerchantEmail());
+        Merchant merchant = merchantRepository
+                .findByUser_Id(user.getId())
+                .orElse(null);
 
-        merchant.setMerchantPhone(
-                request.getMerchantPhone());
 
-        merchant.setUser(user);
+        /*
+         * Khai báo MerchantAddress ở ngoài
+         * để có thể sử dụng cho cả hai trường hợp:
+         *
+         * - Đăng ký lại
+         * - Đăng ký lần đầu
+         */
+        MerchantAddress merchantAddress;
 
-        merchant.setMerchantStatus(
-                MerchantStatus.PENDING);
 
-        merchantRepository.save(merchant);
+        // =========================================
+        // 5. USER ĐÃ TỪNG ĐĂNG KÝ MERCHANT
+        // =========================================
 
-        MerchantAddress merchantAddress =
-                new MerchantAddress();
+        if (merchant != null) {
 
-        merchantAddress.setMerchant(merchant);
+            // Chỉ cho đăng ký lại nếu trước đó bị từ chối
+            if (merchant.getMerchantStatus()
+                    != MerchantStatus.REJECTED) {
+
+                throw new RuntimeException(
+                        "Tài khoản này đã đăng ký Merchant"
+                );
+            }
+
+
+            // =====================================
+            // KIỂM TRA EMAIL TRÙNG
+            // =====================================
+
+            if (!merchant.getMerchantEmail()
+                    .equals(request.getMerchantEmail())
+                    && merchantRepository
+                    .existsByMerchantEmail(
+                            request.getMerchantEmail()
+                    )) {
+
+                throw new RuntimeException(
+                        "Email Merchant đã tồn tại"
+                );
+            }
+
+
+            // =====================================
+            // KIỂM TRA PHONE TRÙNG
+            // =====================================
+
+            if (!merchant.getMerchantPhone()
+                    .equals(request.getMerchantPhone())
+                    && merchantRepository
+                    .existsByMerchantPhone(
+                            request.getMerchantPhone()
+                    )) {
+
+                throw new RuntimeException(
+                        "Số điện thoại đã tồn tại"
+                );
+            }
+
+
+            // =====================================
+            // CẬP NHẬT MERCHANT CŨ
+            // =====================================
+
+            merchant.setMerchantRestaurantName(
+                    request.getMerchantRestaurantName()
+            );
+
+            merchant.setMerchantEmail(
+                    request.getMerchantEmail()
+            );
+
+            merchant.setMerchantPhone(
+                    request.getMerchantPhone()
+            );
+
+            merchant.setMerchantStatus(
+                    MerchantStatus.PENDING
+            );
+
+            // Xóa lý do từ chối cũ
+            merchant.setRejectReason(null);
+
+
+            merchantRepository.save(merchant);
+
+
+            // =====================================
+            // LẤY ĐỊA CHỈ CŨ
+            // =====================================
+
+            List<MerchantAddress> addresses =
+                    merchantAddressRepository
+                            .findByMerchantId(
+                                    merchant.getId()
+                            );
+
+
+            if (!addresses.isEmpty()) {
+
+                merchantAddress =
+                        addresses.get(0);
+
+            } else {
+
+                merchantAddress =
+                        new MerchantAddress();
+
+                merchantAddress.setMerchant(
+                        merchant
+                );
+            }
+
+        }
+
+
+        // =========================================
+        // 6. ĐĂNG KÝ MERCHANT LẦN ĐẦU
+        // =========================================
+
+        else {
+
+            // Kiểm tra email
+            if (merchantRepository
+                    .existsByMerchantEmail(
+                            request.getMerchantEmail()
+                    )) {
+
+                throw new RuntimeException(
+                        "Email Merchant đã tồn tại"
+                );
+            }
+
+
+            // Kiểm tra phone
+            if (merchantRepository
+                    .existsByMerchantPhone(
+                            request.getMerchantPhone()
+                    )) {
+
+                throw new RuntimeException(
+                        "Số điện thoại đã tồn tại"
+                );
+            }
+
+
+            // =====================================
+            // TẠO MERCHANT
+            // =====================================
+
+            merchant = new Merchant();
+
+            merchant.setMerchantRestaurantName(
+                    request.getMerchantRestaurantName()
+            );
+
+            merchant.setMerchantEmail(
+                    request.getMerchantEmail()
+            );
+
+            merchant.setMerchantPhone(
+                    request.getMerchantPhone()
+            );
+
+            merchant.setUser(
+                    user
+            );
+
+            merchant.setMerchantStatus(
+                    MerchantStatus.PENDING
+            );
+
+
+            merchantRepository.save(
+                    merchant
+            );
+
+
+            // =====================================
+            // TẠO ĐỊA CHỈ MỚI
+            // =====================================
+
+            merchantAddress =
+                    new MerchantAddress();
+
+            merchantAddress.setMerchant(
+                    merchant
+            );
+        }
+
+
+        // =========================================
+        // 7. CẬP NHẬT THÔNG TIN ĐỊA CHỈ
+        // =========================================
 
         merchantAddress.setMerchantAddress(
-                request.getMerchantAddress());
+                request.getMerchantAddress()
+        );
+
 
         merchantAddress.setProvinceCode(
-                request.getProvinceCode());
+                request.getProvinceCode()
+        );
+
 
         merchantAddress.setDistrictCode(
-                request.getDistrictCode());
+                request.getDistrictCode()
+        );
+
 
         merchantAddress.setWardCode(
-                request.getWardCode());
+                request.getWardCode()
+        );
 
-        merchantAddress.setDefault(true);
+
+        merchantAddress.setDefault(
+                true
+        );
+
 
         merchantAddressRepository.save(
-                merchantAddress);
+                merchantAddress
+        );
+
+
+        // =========================================
+        // 8. GỬI EMAIL
+        // =========================================
 
         emailService.sendMerchantRegisterEmail(
                 request.getMerchantEmail(),
-                request.getMerchantRestaurantName());
+                request.getMerchantRestaurantName()
+        );
     }
 
     @Transactional
