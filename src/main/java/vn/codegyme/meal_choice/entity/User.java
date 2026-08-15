@@ -49,9 +49,11 @@ public class User {
     @Column()
     private LocalDate dob;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 
+    @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -59,9 +61,6 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
-
-//    @Column(nullable = false)
-//    private Boolean isActive = true;
 
     @Builder.Default
     @Column(nullable = false)

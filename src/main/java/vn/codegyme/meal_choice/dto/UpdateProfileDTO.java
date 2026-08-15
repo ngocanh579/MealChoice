@@ -20,7 +20,7 @@ public class UpdateProfileDTO {
     @Size(min = 2, max = 30, message = "Tên hiển thị phải từ 2 đến 30 kí tự")
     private String displayName;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dob;
 
     private Gender gender;
