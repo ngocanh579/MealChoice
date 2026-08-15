@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm món ăn - Merchant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/merchant.css}">
+</head>
+<body class="merchant-page">
+<div th:replace="~{merchant/layout :: shell('Thêm món ăn', 'foods', ~{::content})}">
+    <section th:fragment="content" class="d-flex flex-column gap-4">
+
+        <!-- HEADER TỐI GIẢN -->
+        <div class="d-flex align-items-center justify-content-between mb-1">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">Thêm món ăn mới</h2>
+                <p class="text-muted mb-0 font-size-14">Nhập thông tin món ăn, ảnh và giá để đưa món lên kệ.</p>
+            </div>
+            <div>
+                <a href="/merchant/foods" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Hủy</span>
+                </a>
+            </div>
+        </div>
+
+        <form id="foodCreateForm" enctype="multipart/form-data">
+            <div class="row g-4">
+
+                <!-- CỘT TRÁI: THÔNG TIN CƠ BẢN & MÔ TẢ -->
+                <div class="col-lg-7 d-flex flex-column gap-4">
+
+                    <!-- Card 1: Thông tin chung -->
+                    <div class="merchant-page-card p-4">
+                        <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                            <i class="bi bi-info-circle text-danger me-2"></i>Thông tin cơ bản
+                        </h5>
+
+                        <div class="mb-3">
+                            <label for="foodName" class="form-label fw-semibold">Tên món ăn <span class="text-danger">*</span></label>
+                            <input type="text"
+                                   id="foodName"
+                                   name="foodName"
+                                   class="form-control form-control-lg bg-light border-0"
+                                   placeholder="Ví dụ: Cơm gà xối mỡ"
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="merchantAddressId" class="form-label fw-semibold">Địa chỉ cửa hàng <span class="text-danger">*</span></label>
+                            <select id="merchantAddressId"
+                                    name="merchantAddressId"
+                                    class="form-select form-select-lg bg-light border-0"
+                                    required>
+                                <option value="">-- Chọn địa chỉ --</option>
+                                <option th:each="address : ${addresses}"
+                                        th:value="${address.id}"
+                                        th:text="${address.merchantAddress}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Danh mục món ăn <span class="text-danger">*</span></label>
+                            <div class="p-3 bg-light rounded-3 border-0">
+                                <div th:if="${categories == null || #lists.isEmpty(categories)}"
+                                     class="text-muted small italic">
+                                    Chưa có danh mục nào.
+                                </div>
+
+                                <div th:each="category : ${categories}"
+                                     class="form-check form-check-inline me-4 mb-2">
+                                    <input class="form-check-input category-checkbox"
+                                           type="checkbox"
+                                           name="categoryIds"
+                                           th:id="'category-' + ${category.id}"
+                                           th:value="${category.id}">
+                                    <label class="form-check-label fw-medium"
+                                           th:for="'category-' + ${category.id}"
+                                           th:text="${category.categoryName}">
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-text font-size-12 mt-1">Có thể chọn nhiều danh mục cho cùng một món ăn.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="preparationTime" class="form-label fw-semibold">
+                                Thời gian chuẩn bị <span class="text-danger">*</span>
+                            </label>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="number"
+                                       id="preparationTime"
+                                       name="preparationTime"
+                                       class="form-control bg-light border-0"
+                                       min="0"
+                                       style="max-width: 140px; height: 42px;"
+                                       placeholder="20"
+                                       required>
+
+                                <span class="text-muted fw-semibold">phút</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label for="foodNote" class="form-label fw-semibold">Mô tả / Ghi chú món ăn</label>
+                            <textarea id="foodNote"
+                                      name="foodNote"
+                                      class="form-control bg-light border-0"
+                                      rows="4"
+                                      placeholder="Mô tả chi tiết về thành phần, hương vị..."></textarea>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- CỘT PHẢI: GIÁ CẢ & TẢI ẢNH -->
+                <div class="col-lg-5 d-flex flex-column gap-4">
+
+                    <!-- Card 2: Giá & Phí -->
+                    <div class="merchant-page-card p-4">
+                        <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                            <i class="bi bi-tag text-danger me-2"></i>Giá & Phí dịch vụ
+                        </h5>
+
+                        <div class="mb-3">
+                            <label for="price" class="form-label fw-semibold">Giá bán chính thức <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number"
+                                       id="price"
+                                       name="price"
+                                       class="form-control bg-light border-0"
+                                       min="0"
+                                       step="0.01"
+                                       placeholder="50000"
+                                       required>
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="discountPrice" class="form-label fw-semibold">Giá khuyến mãi <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number"
+                                       id="discountPrice"
+                                       name="discountPrice"
+                                       class="form-control bg-light border-0"
+                                       min="0"
+                                       step="0.01"
+                                       placeholder="45000"
+                                       required>
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label for="serviceFee" class="form-label fw-semibold">Phí dịch vụ</label>
+                            <div class="input-group">
+                                <input type="number"
+                                       id="serviceFee"
+                                       name="serviceFee"
+                                       class="form-control bg-light border-0"
+                                       min="0"
+                                       step="0.01"
+                                       value="0"
+                                       placeholder="0">
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Tải ảnh món ăn -->
+                    <div class="merchant-page-card p-4">
+                        <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                            <i class="bi bi-images text-danger me-2"></i>Hình ảnh món ăn
+                        </h5>
+
+                        <div>
+                            <label for="images" class="form-label fw-semibold">Ảnh món ăn <span class="text-danger">*</span></label>
+                            <div class="border border-2 border-dashed rounded-3 p-4 text-center bg-light bg-opacity-50">
+                                <i class="bi bi-cloud-arrow-up fs-1 text-danger d-block mb-2"></i>
+                                <p class="fw-semibold mb-1">Chọn hoặc kéo thả ảnh vào đây</p>
+                                <p class="text-muted small mb-3">Hỗ trợ định dạng JPG, JPEG, PNG hoặc WEBP</p>
+
+                                <input type="file"
+                                       id="images"
+                                       name="images"
+                                       class="form-control form-control-sm bg-white"
+                                       accept=".jpg,.jpeg,.png,.webp"
+                                       multiple
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- NÚT THAO TÁC CUỐI TRANG -->
+            <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                <a href="/merchant/foods" class="btn btn-light rounded-pill px-4 py-2 fw-semibold border">
+                    Hủy
+                </a>
+                <button type="submit" id="submitButton" class="btn btn-danger rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-check-lg"></i>
+                    <span>Thêm món ăn</span>
+                </button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script>
+    const form = document.getElementById("foodCreateForm");
+    const submitButton = document.getElementById("submitButton");
+
+    function buildAuthHeaders() {
+        const token = localStorage.getItem("accessToken");
+        const headers = {};
+
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+
+        return headers;
+    }
+
+    form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const checkedCategories = document.querySelectorAll(
+            ".category-checkbox:checked"
+        );
+
+        if (checkedCategories.length === 0) {
+            window.showMerchantNotice?.({
+                variant: "danger",
+                title: "Thiếu thông tin",
+                message: "Vui lòng chọn ít nhất một danh mục."
+            });
+            return;
+        }
+
+        const price = Number(document.getElementById("price").value);
+        const discountPrice = Number(
+            document.getElementById("discountPrice").value
+        );
+        const serviceFee = Number(
+            document.getElementById("serviceFee").value || 0
+        );
+
+        if (price <= 0) {
+            window.showMerchantNotice?.({
+                variant: "danger",
+                title: "Giá tiền không hợp lệ",
+                message: "Giá tiền phải lớn hơn 0."
+            });
+            return;
+        }
+
+        if (discountPrice <= 0) {
+            window.showMerchantNotice?.({
+                variant: "danger",
+                title: "Giá KM không hợp lệ",
+                message: "Giá KM phải lớn hơn 0."
+            });
+            return;
+        }
+
+        if (serviceFee < 0) {
+            window.showMerchantNotice?.({
+                variant: "danger",
+                title: "Phí dịch vụ không hợp lệ",
+                message: "Phí dịch vụ không được nhỏ hơn 0."
+            });
+            return;
+        }
+
+        const formData = new FormData(form);
+
+        submitButton.disabled = true;
+        submitButton.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-1"></span>Đang thêm...';
+
+        try {
+            const response = await fetch("/api/merchant/foods", {
+                method: "POST",
+                credentials: "include",
+                headers: buildAuthHeaders(),
+                body: formData
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                window.showMerchantNotice?.({
+                    variant: "danger",
+                    title: "Phiên đăng nhập",
+                    message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+                });
+                window.location.href = "/login";
+                return;
+            }
+
+            if (!response.ok) {
+                let message = "Không thể thêm món ăn.";
+
+                try {
+                    const errorData = await response.json();
+
+                    if (errorData.message) {
+                        message = errorData.message;
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+
+                window.showMerchantNotice?.({
+                    variant: "danger",
+                    title: "Không thể thêm món ăn",
+                    message
+                });
+                return;
+            }
+
+            window.showMerchantNotice?.({
+                variant: "success",
+                title: "Thêm món ăn thành công",
+                message: "Món ăn đã được lưu. Đang quay về danh sách..."
+            });
+
+            setTimeout(() => {
+                window.location.href = "/merchant/foods";
+            }, 900);
+        } catch (error) {
+            console.error("Lỗi khi thêm món ăn:", error);
+
+            window.showMerchantNotice?.({
+                variant: "danger",
+                title: "Có lỗi xảy ra",
+                message: "Không thể thêm món ăn. Vui lòng thử lại."
+            });
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML =
+                '<i class="bi bi-check-lg me-1"></i>Thêm món ăn';
+        }
+    });
+</script>
+</body>
+</html>
