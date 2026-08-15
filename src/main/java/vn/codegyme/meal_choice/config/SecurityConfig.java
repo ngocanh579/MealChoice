@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import vn.codegyme.meal_choice.security.JwtAuthFilter;
+import vn.codegyme.meal_choice.security.MerchantBlockedFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -23,6 +24,7 @@ import vn.codegyme.meal_choice.security.JwtAuthFilter;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final MerchantBlockedFilter merchantBlockedFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -38,20 +40,32 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         // OPTIONS
-                        .requestMatchers(HttpMethod.OPTIONS, "/**")
-                        .permitAll()
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
 
                         // Public
                         .requestMatchers(
                                 "/",
                                 "/home",
+                                "/search/**",
+                                "/restaurants/**",
+                                "/food/**",
+                                "/foods/**",
+                                "/categories/**",
+                                "/api/foods/**",
+                                "/api/categories/**",
                                 "/login",
                                 "/register",
+                                "/activate",
                                 "/api/auth/**",
+                                "/merchant-blocked",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
-                                "/favicon.ico"
+                                "/favicon.ico",
+                                "/error"
                         ).permitAll()
 
                         // User đã đăng nhập được mở trang đăng ký Merchant
@@ -78,11 +92,20 @@ public class SecurityConfig {
                                 "/api/merchant/my-status"
                         ).authenticated()
 
+                        // API thông tin Merchant public
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/merchants/**"
+                        ).permitAll()
+
                         // Merchant
                         .requestMatchers(
                                 "/merchant/**",
                                 "/api/merchant/**"
-                        ).hasAnyRole("MERCHANT", "ADMIN")
+                        ).hasAnyRole(
+                                "MERCHANT",
+                                "ADMIN"
+                        )
 
                         // User
                         .requestMatchers(
@@ -95,8 +118,7 @@ public class SecurityConfig {
                         .authenticated()
                 )
 
-                // Nếu chưa đăng nhập mà truy cập trang cần đăng nhập
-                // thì chuyển về /login
+                // Chưa đăng nhập -> /login
                 .exceptionHandling(ex -> ex
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint("/login"),
@@ -104,7 +126,7 @@ public class SecurityConfig {
                         )
                 )
 
-                // JWT -> không sử dụng session
+                // JWT -> Stateless
                 .sessionManagement(sess ->
                         sess.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
@@ -115,6 +137,12 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class
+                )
+
+                // Kiểm tra Merchant bị khóa
+                .addFilterAfter(
+                        merchantBlockedFilter,
+                        JwtAuthFilter.class
                 );
 
         return http.build();
