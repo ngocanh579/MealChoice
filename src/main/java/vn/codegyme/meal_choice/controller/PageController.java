@@ -367,6 +367,42 @@ public class PageController {
         return "homepage/food-list-page";
     }
 
+    // 7. TRANG ĐỐI TÁC CHỌN LỌC (TRUSTED PARTNERS)
+    @GetMapping("/restaurants/trusted")
+    public String trustedRestaurantsPage(@RequestParam(name = "categoryId", required = false) Long categoryId,
+                                         @RequestParam(name = "page", defaultValue = "0") int page,
+                                         Authentication authentication,
+                                         Model model) {
+        addLikeStatusToModel(authentication, model);
+        Pageable pageable = PageRequest.of(Math.max(0, page), 50);
+        Page<Food> foodPage;
+        try {
+            if (categoryId != null) {
+                foodPage = foodRepository.findAllByTrustedPartnerAndCategoryId(categoryId, pageable);
+                if (foodPage.isEmpty()) {
+                    foodPage = foodRepository.findAllByCategoryIdAndIsActiveTrueOrderByIdDesc(categoryId, pageable);
+                }
+            } else {
+                foodPage = foodRepository.findAllByTrustedPartner(pageable);
+                if (foodPage.isEmpty()) {
+                    foodPage = foodRepository.findAllByIsActiveTrueOrderByIdDesc(pageable);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Lỗi trang đối tác chọn lọc: {}", e.getMessage(), e);
+            foodPage = Page.empty();
+        }
+
+        model.addAttribute("foodPage", foodPage);
+        model.addAttribute("categories", getCategoriesWithLatestFoodImage());
+        model.addAttribute("selectedCategoryId", categoryId);
+        model.addAttribute("currentUrl", "/restaurants/trusted");
+        model.addAttribute("pageTitle", "Đối Tác Chọn Lọc");
+        model.addAttribute("pageDescription", "Thương hiệu uy tín, chất lượng đảm bảo và đối tác tin cậy của MealChoice");
+
+        return "homepage/food-list-page";
+    }
+
     @GetMapping("/login")
     public String loginPage() {
         return "auth/login";

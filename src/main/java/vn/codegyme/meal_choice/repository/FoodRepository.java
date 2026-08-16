@@ -68,4 +68,12 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     // 14. Lấy món ăn mới nhất thuộc một danh mục cụ thể
     @Query("SELECT f FROM Food f WHERE f.active = true AND f.deletedAt IS NULL AND f.category.id = :categoryId ORDER BY f.id DESC LIMIT 1")
     Optional<Food> findLatestFoodByCategoryId(@Param("categoryId") Long categoryId);
+
+    // 15. Lấy danh sách món ăn từ các đối tác chọn lọc (Trusted Partners)
+    @Query("SELECT f FROM Food f WHERE f.active = true AND f.deletedAt IS NULL AND f.merchant.trustedPartner = true ORDER BY f.id DESC")
+    Page<Food> findAllByTrustedPartner(Pageable pageable);
+
+    // 16. Lấy danh sách món ăn từ các đối tác chọn lọc theo danh mục
+    @Query("SELECT f FROM Food f WHERE f.active = true AND f.deletedAt IS NULL AND f.merchant.trustedPartner = true AND f.category.id = :categoryId ORDER BY f.id DESC")
+    Page<Food> findAllByTrustedPartnerAndCategoryId(@Param("categoryId") Long categoryId, Pageable pageable);
 }
