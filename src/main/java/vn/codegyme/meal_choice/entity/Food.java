@@ -2,14 +2,11 @@ package vn.codegyme.meal_choice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "foods")
@@ -21,10 +18,8 @@ import java.util.UUID;
 public class Food {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(length = 36)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "merchant_id", nullable = false)
@@ -42,6 +37,24 @@ public class Food {
     )
     @Builder.Default
     private List<FoodCategory> foodCategories = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "food_tag_mapping",
+            joinColumns = @JoinColumn(name = "food_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    @Builder.Default
+    private List<Tag> tags = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "food_likes",
+            joinColumns = @JoinColumn(name = "food_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    @Builder.Default
+    private List<User> likedByUsers = new ArrayList<>();
 
     @Column(name = "food_name", nullable = false, length = 150)
     private String foodName;
@@ -70,6 +83,10 @@ public class Food {
     @Builder.Default
     private Integer orderCount = 0;
 
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+
     @Column(name = "is_recommended", nullable = false)
     @Builder.Default
     private Boolean isRecommended = false;
@@ -93,9 +110,7 @@ public class Food {
 
     @PrePersist
     protected void onCreate() {
-        if (id == null) {
-            id = UUID.randomUUID();
-        }
+        LocalDateTime now = LocalDateTime.now();
 
         if (serviceFee == null) {
             serviceFee = BigDecimal.ZERO;
@@ -109,12 +124,16 @@ public class Food {
             orderCount = 0;
         }
 
+        if (isActive == null) {
+            isActive = true;
+        }
+
         if (isRecommended == null) {
             isRecommended = false;
         }
 
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
     }
 
     @PreUpdate
