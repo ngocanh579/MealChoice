@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import vn.codegyme.meal_choice.dto.merchant.MerchantAddressRequest;
@@ -33,6 +34,7 @@ public class MerchantController {
         private final MerchantRepository merchantRepository;
         private final UserRepository userRepository;
 
+        
         // Đăng ký Merchant
         @PostMapping("/register")
         public ResponseEntity<String> registerMerchant(
@@ -108,20 +110,6 @@ public class MerchantController {
                 return ResponseEntity.ok(response);
         }
 
-        // Cập nhật thông tin Merchant
-        @PutMapping("/{merchantId}")
-        public ResponseEntity<String> updateMerchant(
-                @PathVariable UUID merchantId,
-                @Valid @RequestBody MerchantUpdateRequest request) {
-
-                merchantService.updateMerchant(
-                        merchantId,
-                        request);
-
-                return ResponseEntity.ok(
-                        "Cập nhật thông tin Merchant thành công");
-        }
-
         // Thêm địa chỉ Merchant
         @PostMapping("/{merchantId}/addresses")
         public ResponseEntity<String> createAddress(
@@ -148,12 +136,27 @@ public class MerchantController {
                 return ResponseEntity.ok(addresses);
         }
 
+        // Cập nhật thông tin Merchant
+        @PutMapping("/{merchantId}/profile")
+        public ResponseEntity<String> updateMerchantProfile(
+                @PathVariable UUID merchantId,
+                @Validated (MerchantUpdateRequest.ProfileUpdate.class)
+                @RequestBody MerchantUpdateRequest request) {
+
+                merchantService.updateMerchantProfile(
+                        merchantId,
+                        request);
+
+                return ResponseEntity.ok(
+                        "Cập nhật thông tin Merchant thành công");
+        }
         // Cập nhật địa chỉ Merchant
         @PutMapping("/{merchantId}/addresses/{addressId}")
         public ResponseEntity<String> updateAddress(
                 @PathVariable UUID merchantId,
                 @PathVariable UUID addressId,
-                @Valid @RequestBody MerchantAddressRequest request) {
+                @Validated (MerchantUpdateRequest.AddressUpdate.class)
+               @RequestBody MerchantAddressRequest request) {
 
                 merchantAddressService.updateAddress(
                         merchantId,
