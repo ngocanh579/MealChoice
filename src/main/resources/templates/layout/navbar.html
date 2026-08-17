@@ -1,8 +1,9 @@
 <nav th:fragment="navbar"
-     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     xmlns:th="http://www.thymeleaf.org"
      class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm sticky-top">
 
     <div class="container">
+
         <!-- Logo -->
         <a class="navbar-brand d-flex align-items-center fw-bold text-danger fs-4" href="/">
             <i class="bi bi-geo-alt-fill fs-3 me-2 text-danger"></i>
@@ -13,11 +14,15 @@
         <button class="navbar-toggler border-0"
                 type="button"
                 data-bs-toggle="collapse"
-                data-bs-target="#navbarContent">
+                data-bs-target="#navbarContent"
+                aria-controls="navbarContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarContent">
+
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
 
                 <!-- Trang chủ -->
@@ -29,7 +34,8 @@
 
                 <!-- Ưu đãi -->
                 <li class="nav-item">
-                    <a class="nav-link fw-semibold" href="#">
+                    <a class="nav-link fw-semibold"
+                       href="/restaurants/top-discounts">
                         Ưu đãi
                         <span class="badge bg-warning text-dark rounded-pill ms-1 fs-7">
                             Hot
@@ -43,104 +49,236 @@
                        href="#"
                        id="restDropdown"
                        role="button"
-                       data-bs-toggle="dropdown">
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false">
                         Nhà hàng
                     </a>
 
                     <ul class="dropdown-menu border-0 shadow-sm rounded-3">
+
                         <li>
-                            <a class="dropdown-item py-2" href="#">Gần bạn</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="#">Nổi bật</a>
-                        </li>
-                    </ul>
-                </li>
-
-                <!-- Giỏ hàng -->
-                <li class="nav-item me-2">
-                    <a class="btn btn-outline-dark rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-2"
-                       href="/cart">
-                        <i class="bi bi-basket2-fill text-success"></i>
-                        <span>Giỏ hàng</span>
-                        <span class="badge bg-success rounded-pill">2</span>
-                    </a>
-                </li>
-
-                <!-- Khu vực Admin -->
-                <li class="nav-item d-none"
-                    id="adminRoleNav"
-                    sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ADMIN')">
-                    <a class="btn btn-danger rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-1 fw-semibold"
-                       href="/admin/merchant">
-                        <i class="bi bi-shield-lock-fill"></i>
-                        <span>Quản lý Admin</span>
-                    </a>
-                </li>
-
-                <!-- User chưa đăng ký Merchant -->
-                <li class="nav-item d-none" id="registerMerchantNav">
-                    <a class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-1 fw-semibold"
-                       href="/merchant/register">
-                        <i class="bi bi-shop"></i>
-                        <span>Muốn bán hàng?</span>
-                    </a>
-                </li>
-
-                <!-- User đang chờ Admin duyệt -->
-                <li class="nav-item d-none" id="merchantPendingNav">
-                    <span class="btn btn-outline-warning rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-1 fw-semibold">
-                        <i class="bi bi-hourglass-split"></i>
-                        <span>Đang chờ duyệt</span>
-                    </span>
-                </li>
-
-                <!-- Merchant đã được duyệt -->
-                <li class="nav-item d-none"
-                    id="merchantRoleNav">
-                    <a class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-1 fw-semibold"
-                       href="/merchant/dashboard" >
-                        <i class="bi bi-shop"></i>
-                        <span>Kênh Merchant</span>
-                    </a>
-                </li>
-
-                <!-- Người chưa đăng nhập -->
-                <li class="nav-item ms-lg-2" id="guestNav">
-                    <a class="btn btn-danger rounded-pill px-3 py-1 text-sm fw-semibold d-flex align-items-center gap-1"
-                       href="/login">
-                        <i class="bi bi-box-arrow-in-right"></i>
-                        <span>Đăng nhập</span>
-                    </a>
-                </li>
-
-                <!-- Thông tin User -->
-                <li class="nav-item dropdown ms-lg-2 d-none" id="userProfileNav">
-                    <a class="btn btn-light rounded-pill border d-flex align-items-center gap-2 px-3 py-1"
-                       href="#"
-                       data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle fs-5 text-secondary"></i>
-
-                        <span id="userDisplayName"
-                              class="fw-semibold text-dark text-sm">
-                            Tài khoản
-                        </span>
-
-                        <i class="bi bi-chevron-down fs-7 text-muted"></i>
-                    </a>
-
-                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3 mt-2">
-                        <li>
-                            <a class="dropdown-item py-2" href="/user/profile">
-                                <i class="bi bi-person me-2"></i>
-                                Thông tin cá nhân
+                            <a class="dropdown-item py-2"
+                               href="/restaurants/near-you">
+                                Gần bạn
                             </a>
                         </li>
 
                         <li>
-                            <a class="dropdown-item py-2" href="/orders">
+                            <a class="dropdown-item py-2"
+                               href="/restaurants/popular">
+                                Nổi bật
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item py-2"
+                               href="/restaurants/new">
+                                Mới nhất
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <!-- Giỏ hàng -->
+                <li class="nav-item dropdown me-2"
+                    id="navbarCartDropdown">
+
+                    <a class="btn btn-outline-dark rounded-pill px-3 py-1 text-sm
+                              d-flex align-items-center gap-2 dropdown-toggle"
+                       href="#"
+                       role="button"
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false"
+                       data-bs-auto-close="outside">
+
+                        <i class="bi bi-basket2-fill text-success"></i>
+
+                        <span>Giỏ hàng</span>
+
+                        <span class="badge bg-success rounded-pill"
+                              id="navbarCartCount">
+                            0
+                        </span>
+
+                    </a>
+
+                    <div class="dropdown-menu dropdown-menu-end
+                                border-0 shadow-lg rounded-4 p-3"
+                         style="width: 320px; z-index: 1100;">
+
+                        <h6 class="fw-bold text-dark border-bottom pb-2 mb-2">
+                            Giỏ hàng của bạn
+                        </h6>
+
+                        <!-- Danh sách món trong giỏ -->
+                        <div id="navbarCartItems"
+                             class="overflow-y-auto mb-2"
+                             style="max-height: 220px;">
+
+                            <!-- Render bằng navbar.js -->
+
+                        </div>
+
+                        <!-- Tổng tiền -->
+                        <div class="border-top pt-2 mb-2 fs-7"
+                             id="navbarCartSummary">
+
+                            <div class="d-flex justify-content-between mb-1">
+
+                                <span class="text-muted">
+                                    Tổng tiền:
+                                </span>
+
+                                <strong class="text-danger"
+                                        id="navbarCartTotal">
+                                    0 đ
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                        <!-- Thanh toán -->
+                        <div class="d-flex gap-2">
+
+                            <button type="button"
+                                    class="btn btn-danger btn-sm rounded-pill
+                                           w-100 fw-bold py-2"
+                                    id="btnNavbarCheckout"
+                                    style="background: linear-gradient(135deg, #ff416c, #ff4b2b); border: none;">
+                                Thanh toán
+                            </button>
+
+                        </div>
+
+                    </div>
+                </li>
+
+                <!-- Khu vực Admin -->
+                <li class="nav-item"
+                    id="adminRoleNav"
+                    th:classappend="${isAdmin} ? '' : 'd-none'">
+
+                    <a class="btn btn-danger rounded-pill px-3 py-1 text-sm
+                              d-flex align-items-center gap-1 fw-semibold"
+                       href="/admin/merchants">
+
+                        <i class="bi bi-shield-lock-fill"></i>
+
+                        <span>Quản lý Admin</span>
+
+                    </a>
+                </li>
+
+                <!-- User chưa đăng ký Merchant -->
+                <li class="nav-item d-none"
+                    id="registerMerchantNav">
+
+                    <a class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm
+                              d-flex align-items-center gap-1 fw-semibold"
+                       href="/merchant/register">
+
+                        <i class="bi bi-shop"></i>
+
+                        <span>Muốn bán hàng?</span>
+
+                    </a>
+                </li>
+
+                <!-- User đang chờ Admin duyệt -->
+                <li class="nav-item d-none"
+                    id="merchantPendingNav">
+
+                    <span class="btn btn-outline-warning rounded-pill px-3 py-1 text-sm
+                                 d-flex align-items-center gap-1 fw-semibold">
+
+                        <i class="bi bi-hourglass-split"></i>
+
+                        <span>Đang chờ duyệt</span>
+
+                    </span>
+                </li>
+
+                <!-- Merchant đã được duyệt -->
+                <li class="nav-item"
+                    id="merchantRoleNav"
+                    th:classappend="${isMerchant} ? '' : 'd-none'">
+
+                    <a class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm
+                              d-flex align-items-center gap-1 fw-semibold"
+                       href="/merchant/dashboard">
+
+                        <i class="bi bi-shop"></i>
+
+                        <span>Kênh Merchant</span>
+
+                    </a>
+                </li>
+
+                <!-- Người chưa đăng nhập -->
+                <li class="nav-item ms-lg-2"
+                    id="guestNav"
+                    th:classappend="${isLoggedIn} ? 'd-none' : ''">
+
+                    <a class="btn btn-danger rounded-pill px-3 py-1 text-sm
+                              fw-semibold d-flex align-items-center gap-1"
+                       href="/login">
+
+                        <i class="bi bi-box-arrow-in-right"></i>
+
+                        <span>Đăng nhập</span>
+
+                    </a>
+                </li>
+
+                <!-- Thông tin User -->
+                <li class="nav-item dropdown ms-lg-2"
+                    id="userProfileNav"
+                    th:classappend="${isLoggedIn} ? '' : 'd-none'">
+
+                    <a class="btn btn-light rounded-pill border
+                              d-flex align-items-center gap-2 px-3 py-1"
+                       href="#"
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false">
+
+                        <i class="bi bi-person-circle fs-5 text-secondary"></i>
+
+                        <span id="userDisplayName"
+                              class="fw-semibold text-dark text-sm"
+                              th:text="${userDisplayName != null
+                                        ? userDisplayName
+                                        : 'Tài khoản'}">
+                            Tài khoản
+                        </span>
+
+                        <i class="bi bi-chevron-down fs-7 text-muted"></i>
+
+                    </a>
+
+                    <ul class="dropdown-menu dropdown-menu-end
+                               border-0 shadow-sm rounded-3 mt-2">
+
+                        <li>
+                            <a class="dropdown-item py-2"
+                               href="/user/profile">
+
+                                <i class="bi bi-person me-2"></i>
+
+                                Thông tin cá nhân
+
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item py-2"
+                               href="/orders">
+
                                 <i class="bi bi-bag-check me-2"></i>
+
                                 Đơn hàng của tôi
+
                             </a>
                         </li>
 
@@ -152,140 +290,117 @@
                             <a class="dropdown-item py-2 text-danger"
                                href="#"
                                onclick="handleLogout(event)">
+
                                 <i class="bi bi-box-arrow-right me-2"></i>
+
                                 Đăng xuất
+
                             </a>
                         </li>
+
                     </ul>
+
                 </li>
+
             </ul>
+
         </div>
     </div>
 
-    <!-- Xử lý đăng xuất -->
-    <script>
-        async function handleLogout(e) {
-            e.preventDefault();
+    <!-- POPUP MERCHANT BỊ KHÓA -->
+    <div class="modal fade"
+         id="merchantBlockedModal"
+         tabindex="-1"
+         aria-labelledby="merchantBlockedModalLabel"
+         aria-hidden="true">
 
-            if (confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
-                try {
-                    await fetch('/api/auth/logout', {
-                        method: 'POST'
-                    });
-                } catch (error) {
-                    console.error("Lỗi đăng xuất:", error);
-                } finally {
-                    document.cookie =
-                        "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+        <div class="modal-dialog modal-dialog-centered">
 
-                    localStorage.clear();
-                    window.location.href = "/login";
-                }
-            }
-        }
-    </script>
+            <div class="modal-content border-0 shadow">
 
-    <!-- Xử lý hiển thị Navbar -->
-    <script>
-        const displayName = localStorage.getItem('displayName');
+                <div class="modal-header bg-danger text-white">
 
-        const guestNav = document.getElementById('guestNav');
-        const userProfileNav = document.getElementById('userProfileNav');
-        const registerMerchantNav = document.getElementById('registerMerchantNav');
-        const merchantPendingNav = document.getElementById('merchantPendingNav');
-        const merchantRoleNav = document.getElementById('merchantRoleNav');
-        const adminRoleNav = document.getElementById('adminRoleNav');
+                    <h5 class="modal-title"
+                        id="merchantBlockedModalLabel">
 
-        // Hiển thị User/Guest
-        if (displayName) {
-            guestNav?.classList.add('d-none');
-            userProfileNav?.classList.remove('d-none');
+                        <i class="bi bi-lock-fill me-2"></i>
 
-            const nameEl = document.getElementById('userDisplayName');
-            if (nameEl) {
-                nameEl.innerText = displayName;
-            }
-        } else {
-            guestNav?.classList.remove('d-none');
-            userProfileNav?.classList.add('d-none');
-        }
+                        Kênh Merchant đã bị khóa
 
-        // Lấy Role
-        let roles = [];
-        const userRolesStr = localStorage.getItem('userRoles');
+                    </h5>
 
-        if (userRolesStr) {
-            try {
-                roles = JSON.parse(userRolesStr);
-            } catch (e) {
-                console.error("Không đọc được userRoles:", e);
-            }
-        }
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                            aria-label="Close">
+                    </button>
 
-        // Kiểm tra Admin
-        const isAdmin =
-            displayName === 'Admin' ||
-            roles.includes('ROLE_ADMIN') ||
-            roles.includes('ADMIN');
+                </div>
 
-        if (isAdmin) {
-            adminRoleNav?.classList.remove('d-none');
-        }
+                <div class="modal-body p-4">
 
-        // Merchant đã được duyệt
-        const isMerchant =
-            roles.includes('ROLE_MERCHANT') ||
-            roles.includes('MERCHANT');
+                    <div class="text-center mb-3">
 
-        if (isMerchant) {
-            merchantRoleNav?.classList.remove('d-none');
-            registerMerchantNav?.classList.add('d-none');
-            merchantPendingNav?.classList.add('d-none');
-        } else if (displayName && !isAdmin) {
-            checkMerchantStatus();
-        }
+                        <i class="bi bi-lock-fill text-danger"
+                           style="font-size: 3.5rem;">
+                        </i>
 
-        // Kiểm tra trạng thái Merchant
-        async function checkMerchantStatus() {
-            try {
-                const response = await fetch("/api/merchant/my-status");
+                    </div>
 
-                if (!response.ok) {
-                    throw new Error("Không thể lấy trạng thái Merchant");
-                }
+                    <h5 class="text-center fw-bold mb-3">
+                        Merchant của bạn hiện đang bị khóa
+                    </h5>
 
-                const data = await response.json();
+                    <p class="text-muted text-center">
+                        Bạn tạm thời không thể truy cập các chức năng
+                        của Kênh Merchant.
+                    </p>
 
-                registerMerchantNav?.classList.add('d-none');
-                merchantPendingNav?.classList.add('d-none');
-                merchantRoleNav?.classList.add('d-none');
+                    <div class="alert alert-danger mt-4">
 
-                // Chưa đăng ký
-                if (!data.registered) {
-                    registerMerchantNav?.classList.remove('d-none');
-                    return;
-                }
+                        <div class="fw-semibold mb-2">
 
-                // Đang chờ duyệt
-                if (data.status === 'PENDING') {
-                    merchantPendingNav?.classList.remove('d-none');
-                    return;
-                }
+                            <i class="bi bi-exclamation-circle me-1"></i>
 
-                // Bị từ chối
-                if (data.status === 'REJECTED') {
-                    registerMerchantNav?.classList.remove('d-none');
-                    return;
-                }
+                            Lý do khóa
 
-                // Đã được duyệt
-                if (data.status === 'APPROVED') {
-                    merchantRoleNav?.classList.remove('d-none');
-                    return;
-                }
-            } catch (error) {
-                console.error("Lỗi kiểm tra trạng thái Merchant:", error);
-            }
-        }
-    </script>
+                        </div>
+
+                        <div th:text="${merchantLockReason != null
+                                       && !#strings.isEmpty(merchantLockReason)
+                                       ? merchantLockReason
+                                       : 'Không có thông tin lý do khóa.'}">
+
+                            Không có thông tin lý do khóa.
+
+                        </div>
+
+                    </div>
+
+                    <p class="small text-muted mb-0">
+                        Nếu cần hỗ trợ hoặc cho rằng đây là sự nhầm lẫn,
+                        vui lòng liên hệ quản trị viên.
+                    </p>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JS xử lý Navbar -->
+    <script th:src="@{/js/navbar.js}"></script>
+
 </nav>

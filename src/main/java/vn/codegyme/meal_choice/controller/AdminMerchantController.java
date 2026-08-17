@@ -22,45 +22,40 @@ public class AdminMerchantController {
     // Danh sách merchant
     @GetMapping
     public String showMerchantList(
-            @RequestParam(required = false) MerchantStatus status,
+            @RequestParam(name = "status", required = false) MerchantStatus status,
             Model model) {
 
-        model.addAttribute(
-                "merchants",
-                status == null
-                        ? adminService.getAllMerchants()
-                        : adminService.getMerchantsByStatus(status)
-        );
+        model.addAttribute("merchants", status == null ? adminService.getAllMerchants() : adminService.getMerchantsByStatus(status));
 
         model.addAttribute("selectedStatus", status);
 
         return "admin/merchant/list";
     }
-// Xem chi tiết merchant
+
+    // Xem chi tiết merchant
     @GetMapping("/{id}")
     public String showMerchantDetail(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
             Model model) {
 
-        model.addAttribute(
-                "merchant",
-                adminService.getMerchantById(id)
-        );
+        model.addAttribute("merchant", adminService.getMerchantById(id));
 
         return "admin/merchant/detail";
+    }
+    //    merchant block không xem được
+    @GetMapping("/merchant-blocked")
+    public String merchantBlocked() {
+        return "merchant/blocked";
     }
 
     // Duyệt
     @PostMapping("/{id}/approve")
     public String approve(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
             RedirectAttributes redirectAttributes) {
 
         adminService.approveMerchant(id);
-        redirectAttributes.addFlashAttribute(
-                "message",
-                "Đã duyệt đăng ký merchant."
-        );
+        redirectAttributes.addFlashAttribute("message", "Đã duyệt đăng ký merchant.");
 
         return "redirect:/admin/merchants";
     }
@@ -68,46 +63,37 @@ public class AdminMerchantController {
     // Từ chối
     @PostMapping("/{id}/reject")
     public String reject(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
+            @RequestParam(name = "reason", required = false) String rejectReason,
             RedirectAttributes redirectAttributes) {
 
-        adminService.rejectMerchant(id);
-        redirectAttributes.addFlashAttribute(
-                "message",
-                "Đã từ chối đăng ký merchant."
-        );
+        adminService.rejectMerchant(id, rejectReason);
+        redirectAttributes.addFlashAttribute("message", "Đã từ chối đăng ký merchant.");
 
         return "redirect:/admin/merchants";
     }
 
-    // Khóa / mở khóa
+    // Khóa /lý do khóa/ mở khóa/
     @PostMapping("/{id}/toggle-lock")
     public String toggleLock(
-            @PathVariable UUID id,
-            RedirectAttributes redirectAttributes) {
-
-        adminService.toggleMerchantLockStatus(id);
-        redirectAttributes.addFlashAttribute(
-                "message",
-                "Đã cập nhật trạng thái khóa merchant."
-        );
-
-        return "redirect:/admin/merchants";
-    }
-
-    // Duyệt đối tác thân thiết
-    @PostMapping("/{id}/trusted-partner")
-    public String approveTrustedPartner(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
+            @RequestParam(name = "lockReason", required = false) String lockReason,
             RedirectAttributes redirectAttributes) {
 
         try {
-            adminService.approveTrustedPartner(id);
+
+            adminService.toggleMerchantLockStatus(
+                    id,
+                    lockReason
+            );
+
             redirectAttributes.addFlashAttribute(
                     "message",
-                    "Đã duyệt đối tác thân thiết."
+                    "Đã cập nhật trạng thái merchant."
             );
-        } catch (IllegalStateException e) {
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+
             redirectAttributes.addFlashAttribute(
                     "error",
                     e.getMessage()
@@ -117,17 +103,30 @@ public class AdminMerchantController {
         return "redirect:/admin/merchants";
     }
 
+    // Duyệt đối tác thân thiết
+    @PostMapping("/{id}/trusted-partner")
+    public String approveTrustedPartner(
+            @PathVariable(name = "id") UUID id,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            adminService.approveTrustedPartner(id);
+            redirectAttributes.addFlashAttribute("message", "Đã duyệt đối tác thân thiết.");
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/admin/merchants";
+    }
+
     // Bỏ đối tác thân thiết
     @PostMapping("/{id}/trusted-partner/remove")
     public String removeTrustedPartner(
-            @PathVariable UUID id,
+            @PathVariable(name = "id") UUID id,
             RedirectAttributes redirectAttributes) {
 
         adminService.removeTrustedPartner(id);
-        redirectAttributes.addFlashAttribute(
-                "message",
-                "Đã bỏ trạng thái đối tác thân thiết."
-        );
+        redirectAttributes.addFlashAttribute("message", "Đã bỏ trạng thái đối tác thân thiết.");
 
         return "redirect:/admin/merchants";
     }

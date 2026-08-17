@@ -19,6 +19,7 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
     Optional<Merchant> findByMerchantEmail(String merchantEmail);
 
     boolean existsByUserId(UUID userId);
+
     boolean existsByMerchantPhone(String merchantPhone);
 
     List<Merchant> findAllByOrderByIdDesc();
@@ -26,6 +27,7 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
     List<Merchant> findByMerchantStatusOrderByIdDesc(
             MerchantStatus merchantStatus
     );
+
     Optional<Merchant> findByUser_Id(UUID userId);
 
     @Query("""
@@ -42,5 +44,19 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
         LEFT JOIN FETCH m.addresses
         WHERE m.merchantEmail = :email
     """)
-    Optional<Merchant> findByMerchantEmailWithAddresses(@Param("email") String email);
+    Optional<Merchant> findByMerchantEmailWithAddresses(
+            @Param("email") String email
+    );
+
+    @Query(
+            value = """
+            SELECT merchant_id
+            FROM merchant_likes
+            WHERE user_id = :userId
+        """,
+            nativeQuery = true
+    )
+    List<UUID> findLikedMerchantIdsByUserId(
+            @Param("userId") UUID userId
+    );
 }

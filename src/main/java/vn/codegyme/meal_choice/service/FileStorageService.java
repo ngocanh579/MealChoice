@@ -16,7 +16,7 @@ public class FileStorageService {
     private final Path uploadRoot = Paths.get("uploads", "foods");
 
     // Lưu ảnh món ăn
-    public String saveFoodImage(UUID foodId, MultipartFile image) {
+    public String saveFoodImage(Long foodId, MultipartFile image) {
         if (image == null || image.isEmpty()) {
             throw new RuntimeException("Ảnh món ăn không được để trống");
         }
