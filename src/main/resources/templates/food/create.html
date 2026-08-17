@@ -286,9 +286,8 @@
         }
 
         const price = Number(document.getElementById("price").value);
-        const discountPrice = Number(
-            document.getElementById("discountPrice").value
-        );
+        const discountPriceVal = document.getElementById("discountPrice").value.trim();
+        const discountPrice = discountPriceVal !== "" ? Number(discountPriceVal) : null;
         const serviceFee = Number(
             document.getElementById("serviceFee").value || 0
         );
@@ -302,11 +301,20 @@
             return;
         }
 
-        if (discountPrice <= 0) {
+        if (discountPrice !== null && discountPrice <= 0) {
             window.showMerchantNotice?.({
                 variant: "danger",
                 title: "Giá KM không hợp lệ",
                 message: "Giá KM phải lớn hơn 0."
+            });
+            return;
+        }
+
+        if (discountPrice !== null && discountPrice >= price) {
+            window.showMerchantNotice?.({
+                variant: "danger",
+                title: "Giá KM không hợp lệ",
+                message: "Giá khuyến mãi phải nhỏ hơn giá bán gốc."
             });
             return;
         }

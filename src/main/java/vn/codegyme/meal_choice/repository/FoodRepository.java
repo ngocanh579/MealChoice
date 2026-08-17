@@ -195,4 +195,35 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             @Param("categoryId") Long categoryId,
             Pageable pageable
     );
+
+    // Lấy món ăn từ đối tác chọn lọc
+    @Query("""
+            SELECT DISTINCT f
+            FROM Food f
+            JOIN f.merchant m
+            WHERE f.isActive = true
+              AND f.deletedAt IS NULL
+              AND (m.trustedPartner = true OR m.merchantStatus = vn.codegyme.meal_choice.entity.MerchantStatus.APPROVED)
+            ORDER BY f.isRecommended DESC, f.orderCount DESC, f.views DESC, f.id DESC
+            """)
+    Page<Food> findTrustedFoods(
+            Pageable pageable
+    );
+
+    // Lấy món đối tác chọn lọc theo danh mục
+    @Query("""
+            SELECT DISTINCT f
+            FROM Food f
+            JOIN f.merchant m
+            JOIN f.foodCategories c
+            WHERE f.isActive = true
+              AND f.deletedAt IS NULL
+              AND (m.trustedPartner = true OR m.merchantStatus = vn.codegyme.meal_choice.entity.MerchantStatus.APPROVED)
+              AND c.id = :categoryId
+            ORDER BY f.isRecommended DESC, f.orderCount DESC, f.views DESC, f.id DESC
+            """)
+    Page<Food> findTrustedFoodsByCategory(
+            @Param("categoryId") Long categoryId,
+            Pageable pageable
+    );
 }

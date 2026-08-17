@@ -377,31 +377,56 @@ function saveGlobalCart(cart) {
 
 
 function addToCartGlobal(
-    id,
+    idOrItem,
     name,
     price,
     discountPrice,
     serviceFee = 0
 ) {
+    let itemToAdd;
+    if (typeof idOrItem === "object" && idOrItem !== null) {
+        itemToAdd = {
+            id: idOrItem.id,
+            name: idOrItem.name || idOrItem.foodName || "Món ăn",
+            price: Number(idOrItem.price || 0),
+            discountPrice: idOrItem.discountPrice !== null && idOrItem.discountPrice !== undefined
+                ? Number(idOrItem.discountPrice)
+                : Number(idOrItem.price || 0),
+            serviceFee: Number(idOrItem.serviceFee || 0),
+            quantity: Number(idOrItem.quantity || 1)
+        };
+    } else {
+        itemToAdd = {
+            id: idOrItem,
+            name: name || "Món ăn",
+            price: Number(price || 0),
+            discountPrice: discountPrice !== null && discountPrice !== undefined
+                ? Number(discountPrice)
+                : Number(price || 0),
+            serviceFee: Number(serviceFee || 0),
+            quantity: 1
+        };
+    }
+
     const cart = getGlobalCart();
-    const existing = cart.find(item => item.id === id);
+    const existing = cart.find(item => item.id === itemToAdd.id);
 
     if (existing) {
-        existing.quantity++;
+        existing.quantity += itemToAdd.quantity;
     } else {
-        cart.push({
-            id,
-            name,
-            price,
-            discountPrice,
-            serviceFee,
-            quantity: 1
-        });
+        cart.push(itemToAdd);
     }
 
     saveGlobalCart(cart);
     updateNavbarCartUI();
 }
+
+window.addToCartGlobal = addToCartGlobal;
+window.addToGlobalCart = addToCartGlobal;
+window.getGlobalCart = getGlobalCart;
+window.saveGlobalCart = saveGlobalCart;
+window.updateNavbarCartUI = updateNavbarCartUI;
+window.changeQuantityGlobal = changeQuantityGlobal;
 
 
 function changeQuantityGlobal(id, delta) {

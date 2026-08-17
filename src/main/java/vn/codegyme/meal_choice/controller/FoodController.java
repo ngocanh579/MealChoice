@@ -18,7 +18,6 @@ import vn.codegyme.meal_choice.dto.food.FoodUpdateRequest;
 import vn.codegyme.meal_choice.entity.Food;
 import vn.codegyme.meal_choice.entity.FoodCategory;
 import vn.codegyme.meal_choice.entity.Merchant;
-import vn.codegyme.meal_choice.entity.MerchantAddress;
 import vn.codegyme.meal_choice.entity.User;
 import vn.codegyme.meal_choice.repository.FoodRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
@@ -101,7 +100,7 @@ public class FoodController {
     @GetMapping("/api/merchant/foods/{foodId}")
     @ResponseBody
     public ResponseEntity<FoodResponse> getFood(
-            @PathVariable Long foodId) {
+            @PathVariable("foodId") Long foodId) {
 
         Merchant merchant = getCurrentMerchant();
 
@@ -120,7 +119,7 @@ public class FoodController {
     )
     @ResponseBody
     public ResponseEntity<FoodResponse> updateFood(
-            @PathVariable Long foodId,
+            @PathVariable("foodId") Long foodId,
             @Valid @ModelAttribute FoodUpdateRequest request,
             @RequestParam(
                     value = "images",
@@ -143,7 +142,7 @@ public class FoodController {
     @DeleteMapping("/api/merchant/foods/{foodId}")
     @ResponseBody
     public ResponseEntity<String> deleteFood(
-            @PathVariable Long foodId) {
+            @PathVariable("foodId") Long foodId) {
 
         Merchant merchant = getCurrentMerchant();
 
@@ -159,7 +158,7 @@ public class FoodController {
     @PatchMapping("/api/merchant/foods/{foodId}/recommend")
     @ResponseBody
     public ResponseEntity<Void> toggleRecommendation(
-            @PathVariable Long foodId) {
+            @PathVariable("foodId") Long foodId) {
 
         Merchant merchant = getCurrentMerchant();
 
@@ -176,7 +175,7 @@ public class FoodController {
     @Transactional
     @GetMapping("/foods/{id}")
     public String foodDetailPage(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             Authentication authentication,
             Model model) {
 
@@ -217,26 +216,17 @@ public class FoodController {
                     foodImagesList
             );
 
-            String city = getFoodCity(food);
-
-            List<Food> foodsInCity;
-
-            if (!city.isBlank()) {
-                foodsInCity =
-                        foodRepository.findAllActiveInCity(city);
-            } else {
-                foodsInCity =
-                        foodRepository
-                                .findAllByIsActiveTrueAndDeletedAtIsNullOrderByIdDesc(
-                                        org.springframework.data.domain.Pageable.unpaged()
-                                )
-                                .getContent();
-            }
+            List<Food> allActiveFoods =
+                    foodRepository
+                            .findAllByIsActiveTrueAndDeletedAtIsNullOrderByIdDesc(
+                                    org.springframework.data.domain.Pageable.unpaged()
+                            )
+                            .getContent();
 
             List<Food> recommendedFoods =
                     buildRecommendedFoods(
                             food,
-                            foodsInCity
+                            allActiveFoods
                     );
 
             model.addAttribute(
@@ -247,7 +237,7 @@ public class FoodController {
             List<Food> peopleAlsoLiked =
                     buildPeopleAlsoLiked(
                             food,
-                            foodsInCity
+                            allActiveFoods
                     );
 
             model.addAttribute(
@@ -260,7 +250,7 @@ public class FoodController {
                     model
             );
 
-            return "food/detail";
+            return "food/customer-detail";
 
         } catch (Exception e) {
 
@@ -274,44 +264,16 @@ public class FoodController {
         }
     }
 
-    // Lấy thành phố
-    private String getFoodCity(Food food) {
-
-        MerchantAddress address =
-                food.getMerchantAddress();
-
-        if (address == null) {
-            return "";
-        }
-
-        String fullAddress =
-                address.getMerchantAddress();
-
-        if (fullAddress == null
-                || fullAddress.isBlank()) {
-            return "";
-        }
-
-        String[] parts =
-                fullAddress.split(",");
-
-        return parts[parts.length - 1].trim();
-    }
-
     // Món đề xuất
     private List<Food> buildRecommendedFoods(
             Food food,
-            List<Food> foodsInCity) {
+            List<Food> allActiveFoods) {
 
         List<Food> recommendedFoods =
                 new ArrayList<>();
 
         Merchant merchant =
                 food.getMerchant();
-
-        if (merchant == null) {
-            return recommendedFoods;
-        }
 
         Long currentFoodId =
                 food.getId();
@@ -327,40 +289,16 @@ public class FoodController {
                         .toList();
 
         List<Food> candidates =
-                foodsInCity.stream()
+                allActiveFoods.stream()
                         .filter(f ->
                                 f != null
                                         && !f.getId()
                                         .equals(currentFoodId))
                         .toList();
 
-        List<Food> sameMerchantAndCategory =
-                candidates.stream()
-                        .filter(f ->
-                                f.getMerchant() != null
-                                        && f.getMerchant()
-                                        .getId()
-                                        .equals(merchant.getId()))
-                        .filter(f ->
-                                f.getFoodCategories() != null
-                                        && f.getFoodCategories()
-                                        .stream()
-                                        .anyMatch(category ->
-                                                categoryIds.contains(
-                                                        category.getId())))
-                        .sorted((a, b) ->
-                                Long.compare(
-                                        b.getId(),
-                                        a.getId()))
-                        .toList();
-
-        recommendedFoods.addAll(
-                sameMerchantAndCategory
-        );
-
-        if (recommendedFoods.size() < 8) {
-
-            List<Food> sameMerchant =
+        // 1. Món cùng Merchant và cùng Danh mục
+        if (merchant != null) {
+            List<Food> sameMerchantAndCategory =
                     candidates.stream()
                             .filter(f ->
                                     f.getMerchant() != null
@@ -368,57 +306,157 @@ public class FoodController {
                                             .getId()
                                             .equals(merchant.getId()))
                             .filter(f ->
-                                    !recommendedFoods.contains(f))
+                                    f.getFoodCategories() != null
+                                            && f.getFoodCategories()
+                                            .stream()
+                                            .anyMatch(category ->
+                                                    categoryIds.contains(
+                                                            category.getId())))
                             .sorted((a, b) ->
-                                    Long.compare(
-                                            b.getId(),
-                                            a.getId()))
+                                    Long.compare(b.getId(), a.getId()))
+                            .limit(8)
                             .toList();
 
-            recommendedFoods.addAll(
-                    sameMerchant
-            );
+            recommendedFoods.addAll(sameMerchantAndCategory);
+
+            // 2. Món cùng Merchant (khác danh mục)
+            if (recommendedFoods.size() < 8) {
+                List<Food> sameMerchantOther =
+                        candidates.stream()
+                                .filter(f ->
+                                        !recommendedFoods.contains(f))
+                                .filter(f ->
+                                        f.getMerchant() != null
+                                                && f.getMerchant()
+                                                .getId()
+                                                .equals(merchant.getId()))
+                                .limit(8 - recommendedFoods.size())
+                                .toList();
+
+                recommendedFoods.addAll(sameMerchantOther);
+            }
         }
 
-        return recommendedFoods.stream()
-                .limit(8)
-                .toList();
+        // 3. Món cùng danh mục từ các quán khác
+        if (recommendedFoods.size() < 8) {
+            List<Food> sameCategory =
+                    candidates.stream()
+                            .filter(f ->
+                                    !recommendedFoods.contains(f))
+                            .filter(f ->
+                                    f.getFoodCategories() != null
+                                            && f.getFoodCategories()
+                                            .stream()
+                                            .anyMatch(category ->
+                                                    categoryIds.contains(
+                                                            category.getId())))
+                            .sorted((a, b) -> {
+                                int orderA = a.getOrderCount() != null ? a.getOrderCount() : 0;
+                                int orderB = b.getOrderCount() != null ? b.getOrderCount() : 0;
+                                return Integer.compare(orderB, orderA);
+                            })
+                            .limit(8 - recommendedFoods.size())
+                            .toList();
+
+            recommendedFoods.addAll(sameCategory);
+        }
+
+        // 4. Món đề cử hoặc món bán chạy/view cao trên hệ thống
+        if (recommendedFoods.size() < 8) {
+            List<Food> popularFallback =
+                    candidates.stream()
+                            .filter(f ->
+                                    !recommendedFoods.contains(f))
+                            .sorted((a, b) -> {
+                                boolean recA = Boolean.TRUE.equals(a.getIsRecommended());
+                                boolean recB = Boolean.TRUE.equals(b.getIsRecommended());
+                                if (recA != recB) return Boolean.compare(recB, recA);
+                                int viewsA = a.getViews() != null ? a.getViews() : 0;
+                                int viewsB = b.getViews() != null ? b.getViews() : 0;
+                                return Integer.compare(viewsB, viewsA);
+                            })
+                            .limit(8 - recommendedFoods.size())
+                            .toList();
+
+            recommendedFoods.addAll(popularFallback);
+        }
+
+        return recommendedFoods;
     }
 
-    // Món cùng danh mục
+    // Món mọi người cùng thích
     private List<Food> buildPeopleAlsoLiked(
             Food food,
-            List<Food> foodsInCity) {
+            List<Food> allActiveFoods) {
 
-        if (food.getFoodCategories() == null
-                || food.getFoodCategories().isEmpty()) {
-            return Collections.emptyList();
-        }
+        List<Food> peopleAlsoLiked =
+                new ArrayList<>();
+
+        Long currentFoodId =
+                food.getId();
+
+        List<FoodCategory> categories =
+                food.getFoodCategories();
 
         List<Long> categoryIds =
-                food.getFoodCategories()
-                        .stream()
+                categories == null
+                        ? Collections.emptyList()
+                        : categories.stream()
                         .map(FoodCategory::getId)
                         .toList();
 
-        return foodsInCity.stream()
-                .filter(f ->
-                        f != null
-                                && !f.getId()
-                                .equals(food.getId()))
-                .filter(f ->
-                        f.getFoodCategories() != null
-                                && f.getFoodCategories()
-                                .stream()
-                                .anyMatch(category ->
-                                        categoryIds.contains(
-                                                category.getId())))
-                .limit(8)
-                .toList();
+        List<Food> candidates =
+                allActiveFoods.stream()
+                        .filter(f ->
+                                f != null
+                                        && !f.getId()
+                                        .equals(currentFoodId))
+                        .toList();
+
+        // 1. Món cùng danh mục có lượt mua / lượt xem cao
+        List<Food> sameCategoryTopOrders =
+                candidates.stream()
+                        .filter(f ->
+                                f.getFoodCategories() != null
+                                        && f.getFoodCategories()
+                                        .stream()
+                                        .anyMatch(category ->
+                                                categoryIds.contains(
+                                                        category.getId())))
+                        .sorted((a, b) -> {
+                            int orderA = a.getOrderCount() != null ? a.getOrderCount() : 0;
+                            int orderB = b.getOrderCount() != null ? b.getOrderCount() : 0;
+                            if (orderA != orderB) return Integer.compare(orderB, orderA);
+                            int viewsA = a.getViews() != null ? a.getViews() : 0;
+                            int viewsB = b.getViews() != null ? b.getViews() : 0;
+                            return Integer.compare(viewsB, viewsA);
+                        })
+                        .limit(8)
+                        .toList();
+
+        peopleAlsoLiked.addAll(sameCategoryTopOrders);
+
+        // 2. Món phổ biến nhất trên toàn hệ thống
+        if (peopleAlsoLiked.size() < 8) {
+            List<Food> fallback =
+                    candidates.stream()
+                            .filter(f ->
+                                    !peopleAlsoLiked.contains(f))
+                            .sorted((a, b) -> {
+                                int viewsA = a.getViews() != null ? a.getViews() : 0;
+                                int viewsB = b.getViews() != null ? b.getViews() : 0;
+                                return Integer.compare(viewsB, viewsA);
+                            })
+                            .limit(8 - peopleAlsoLiked.size())
+                            .toList();
+
+            peopleAlsoLiked.addAll(fallback);
+        }
+
+        return peopleAlsoLiked;
     }
 
-    // ==================== USER ====================
-
+    // Thêm thông tin User
     private void addUserInformation(
             Authentication authentication,
             Model model) {
@@ -427,6 +465,8 @@ public class FoodController {
         String userDisplayName = null;
         boolean isAdmin = false;
         boolean isMerchant = false;
+        List<Long> likedFoodIds = Collections.emptyList();
+        List<UUID> likedMerchantIds = Collections.emptyList();
 
         if (authentication != null
                 && authentication.isAuthenticated()
@@ -466,6 +506,9 @@ public class FoodController {
                                                     .name()
                                                     .contains("MERCHANT"));
                 }
+
+                likedFoodIds = foodRepository.findLikedFoodIdsByUserId(user.getId());
+                likedMerchantIds = merchantRepository.findLikedMerchantIdsByUserId(user.getId());
             }
         }
 
@@ -488,84 +531,132 @@ public class FoodController {
                 "isMerchant",
                 isMerchant
         );
+
+        model.addAttribute(
+                "likedFoodIds",
+                likedFoodIds
+        );
+
+        model.addAttribute(
+                "likedMerchantIds",
+                likedMerchantIds
+        );
+    }
+
+    private User getAuthenticatedUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        if (authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+            return userRepository.findById(userDetails.getId()).orElse(null);
+        }
+        return userRepository.findByEmail(authentication.getName()).orElse(null);
     }
 
     // ==================== LIKE FOOD ====================
 
+    @Transactional
     @ResponseBody
     @PostMapping("/api/foods/{id}/like")
     public ResponseEntity<?> likeFood(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             Authentication authentication) {
 
-        if (authentication == null
-                || !authentication.isAuthenticated()) {
-
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body("Chưa đăng nhập");
         }
 
-        // TODO: FoodLikeRepository
+        Food food = foodRepository.findById(id).orElse(null);
+        if (food == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (!food.getLikedByUsers().contains(user)) {
+            food.getLikedByUsers().add(user);
+            foodRepository.save(food);
+        }
 
         return ResponseEntity.ok().build();
     }
 
+    @Transactional
     @ResponseBody
     @PostMapping("/api/foods/{id}/unlike")
     public ResponseEntity<?> unlikeFood(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             Authentication authentication) {
 
-        if (authentication == null
-                || !authentication.isAuthenticated()) {
-
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body("Chưa đăng nhập");
         }
 
-        // TODO: FoodLikeRepository
+        Food food = foodRepository.findById(id).orElse(null);
+        if (food == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        food.getLikedByUsers().removeIf(u -> u.getId().equals(user.getId()));
+        foodRepository.save(food);
 
         return ResponseEntity.ok().build();
     }
 
     // ==================== FOLLOW MERCHANT ====================
 
+    @Transactional
     @ResponseBody
     @PostMapping("/api/merchants/{id}/follow")
     public ResponseEntity<?> followMerchant(
-            @PathVariable UUID id,
+            @PathVariable("id") UUID id,
             Authentication authentication) {
 
-        if (authentication == null
-                || !authentication.isAuthenticated()) {
-
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body("Chưa đăng nhập");
         }
 
-        // TODO: MerchantLikeRepository
+        Merchant merchant = merchantRepository.findById(id).orElse(null);
+        if (merchant == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (!merchant.getLikedByUsers().contains(user)) {
+            merchant.getLikedByUsers().add(user);
+            merchantRepository.save(merchant);
+        }
 
         return ResponseEntity.ok().build();
     }
 
+    @Transactional
     @ResponseBody
     @PostMapping("/api/merchants/{id}/unfollow")
     public ResponseEntity<?> unfollowMerchant(
-            @PathVariable UUID id,
+            @PathVariable("id") UUID id,
             Authentication authentication) {
 
-        if (authentication == null
-                || !authentication.isAuthenticated()) {
-
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body("Chưa đăng nhập");
         }
 
-        // TODO: MerchantLikeRepository
+        Merchant merchant = merchantRepository.findById(id).orElse(null);
+        if (merchant == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        merchant.getLikedByUsers().removeIf(u -> u.getId().equals(user.getId()));
+        merchantRepository.save(merchant);
 
         return ResponseEntity.ok().build();
     }

@@ -113,7 +113,7 @@ public class MerchantController {
         // Thêm địa chỉ Merchant
         @PostMapping("/{merchantId}/addresses")
         public ResponseEntity<String> createAddress(
-                @PathVariable UUID merchantId,
+                @PathVariable("merchantId") UUID merchantId,
                 @Valid @RequestBody MerchantAddressRequest request) {
 
                 merchantAddressService.createAddress(
@@ -127,7 +127,7 @@ public class MerchantController {
         // Lấy danh sách địa chỉ Merchant
         @GetMapping("/{merchantId}/addresses")
         public ResponseEntity<List<MerchantAddressResponse>> getAddresses(
-                @PathVariable UUID merchantId) {
+                @PathVariable("merchantId") UUID merchantId) {
 
                 List<MerchantAddressResponse> addresses =
                         merchantAddressService.getAddresses(
@@ -139,7 +139,7 @@ public class MerchantController {
         // Cập nhật thông tin Merchant
         @PutMapping("/{merchantId}/profile")
         public ResponseEntity<String> updateMerchantProfile(
-                @PathVariable UUID merchantId,
+                @PathVariable("merchantId") UUID merchantId,
                 @Validated (MerchantUpdateRequest.ProfileUpdate.class)
                 @RequestBody MerchantUpdateRequest request) {
 
@@ -153,10 +153,9 @@ public class MerchantController {
         // Cập nhật địa chỉ Merchant
         @PutMapping("/{merchantId}/addresses/{addressId}")
         public ResponseEntity<String> updateAddress(
-                @PathVariable UUID merchantId,
-                @PathVariable UUID addressId,
-                @Validated (MerchantUpdateRequest.AddressUpdate.class)
-               @RequestBody MerchantAddressRequest request) {
+                @PathVariable("merchantId") UUID merchantId,
+                @PathVariable("addressId") UUID addressId,
+                @Valid @RequestBody MerchantAddressRequest request) {
 
                 merchantAddressService.updateAddress(
                         merchantId,
@@ -170,8 +169,8 @@ public class MerchantController {
         // Xóa địa chỉ Merchant
         @DeleteMapping("/{merchantId}/addresses/{addressId}")
         public ResponseEntity<String> deleteAddress(
-                @PathVariable UUID merchantId,
-                @PathVariable UUID addressId) {
+                @PathVariable("merchantId") UUID merchantId,
+                @PathVariable("addressId") UUID addressId) {
 
                 merchantAddressService.deleteAddress(
                         merchantId,
@@ -184,7 +183,7 @@ public class MerchantController {
         // Lấy thông tin Merchant theo ID
         @GetMapping("/{merchantId}")
         public ResponseEntity<MerchantResponse> getMerchant(
-                @PathVariable UUID merchantId) {
+                @PathVariable("merchantId") UUID merchantId) {
 
                 MerchantResponse response =
                         merchantService.getMerchant(

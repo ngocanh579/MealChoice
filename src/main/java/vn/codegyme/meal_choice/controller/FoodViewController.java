@@ -95,7 +95,7 @@ public class FoodViewController {
     // GET /merchant/foods/{foodId}
     @GetMapping("/{foodId}")
     public String detail(
-            @PathVariable Long foodId,
+            @PathVariable("foodId") Long foodId,
             Model model) {
 
         Merchant merchant = getCurrentMerchant();
@@ -116,7 +116,7 @@ public class FoodViewController {
     // GET /merchant/foods/{foodId}/edit
     @GetMapping("/{foodId}/edit")
     public String edit(
-            @PathVariable Long foodId,
+            @PathVariable("foodId") Long foodId,
             Model model) {
 
         Merchant merchant = getCurrentMerchant();

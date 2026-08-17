@@ -519,6 +519,47 @@ public class PageController {
         return "homepage/food-list-page";
     }
 
+    // Trang đối tác chọn lọc
+    @GetMapping("/restaurants/trusted")
+    public String trustedRestaurantsPage(
+            @RequestParam(name = "categoryId", required = false) Long categoryId,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            Authentication authentication,
+            Model model) {
+
+        addLikeStatusToModel(authentication, model);
+
+        Pageable pageable = PageRequest.of(Math.max(0, page), 50);
+        Page<Food> foodPage;
+
+        try {
+            foodPage = categoryId != null
+                    ? foodRepository.findTrustedFoodsByCategory(categoryId, pageable)
+                    : foodRepository.findTrustedFoods(pageable);
+
+            if (foodPage.isEmpty()) {
+                foodPage = categoryId != null
+                        ? foodRepository.findAllByCategoryId(categoryId, pageable)
+                        : foodRepository.findAllByIsActiveTrueAndDeletedAtIsNullOrderByIdDesc(pageable);
+            }
+        } catch (Exception e) {
+            log.error("Lỗi trang đối tác chọn lọc: {}", e.getMessage(), e);
+            foodPage = Page.empty();
+        }
+
+        model.addAttribute("foodPage", foodPage);
+        model.addAttribute("categories", getCategories());
+        model.addAttribute("selectedCategoryId", categoryId);
+        model.addAttribute("currentUrl", "/restaurants/trusted");
+        model.addAttribute("pageTitle", "Đối Tác Chọn Lọc");
+        model.addAttribute(
+                "pageDescription",
+                "Thương hiệu uy tín, chất lượng đảm bảo và được đánh giá cao"
+        );
+
+        return "homepage/food-list-page";
+    }
+
     // Trang đăng nhập
     @GetMapping("/login")
     public String loginPage() {
