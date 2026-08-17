@@ -25,17 +25,14 @@ INSERT INTO roles (id, name) VALUES
                                  (2, 'ROLE_USER'),
                                  (3, 'ROLE_MERCHANT');
 
--- 2. Users (Password: 123456)
+-- 2. Users (Password mặc định cho tất cả tài khoản: 123456)
 INSERT INTO users (id, email, password, display_name, phone_number, gender, avatar_url, dob, is_active, created_at) VALUES
-                                                                                                                        ('00000000-0000-0000-0000-000000000001', 'admin@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Quản Trị Viên', '0900000001', 'MALE', 'https://api.dicebear.com/7.x/bottts/svg?seed=Admin', '1995-01-01', TRUE, NOW()),
-                                                                                                                        ('00000000-0000-0000-0000-000000000002', 'anh2k3le@gmail.com', '$2a$10$v7gW6EwZ2L5S0Yx9RkQ1.O3xO0A9r.PZfQ1v2eX9jQ8sT7uV6wW2C', 'Nguyễn Văn Anh', '0900000002', 'MALE', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Anh', '2000-05-10', TRUE, NOW()),
-                                                                                                                        ('00000000-0000-0000-0000-000000000003', 'user2@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Trần Thị Bình', '0900000003', 'FEMALE', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Binh', '1999-11-20', TRUE, NOW()),
-                                                                                                                        ('00000000-0000-0000-0000-000000000004', 'merchant1@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Chủ Quán Bún Cả', '0900000004', 'MALE', NULL, '1988-08-15', TRUE, NOW()),
-                                                                                                                        ('00000000-0000-0000-0000-000000000005', 'merchant2@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Chủ Quán Trà Sữa', '0900000005', 'FEMALE', NULL, '1992-03-12', TRUE, NOW());
+('00000000-0000-0000-0000-000000000001', 'admin@gmail.com', '$2a$10$JhjAsJnlV0WGotKDMSl2b.st8YryfvIAQHl5RfHmyx/Des805kDLG', 'Quản Trị Viên', '0900000001', 'MALE', 'https://api.dicebear.com/7.x/bottts/svg?seed=Admin', '1995-01-01', TRUE, NOW()),
+('00000000-0000-0000-0000-000000000002', 'anh2k3le@gmail.com', '$2a$10$JhjAsJnlV0WGotKDMSl2b.st8YryfvIAQHl5RfHmyx/Des805kDLG', 'Nguyễn Văn Anh', '0900000002', 'MALE', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Anh', '2000-05-10', TRUE, NOW()),
+('00000000-0000-0000-0000-000000000003', 'user2@gmail.com', '$2a$10$JhjAsJnlV0WGotKDMSl2b.st8YryfvIAQHl5RfHmyx/Des805kDLG', 'Trần Thị Bình', '0900000003', 'FEMALE', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Binh', '1999-11-20', TRUE, NOW()),
+('00000000-0000-0000-0000-000000000004', 'merchant1@gmail.com', '$2a$10$JhjAsJnlV0WGotKDMSl2b.st8YryfvIAQHl5RfHmyx/Des805kDLG', 'Chủ Quán Bún Cả', '0900000004', 'MALE', NULL, '1988-08-15', TRUE, NOW()),
+('00000000-0000-0000-0000-000000000005', 'merchant2@gmail.com', '$2a$10$JhjAsJnlV0WGotKDMSl2b.st8YryfvIAQHl5RfHmyx/Des805kDLG', 'Chủ Quán Trà Sữa', '0900000005', 'FEMALE', NULL, '1992-03-12', TRUE, NOW());
 
-UPDATE users
-SET password = '$2a$10$AW2pRDl7rI7hBsUwout8i.s15ojCHME8eYW8HN/0DgY.X5iLhec/a'
-WHERE email = 'anh2k3le@gmail.com';
 -- 3. User Roles
 INSERT INTO user_roles (user_id, role_id) VALUES
                                               ('00000000-0000-0000-0000-000000000001', 1),

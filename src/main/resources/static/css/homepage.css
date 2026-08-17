@@ -73,9 +73,18 @@ main {
     background: #ff385c;
 }
 
+.category-scroll-container {
+    justify-content: center;
+    max-width: 100%;
+}
 .category-item-card {
-    min-width: 90px;
+    min-width: 96px;
     border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.category-item-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
 }
 .slider-nav-btn {
     width: 36px;
@@ -85,6 +94,11 @@ main {
     justify-content: center;
     border: 1px solid rgba(0, 0, 0, 0.08);
     z-index: 5;
+    transition: all 0.2s ease;
+}
+.slider-nav-btn:hover {
+    background-color: #fff;
+    transform: scale(1.08);
 }
 
 /* 4 Promo Blocks */
