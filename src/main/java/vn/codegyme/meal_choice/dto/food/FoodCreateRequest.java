@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,7 +21,9 @@ public class FoodCreateRequest {
     private UUID merchantAddressId;
 
     @NotEmpty(message = "Vui lòng chọn ít nhất một danh mục")
-    private List<UUID> categoryIds;
+    private List<Long> categoryIds;
+
+    private List<Long> tagIds = new ArrayList<>();
 
     @NotNull(message = "Thời gian chuẩn bị không được để trống")
     private Integer preparationTime;
