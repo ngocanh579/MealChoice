@@ -72,6 +72,43 @@
                             </div>
                         </div>
 
+                        <!-- Tag món ăn -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Tag món ăn
+                            </label>
+
+                            <div class="p-3 bg-light rounded-3 border-0">
+
+                                <div th:if="${tags == null || #lists.isEmpty(tags)}"
+                                     class="text-muted small">
+                                    Chưa có tag nào.
+                                </div>
+
+                                <div th:each="tag : ${tags}"
+                                     class="form-check form-check-inline me-4 mb-2">
+
+                                    <input class="form-check-input tag-checkbox"
+                                           type="checkbox"
+                                           name="tagIds"
+                                           th:id="'tag-' + ${tag.id}"
+                                           th:value="${tag.id}"
+                                           th:checked="${food.tagIds != null and food.tagIds.contains(tag.id)}">
+
+                                    <label class="form-check-label fw-medium"
+                                           th:for="'tag-' + ${tag.id}"
+                                           th:text="${tag.tagName}">
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+                            <div class="form-text font-size-12 mt-1">
+                                Có thể chọn nhiều tag cho món ăn. Không bắt buộc.
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="preparationTime" class="form-label fw-semibold">
                                 Thời gian chuẩn bị <span class="text-danger">*</span>
@@ -153,11 +190,6 @@
                                          alt="Ảnh món ăn"
                                          class="w-100 h-100 object-fit-cover">
 
-<!--                                    &lt;!&ndash; Badge ảnh chính cho ảnh đầu tiên &ndash;&gt;-->
-<!--                                    <span th:if="${iterStat.first}"-->
-<!--                                          class="position-absolute top-0 start-0 bg-danger text-white px-1 font-size-10 fw-bold rounded-bottom-end">-->
-<!--                                        -->
-<!--                                    </span>-->
                                 </div>
 
                                 <div th:unless="${food.imageUrls != null and !#lists.isEmpty(food.imageUrls)}"
@@ -201,23 +233,56 @@
 
     function buildAuthHeaders() {
         const token = localStorage.getItem('accessToken');
-        const headers = {};
+        return token ? {Authorization: `Bearer ${token}`} : {};
+    }
 
-        if (token) {
-            headers.Authorization = `Bearer ${token}`;
-        }
+    const initialData = {
+        foodName: document.getElementById('foodName').value,
+        merchantAddressId: document.getElementById('merchantAddressId').value,
+        preparationTime: document.getElementById('preparationTime').value,
+        foodNote: document.getElementById('foodNote').value,
+        price: document.getElementById('price').value,
+        discountPrice: document.getElementById('discountPrice').value,
+        serviceFee: document.getElementById('serviceFee').value,
+        categoryIds: [...document.querySelectorAll('input[name="categoryIds"]:checked')]
+            .map(input => input.value)
+            .sort(),
+        tagIds: [...document.querySelectorAll('input[name="tagIds"]:checked')]
+            .map(input => input.value)
+            .sort()
+    };
 
-        return headers;
+    function hasChanges() {
+        const currentData = {
+            foodName: document.getElementById('foodName').value,
+            merchantAddressId: document.getElementById('merchantAddressId').value,
+            preparationTime: document.getElementById('preparationTime').value,
+            foodNote: document.getElementById('foodNote').value,
+            price: document.getElementById('price').value,
+            discountPrice: document.getElementById('discountPrice').value,
+            serviceFee: document.getElementById('serviceFee').value,
+            categoryIds: [...document.querySelectorAll('input[name="categoryIds"]:checked')]
+                .map(input => input.value)
+                .sort(),
+            tagIds: [...document.querySelectorAll('input[name="tagIds"]:checked')]
+                .map(input => input.value)
+                .sort()
+        };
+
+        return JSON.stringify(initialData) !== JSON.stringify(currentData)
+            || [...document.getElementById('image').files].some(file => file.size > 0);
     }
 
     form.addEventListener('submit', async function (event) {
         event.preventDefault();
 
         const foodId = form.dataset.foodId;
+        const changed = hasChanges();
         const formData = new FormData(form);
 
         submitButton.disabled = true;
-        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang lưu...';
+        submitButton.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-1"></span>Đang lưu...';
 
         try {
             const response = await fetch(`/api/merchant/foods/${foodId}`, {
@@ -233,12 +298,14 @@
                     title: 'Phiên đăng nhập',
                     message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
                 });
+
                 window.location.href = '/login';
                 return;
             }
 
             if (!response.ok) {
                 let message = 'Không thể lưu thay đổi.';
+
                 try {
                     const errorData = await response.json();
                     if (errorData.message) {
@@ -253,19 +320,31 @@
                     title: 'Không thể lưu thay đổi',
                     message
                 });
+
                 return;
             }
 
-            window.showMerchantNotice?.({
-                variant: 'success',
-                title: 'Cập nhật món ăn thành công',
-                message: 'Đang quay về trang chi tiết món ăn...'
-            });
+            if (changed) {
+                window.showMerchantNotice?.({
+                    variant: 'success',
+                    title: 'Cập nhật món ăn thành công',
+                    message: 'Thông tin món ăn đã được cập nhật.'
+                });
+            } else {
+                window.showMerchantNotice?.({
+                    variant: 'info',
+                    title: 'Không có thay đổi',
+                    message: 'Bạn chưa thay đổi thông tin món ăn.'
+                });
+            }
+
             setTimeout(() => {
                 window.location.href = `/merchant/foods/${foodId}`;
             }, 900);
+
         } catch (error) {
             console.error('Lỗi khi cập nhật món ăn:', error);
+
             window.showMerchantNotice?.({
                 variant: 'danger',
                 title: 'Có lỗi xảy ra',
@@ -273,7 +352,8 @@
             });
         } finally {
             submitButton.disabled = false;
-            submitButton.innerHTML = '<i class="bi bi-check-lg me-1"></i>Lưu thay đổi';
+            submitButton.innerHTML =
+                '<i class="bi bi-check-lg me-1"></i>Lưu thay đổi';
         }
     });
 </script>
