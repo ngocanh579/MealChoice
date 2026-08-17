@@ -7,15 +7,18 @@ import vn.codegyme.meal_choice.dto.merchant.MerchantAddressRequest;
 import vn.codegyme.meal_choice.dto.merchant.MerchantAddressResponse;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.MerchantAddress;
+import vn.codegyme.meal_choice.repository.FoodRepository;
 import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 
 import java.util.List;
 import java.util.UUID;
 
+
 @Service
 @RequiredArgsConstructor
 public class MerchantAddressService {
+    private final FoodRepository foodRepository;
 
     private final MerchantRepository merchantRepository;
     private final MerchantAddressRepository merchantAddressRepository;
@@ -121,32 +124,19 @@ public class MerchantAddressService {
     }
 
     @Transactional
-    public void deleteAddress(
-            UUID merchantId,
-            UUID addressId) {
+    public void deleteAddress(UUID merchantId, UUID addressId) {
+        MerchantAddress address = merchantAddressRepository
+                .findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
 
-        MerchantAddress address =
-                merchantAddressRepository
-                        .findById(addressId)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Không tìm thấy địa chỉ"));
-
-        if (address.getMerchant() != null
-                && !address.getMerchant()
-                .getId()
-                .equals(merchantId)) {
-
-            throw new RuntimeException(
-                    "Địa chỉ không thuộc Merchant này");
+        if (!address.getMerchant().getId().equals(merchantId)) {
+            throw new RuntimeException("Địa chỉ không thuộc Merchant này");
         }
 
-        Merchant merchant = address.getMerchant();
-
-        if (merchant != null
-                && merchant.getAddresses() != null) {
-
-            merchant.getAddresses().remove(address);
+        if (foodRepository.existsByMerchantAddress_Id(addressId)) {
+            throw new RuntimeException(
+                    "Không thể xóa địa chỉ này vì đang có món ăn sử dụng."
+            );
         }
 
         merchantAddressRepository.delete(address);
