@@ -14,6 +14,7 @@ import java.util.UUID;
 
 @Repository
 public interface FoodRepository extends JpaRepository<Food, Long> {
+    boolean existsByMerchantAddress_Id(UUID merchantAddressId);
 
     // Lấy danh sách món của Merchant
     List<Food> findByMerchant_IdAndDeletedAtIsNullOrderByCreatedAtDesc(
