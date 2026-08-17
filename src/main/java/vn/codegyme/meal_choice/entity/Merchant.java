@@ -94,4 +94,12 @@ public class Merchant {
             orphanRemoval = true
     )
     private List<Food> foods = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "merchant_likes",
+            joinColumns = @JoinColumn(name = "merchant_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<User> likedByUsers = new ArrayList<>();
 }

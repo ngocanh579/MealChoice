@@ -48,9 +48,11 @@ public class MerchantBlockedFilter extends OncePerRequestFilter {
          *
          * /merchant/**
          * /api/merchant/**
+         * /api/merchants/**
          */
         return !uri.startsWith("/merchant/")
-                && !uri.startsWith("/api/merchant/");
+                && !uri.startsWith("/api/merchant/")
+                && !uri.startsWith("/api/merchants/");
     }
 
 
@@ -117,23 +119,9 @@ public class MerchantBlockedFilter extends OncePerRequestFilter {
         // =========================================
         // 4. TÌM MERCHANT CỦA USER
         // =========================================
-        /*
-         * Không sửa MerchantRepository.
-         *
-         * Dùng findAll() có sẵn từ JpaRepository
-         * rồi tìm Merchant thuộc User hiện tại.
-         */
 
         Merchant merchant = merchantRepository
-                .findAll()
-                .stream()
-                .filter(m ->
-                        m.getUser() != null
-                                && m.getUser()
-                                .getId()
-                                .equals(user.getId())
-                )
-                .findFirst()
+                .findByUser_Id(user.getId())
                 .orElse(null);
 
 
@@ -159,11 +147,11 @@ public class MerchantBlockedFilter extends OncePerRequestFilter {
         if (merchant.getMerchantStatus()
                 == MerchantStatus.BLOCKED) {
 
+            String uri = request.getRequestURI();
             /*
-             * API thì không nên redirect HTML.
+             * API thì trả về JSON FORBIDDEN.
              */
-            if (request.getRequestURI()
-                    .startsWith("/api/merchants/")) {
+            if (uri.startsWith("/api/merchant/") || uri.startsWith("/api/merchants/")) {
 
                 response.setStatus(
                         HttpServletResponse.SC_FORBIDDEN

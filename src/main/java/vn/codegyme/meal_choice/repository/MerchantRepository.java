@@ -48,14 +48,12 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
             @Param("email") String email
     );
 
-    @Query(
-            value = """
-            SELECT merchant_id
-            FROM merchant_likes
-            WHERE user_id = :userId
-        """,
-            nativeQuery = true
-    )
+    @Query("""
+        SELECT m.id
+        FROM Merchant m
+        JOIN m.likedByUsers u
+        WHERE u.id = :userId
+    """)
     List<UUID> findLikedMerchantIdsByUserId(
             @Param("userId") UUID userId
     );

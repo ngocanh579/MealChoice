@@ -45,7 +45,7 @@ public class AdminMerchantController {
     //    merchant block không xem được
     @GetMapping("/merchant-blocked")
     public String merchantBlocked() {
-        return "merchant/blocked";
+        return "redirect:/home?merchantBlocked=true";
     }
 
     // Duyệt

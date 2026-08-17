@@ -61,6 +61,7 @@ public class SecurityConfig {
                                 "/activate",
                                 "/api/auth/**",
                                 "/merchant-blocked",
+                                "/uploads/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",

@@ -73,7 +73,7 @@ public class UserController {
      * GET /api/user/address/{id} - Lấy chi tiết 1 địa chỉ theo ID
      */
     @GetMapping("/address/{id}")
-    public ResponseEntity<Map<String, Object>> getAddressById(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getAddressById(@PathVariable("id") Long id) {
         AddressResponseDTO address = userService.getAddressById(id);
 
         Map<String, Object> response = new HashMap<>();
@@ -104,7 +104,7 @@ public class UserController {
      */
     @PatchMapping("/address/{id}")
     public ResponseEntity<Map<String, Object>> updateAddress(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody UpdateAddressDTO updateAddressDTO) {
 
         UserResponseDTO updatedUser = userService.updateAddress(id, updateAddressDTO);
@@ -121,7 +121,7 @@ public class UserController {
      * DELETE /api/user/address/{id} - Xóa địa chỉ
      */
     @DeleteMapping("/address/{id}")
-    public ResponseEntity<Map<String, Object>> deleteAddress(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> deleteAddress(@PathVariable("id") Long id) {
         UserResponseDTO updatedUser = userService.deleteAddress(id);
 
         Map<String, Object> response = new HashMap<>();
@@ -136,7 +136,7 @@ public class UserController {
      * PATCH /api/user/address/{id}/set-default - Đặt địa chỉ mặc định
      */
     @PatchMapping("/address/{id}/set-default")
-    public ResponseEntity<Map<String, Object>> setDefaultAddress(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> setDefaultAddress(@PathVariable("id") Long id) {
         UserResponseDTO updatedUser = userService.setDefaultAddress(id);
 
         Map<String, Object> response = new HashMap<>();
