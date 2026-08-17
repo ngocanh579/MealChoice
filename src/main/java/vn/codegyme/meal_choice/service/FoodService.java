@@ -7,15 +7,23 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.codegyme.meal_choice.dto.food.FoodCreateRequest;
 import vn.codegyme.meal_choice.dto.food.FoodResponse;
 import vn.codegyme.meal_choice.dto.food.FoodUpdateRequest;
-import vn.codegyme.meal_choice.entity.*;
+import vn.codegyme.meal_choice.entity.Food;
+import vn.codegyme.meal_choice.entity.FoodCategory;
+import vn.codegyme.meal_choice.entity.FoodImage;
+import vn.codegyme.meal_choice.entity.Merchant;
+import vn.codegyme.meal_choice.entity.MerchantAddress;
+import vn.codegyme.meal_choice.entity.MerchantStatus;
+import vn.codegyme.meal_choice.entity.Tag;
 import vn.codegyme.meal_choice.repository.FoodCategoryRepository;
 import vn.codegyme.meal_choice.repository.FoodRepository;
 import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
+import vn.codegyme.meal_choice.repository.TagRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,11 +33,11 @@ public class FoodService {
 
     private final FoodRepository foodRepository;
     private final FoodCategoryRepository foodCategoryRepository;
+    private final TagRepository tagRepository;
     private final MerchantRepository merchantRepository;
     private final MerchantAddressRepository merchantAddressRepository;
     private final FileStorageService fileStorageService;
 
-    // Thêm món ăn
     // Thêm món ăn
     @Transactional
     public FoodResponse createFood(
@@ -60,11 +68,22 @@ public class FoodService {
                     "Một hoặc nhiều danh mục không tồn tại");
         }
 
-        // Tạo Food trước để có foodId
+        List<Tag> tags = Collections.emptyList();
+
+        if (request.getTagIds() != null && !request.getTagIds().isEmpty()) {
+            tags = tagRepository.findAllById(request.getTagIds());
+
+            if (tags.size() != request.getTagIds().size()) {
+                throw new RuntimeException(
+                        "Một hoặc nhiều Tag không tồn tại");
+            }
+        }
+
         Food food = Food.builder()
                 .merchant(merchant)
                 .merchantAddress(address)
-                .foodCategories(categories)
+                .foodCategories(new ArrayList<>(categories))
+                .tags(new ArrayList<>(tags))
                 .foodName(request.getFoodName())
                 .preparationTime(request.getPreparationTime())
                 .foodNote(request.getFoodNote())
@@ -75,6 +94,7 @@ public class FoodService {
                                 ? request.getServiceFee()
                                 : BigDecimal.ZERO
                 )
+                .isActive(true)
                 .isRecommended(false)
                 .views(0)
                 .orderCount(0)
@@ -86,7 +106,6 @@ public class FoodService {
             food.setImages(new ArrayList<>());
         }
 
-        // Lưu tất cả ảnh vào thư mục uploads/foods/{foodId}/
         for (int i = 0; i < images.size(); i++) {
 
             MultipartFile image = images.get(i);
@@ -109,13 +128,16 @@ public class FoodService {
             food.getImages().add(foodImage);
         }
 
-        if (food.getImages().size() < 1 ) {
+        if (food.getImages().isEmpty()) {
             throw new RuntimeException("Món ăn phải có ít nhất 1 ảnh hợp lệ");
         }
 
-        return mapToResponse(foodRepository.save(food));
+        foodRepository.save(food);
+
+        return mapToResponse(food);
     }
-    // Lấy danh sách món
+
+    // Lấy danh sách món ăn của Merchant
     @Transactional(readOnly = true)
     public List<FoodResponse> getFoods(UUID merchantId) {
 
@@ -124,15 +146,17 @@ public class FoodService {
         }
 
         return foodRepository
-                .findByMerchant_IdAndDeletedAtIsNullOrderByCreatedAtDesc(merchantId)
+                .findByMerchant_IdAndDeletedAtIsNullOrderByCreatedAtDesc(
+                        merchantId
+                )
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
-    // Lấy chi tiết món
+    // Lấy chi tiết món ăn
     @Transactional(readOnly = true)
-    public FoodResponse getFood(UUID merchantId, UUID foodId) {
+    public FoodResponse getFood(UUID merchantId, Long foodId) {
 
         Food food = foodRepository
                 .findByIdAndMerchant_IdAndDeletedAtIsNull(
@@ -149,7 +173,7 @@ public class FoodService {
     @Transactional
     public FoodResponse updateFood(
             UUID merchantId,
-            UUID foodId,
+            Long foodId,
             FoodUpdateRequest request,
             List<MultipartFile> images) {
 
@@ -180,10 +204,22 @@ public class FoodService {
                     "Một hoặc nhiều danh mục không tồn tại");
         }
 
-        // Cập nhật thông tin món
+        List<Tag> tags = Collections.emptyList();
+
+        if (request.getTagIds() != null && !request.getTagIds().isEmpty()) {
+            tags = tagRepository.findAllById(request.getTagIds());
+
+            if (tags.size() != request.getTagIds().size()) {
+                throw new RuntimeException(
+                        "Một hoặc nhiều Tag không tồn tại");
+            }
+        }
+
         food.setMerchant(merchant);
         food.setMerchantAddress(address);
-        food.setFoodCategories(categories);
+        food.setFoodCategories(new ArrayList<>(categories));
+        food.setTags(new ArrayList<>(tags));
+
         food.setFoodName(request.getFoodName());
         food.setPreparationTime(request.getPreparationTime());
         food.setFoodNote(request.getFoodNote());
@@ -195,36 +231,29 @@ public class FoodService {
                         : BigDecimal.ZERO
         );
 
-        // Nếu người dùng chọn ảnh mới thì thay toàn bộ ảnh cũ
+        // Nếu có ảnh mới thì thêm vào món ăn
         if (images != null && !images.isEmpty()) {
 
-            List<MultipartFile> validImages = images.stream()
-                    .filter(image -> image != null && !image.isEmpty())
-                    .toList();
+            for (int i = images.size() - 1; i >= 0; i--) {
 
-            if (!validImages.isEmpty()) {
+                MultipartFile image = images.get(i);
 
-                for (int i = images.size() - 1; i >= 0; i--) {
-
-                    MultipartFile image = images.get(i);
-
-                    if (image == null || image.isEmpty()) {
-                        continue;
-                    }
-
-                    String imageUrl = fileStorageService.saveFoodImage(
-                            food.getId(),
-                            image
-                    );
-
-                    FoodImage foodImage = FoodImage.builder()
-                            .food(food)
-                            .imageUrl(imageUrl)
-                            .isPrimary(i == images.size() - 1)
-                            .build();
-
-                    food.getImages().add(foodImage);
+                if (image == null || image.isEmpty()) {
+                    continue;
                 }
+
+                String imageUrl = fileStorageService.saveFoodImage(
+                        food.getId(),
+                        image
+                );
+
+                FoodImage foodImage = FoodImage.builder()
+                        .food(food)
+                        .imageUrl(imageUrl)
+                        .isPrimary(i == images.size() - 1)
+                        .build();
+
+                food.getImages().add(foodImage);
             }
         }
 
@@ -233,7 +262,7 @@ public class FoodService {
 
     // Xóa mềm món ăn
     @Transactional
-    public void deleteFood(UUID merchantId, UUID foodId) {
+    public void deleteFood(UUID merchantId, Long foodId) {
 
         Merchant merchant = getApprovedMerchant(merchantId);
 
@@ -267,7 +296,7 @@ public class FoodService {
         return merchant;
     }
 
-    // Entity → Response
+    // Chuyển Entity thành Response DTO
     private FoodResponse mapToResponse(Food food) {
 
         FoodResponse response = new FoodResponse();
@@ -294,26 +323,52 @@ public class FoodService {
         response.setOrderCount(food.getOrderCount());
         response.setIsRecommended(food.getIsRecommended());
 
-        response.setCategoryIds(
-                food.getFoodCategories()
-                        .stream()
-                        .map(FoodCategory::getId)
-                        .toList()
-        );
+        // Category
+        if (food.getFoodCategories() != null) {
 
-        response.setCategoryNames(
-                food.getFoodCategories()
-                        .stream()
-                        .map(FoodCategory::getCategoryName)
-                        .toList()
-        );
+            response.setCategoryIds(
+                    food.getFoodCategories()
+                            .stream()
+                            .map(FoodCategory::getId)
+                            .toList()
+            );
 
-        response.setImageUrls(
-                food.getImages()
-                        .stream()
-                        .map(FoodImage::getImageUrl)
-                        .toList()
-        );
+            response.setCategoryNames(
+                    food.getFoodCategories()
+                            .stream()
+                            .map(FoodCategory::getCategoryName)
+                            .toList()
+            );
+        }
+
+        // Tag
+        if (food.getTags() != null) {
+
+            response.setTagIds(
+                    food.getTags()
+                            .stream()
+                            .map(Tag::getId)
+                            .toList()
+            );
+
+            response.setTagNames(
+                    food.getTags()
+                            .stream()
+                            .map(Tag::getTagName)
+                            .toList()
+            );
+        }
+
+        // Image
+        if (food.getImages() != null) {
+
+            response.setImageUrls(
+                    food.getImages()
+                            .stream()
+                            .map(FoodImage::getImageUrl)
+                            .toList()
+            );
+        }
 
         response.setCreatedAt(food.getCreatedAt());
         response.setUpdatedAt(food.getUpdatedAt());
@@ -321,12 +376,23 @@ public class FoodService {
         return response;
     }
 
-    public void toggleRecommendation(UUID merchantId, UUID foodId) {
-        Food food = foodRepository
-                .findByIdAndMerchant_IdAndDeletedAtIsNull(foodId, merchantId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy món ăn"));
+    // Bật hoặc tắt đề xuất món ăn
+    @Transactional
+    public void toggleRecommendation(
+            UUID merchantId,
+            Long foodId) {
 
-        food.setIsRecommended(!food.getIsRecommended());
+        Food food = foodRepository
+                .findByIdAndMerchant_IdAndDeletedAtIsNull(
+                        foodId,
+                        merchantId
+                )
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy món ăn"));
+
+        food.setIsRecommended(
+                !Boolean.TRUE.equals(food.getIsRecommended())
+        );
 
         foodRepository.save(food);
     }
