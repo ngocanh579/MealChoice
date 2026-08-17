@@ -64,26 +64,67 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Danh mục món ăn <span class="text-danger">*</span></label>
+
                             <div class="p-3 bg-light rounded-3 border-0">
                                 <div th:if="${categories == null || #lists.isEmpty(categories)}"
-                                     class="text-muted small italic">
+                                     class="text-muted small">
                                     Chưa có danh mục nào.
                                 </div>
 
                                 <div th:each="category : ${categories}"
                                      class="form-check form-check-inline me-4 mb-2">
+
                                     <input class="form-check-input category-checkbox"
                                            type="checkbox"
                                            name="categoryIds"
                                            th:id="'category-' + ${category.id}"
                                            th:value="${category.id}">
+
                                     <label class="form-check-label fw-medium"
                                            th:for="'category-' + ${category.id}"
                                            th:text="${category.categoryName}">
                                     </label>
+
                                 </div>
                             </div>
-                            <div class="form-text font-size-12 mt-1">Có thể chọn nhiều danh mục cho cùng một món ăn.</div>
+
+                            <div class="form-text font-size-12 mt-1">
+                                Có thể chọn nhiều danh mục cho cùng một món ăn.
+                            </div>
+                        </div>
+
+                        <!-- Tag món ăn -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Tag món ăn
+                            </label>
+
+                            <div class="p-3 bg-light rounded-3 border-0">
+                                <div th:if="${tags == null || #lists.isEmpty(tags)}"
+                                     class="text-muted small">
+                                    Chưa có tag nào.
+                                </div>
+
+                                <div th:each="tag : ${tags}"
+                                     class="form-check form-check-inline me-4 mb-2">
+
+                                    <input class="form-check-input tag-checkbox"
+                                           type="checkbox"
+                                           name="tagIds"
+                                           th:id="'tag-' + ${tag.id}"
+                                           th:value="${tag.id}">
+
+                                    <label class="form-check-label fw-medium"
+                                           th:for="'tag-' + ${tag.id}"
+                                           th:text="${tag.tagName}">
+                                    </label>
+
+                                </div>
+                            </div>
+
+                            <div class="form-text font-size-12 mt-1">
+                                Có thể chọn nhiều tag cho món ăn. Không bắt buộc.
+                            </div>
                         </div>
 
                         <div class="mb-3">
