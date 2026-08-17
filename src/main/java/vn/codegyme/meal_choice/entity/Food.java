@@ -16,11 +16,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class Food {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "merchant_id", nullable = false)
     private Merchant merchant;
@@ -28,6 +23,11 @@ public class Food {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "merchant_address_id", nullable = false)
     private MerchantAddress merchantAddress;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
