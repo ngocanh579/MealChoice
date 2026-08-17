@@ -13,6 +13,7 @@ import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.repository.FoodCategoryRepository;
 import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
+import vn.codegyme.meal_choice.repository.TagRepository;
 import vn.codegyme.meal_choice.security.CustomUserDetails;
 import vn.codegyme.meal_choice.service.FoodService;
 
@@ -28,6 +29,7 @@ public class FoodViewController {
     private final MerchantRepository merchantRepository;
     private final MerchantAddressRepository merchantAddressRepository;
     private final FoodCategoryRepository foodCategoryRepository;
+    private final TagRepository tagRepository;
 
     private Merchant getCurrentMerchant() {
 
@@ -44,7 +46,8 @@ public class FoodViewController {
                         new RuntimeException("Không tìm thấy Merchant"));
     }
 
-    // Danh sách món ăn
+    // ==================== DANH SÁCH MÓN ====================
+
     // GET /merchant/foods
     @GetMapping
     public String list(Model model) {
@@ -59,14 +62,14 @@ public class FoodViewController {
         return "food/list";
     }
 
-    // Form thêm món
+    // ==================== FORM THÊM MÓN ====================
+
     // GET /merchant/foods/create
     @GetMapping("/create")
     public String create(Model model) {
 
         Merchant merchant = getCurrentMerchant();
 
-        // Địa chỉ của Merchant hiện tại
         model.addAttribute(
                 "addresses",
                 merchantAddressRepository.findByMerchantId(
@@ -74,20 +77,25 @@ public class FoodViewController {
                 )
         );
 
-        // Danh sách category
         model.addAttribute(
                 "categories",
                 foodCategoryRepository.findAll()
         );
 
+        model.addAttribute(
+                "tags",
+                tagRepository.findAll()
+        );
+
         return "food/create";
     }
 
-    // Chi tiết món
+    // ==================== CHI TIẾT MÓN ====================
+
     // GET /merchant/foods/{foodId}
     @GetMapping("/{foodId}")
     public String detail(
-            @PathVariable UUID foodId,
+            @PathVariable Long foodId,
             Model model) {
 
         Merchant merchant = getCurrentMerchant();
@@ -103,10 +111,12 @@ public class FoodViewController {
         return "food/detail";
     }
 
-    // Form chỉnh sửa món
+    // ==================== FORM CHỈNH SỬA ====================
+
+    // GET /merchant/foods/{foodId}/edit
     @GetMapping("/{foodId}/edit")
     public String edit(
-            @PathVariable UUID foodId,
+            @PathVariable Long foodId,
             Model model) {
 
         Merchant merchant = getCurrentMerchant();
@@ -118,18 +128,24 @@ public class FoodViewController {
                 );
 
         model.addAttribute("food", food);
+
         model.addAttribute(
                 "addresses",
                 merchantAddressRepository.findByMerchantId(
                         merchant.getId()
                 )
         );
+
         model.addAttribute(
                 "categories",
                 foodCategoryRepository.findAll()
         );
 
+        model.addAttribute(
+                "tags",
+                tagRepository.findAll()
+        );
+
         return "food/edit";
     }
-
 }
