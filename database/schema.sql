@@ -38,6 +38,21 @@ CREATE TABLE user_roles (
                                 REFERENCES roles(id)
 );
 
+-- Addresses (Địa chỉ khách hàng)
+CREATE TABLE addresses (
+                           id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                           contact_name VARCHAR(100) NOT NULL,
+                           contact_phone VARCHAR(20) NOT NULL,
+                           city VARCHAR(100) NOT NULL,
+                           district VARCHAR(100) NOT NULL,
+                           ward VARCHAR(100) NOT NULL,
+                           street VARCHAR(255) NOT NULL,
+                           note VARCHAR(500),
+                           is_default BOOLEAN NOT NULL DEFAULT FALSE,
+                           user_id VARCHAR(36) NOT NULL,
+                           FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
 -- Merchants
 CREATE TABLE merchants (
                            id VARCHAR(36) PRIMARY KEY,
@@ -48,6 +63,12 @@ CREATE TABLE merchants (
                            merchant_phone VARCHAR(20) UNIQUE NOT NULL,
 
                            merchant_status VARCHAR(30) DEFAULT 'PENDING',
+
+                           lock_reason VARCHAR(500),
+                           locked_at DATETIME(6),
+                           reject_reason VARCHAR(500),
+                           rejected_at DATETIME(6),
+
                            is_trusted_partner BOOLEAN NOT NULL DEFAULT FALSE,
 
                            FOREIGN KEY (user_id)
