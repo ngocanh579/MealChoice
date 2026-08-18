@@ -32,12 +32,13 @@ public class FoodViewController {
     private final TagRepository tagRepository;
 
     private Merchant getCurrentMerchant() {
-
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        CustomUserDetails userDetails =
-                (CustomUserDetails) authentication.getPrincipal();
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            throw new RuntimeException("Người dùng chưa đăng nhập hoặc phiên làm việc không hợp lệ");
+        }
 
         UUID userId = userDetails.getId();
 

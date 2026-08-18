@@ -44,43 +44,31 @@
                 <p class="merchant-section-subtitle mb-0">Xem thông tin chi tiết của món ăn đang quản lý.</p>
             </div>
 
-            <!-- Cụm nút điều hướng JS -->
+            <!-- Cụm nút điều hướng món ăn -->
             <div class="d-flex align-items-center gap-2">
-                <!-- Nút Lùi lại món vừa xem -->
-                <button type="button"
-                        id="btnFoodBack"
-                        class="btn btn-outline-secondary rounded-pill px-3"
-                        title="Quay lại món vừa xem"
-                        disabled>
-                    <i class="bi bi-chevron-left me-1"></i> Món trước
-                </button>
-
-                <!-- Nút Tiến tới món tiếp theo -->
-                <button type="button"
-                        id="btnFoodForward"
-                        class="btn btn-outline-secondary rounded-pill px-3"
-                        title="Tiến tới món tiếp theo"
-                        disabled>
-                    Món sau <i class="bi bi-chevron-right ms-1"></i>
-                </button>
-
-                <!-- Nút Xóa món ăn -->
+                <!-- Xóa -->
                 <button type="button"
                         id="btnDeleteFood"
                         class="btn btn-outline-danger rounded-pill px-3"
                         title="Xóa món ăn">
-                    <i class="bi bi-trash me-1"></i> Xóa
+                    <i class="bi bi-trash me-1"></i>
+                    Xóa
                 </button>
 
-                <!-- Nút Chỉnh sửa món ăn -->
-                <a th:href="@{/merchant/foods/{id}/edit(id=${food.id})}" class="btn btn-danger rounded-pill px-3 ms-1 fw-semibold">
-                    <i class="bi bi-pencil me-1"></i> Chỉnh sửa
+                <!-- Chỉnh sửa -->
+                <a th:href="@{/merchant/foods/{id}/edit(id=${food.id})}"
+                   class="btn btn-danger rounded-pill px-3 ms-1 fw-semibold">
+                    <i class="bi bi-pencil me-1"></i>
+                    Chỉnh sửa
                 </a>
 
-                <!-- Nút thoát về danh sách -->
-                <a href="/merchant/foods" class="btn btn-outline-secondary rounded-pill px-4 ms-1">
-                    <i class="bi bi-arrow-left me-1"></i> Danh sách
+                <!-- Danh sách -->
+                <a href="/merchant/foods"
+                   class="btn btn-outline-secondary rounded-pill px-4 ms-1">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Danh sách
                 </a>
+
             </div>
         </div>
 
@@ -242,51 +230,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- JAVASCRIPT ĐIỀU HƯỚNG MÓN ÁN & GALLERY -->
 <script th:inline="javascript">
-    // --- 1. LOGIC CHUYỂN TIẾP VÀ QUAY LẠI MÓN ÁN (NAVIGATION HISTORY) ---
-    (function initFoodNavigation() {
-        const btnBack = document.getElementById("btnFoodBack");
-        const btnForward = document.getElementById("btnFoodForward");
-        const currentUrl = window.location.pathname;
-
-        // Lấy lịch sử xem từ sessionStorage
-        let historyStack = JSON.parse(sessionStorage.getItem("foodNavHistory") || "[]");
-        let currentIndex = Number(sessionStorage.getItem("foodNavIndex") ?? -1);
-
-        // Nếu vừa truy cập trang mới (không phải thao tác Back/Forward)
-        if (currentIndex === -1 || historyStack[currentIndex] !== currentUrl) {
-            // Xóa các trang phía trước nếu đang ở giữa lịch sử mà click món mới
-            historyStack = historyStack.slice(0, currentIndex + 1);
-            historyStack.push(currentUrl);
-            currentIndex = historyStack.length - 1;
-
-            sessionStorage.setItem("foodNavHistory", JSON.stringify(historyStack));
-            sessionStorage.setItem("foodNavIndex", currentIndex);
-        }
-
-        // Cập nhật trạng thái bật/tắt của các nút
-        if (btnBack) {
-            btnBack.disabled = currentIndex <= 0;
-            btnBack.addEventListener("click", () => {
-                if (currentIndex > 0) {
-                    sessionStorage.setItem("foodNavIndex", currentIndex - 1);
-                    window.location.href = historyStack[currentIndex - 1];
-                }
-            });
-        }
-
-        if (btnForward) {
-            btnForward.disabled = currentIndex >= historyStack.length - 1;
-            btnForward.addEventListener("click", () => {
-                if (currentIndex < historyStack.length - 1) {
-                    sessionStorage.setItem("foodNavIndex", currentIndex + 1);
-                    window.location.href = historyStack[currentIndex + 1];
-                }
-            });
-        }
-    })();
-
     // --- 2. LOGIC BỘ CẢNH GALLERY ẢNH MÓN ÁN ---
     const foodImages = /*[[${food.imageUrls}]]*/ [];
     let currentImageIndex = 0;

@@ -41,23 +41,36 @@
                     <p class="text-muted fs-8 mb-0" th:text="${pageDescription}">Khám phá danh sách các món ăn hấp dẫn</p>
                 </div>
                 <div class="text-muted fs-8" th:if="${foodPage != null}">
-                    Tìm thấy <span class="fw-bold text-danger" th:text="${foodPage.totalElements}">32</span> món ăn
+                    Tìm thấy <span class="fw-bold text-danger" th:text="${foodPage.totalElements}">0</span> món ăn
                 </div>
             </div>
         </div>
 
+        <!-- Search Box Trên Trang Danh Sách -->
+        <div class="mb-4">
+            <form th:action="@{${currentUrl}}" method="GET" class="d-flex gap-2" style="max-width: 540px;">
+                <input type="hidden" name="categoryId" th:value="${selectedCategoryId}" th:if="${selectedCategoryId != null}">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden border">
+                        <span class="input-group-text bg-white border-0 ps-3 text-muted">
+                            <i class="bi bi-search"></i>
+                        </span>
+                    <input type="text" name="keyword" th:value="${keyword}"
+                           class="form-control border-0 shadow-none px-2"
+                           placeholder="Tìm kiếm món ăn, tên quán...">
+                    <button type="submit" class="btn btn-danger px-4 fw-semibold">Tìm</button>
+                </div>
+            </form>
+        </div>
+
         <!-- Filter Bar (Categories Filter Buttons) -->
         <div class="d-flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar">
-            <!-- Nút Tất cả danh mục -->
-            <a th:href="@{''(keyword=${param.keyword})}"
+            <a th:href="@{${currentUrl}(keyword=${keyword})}"
                class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold flex-shrink-0"
-               th:classappend="${selectedCategoryId == null or selectedCategoryId == ''} ? 'btn-danger text-white' : 'btn-outline-secondary'">
+               th:classappend="${selectedCategoryId == null} ? 'btn-danger text-white' : 'btn-outline-secondary'">
                 Tất cả danh mục
             </a>
-
-            <!-- Loop Danh mục (Sửa cat.name -> cat.categoryName) -->
             <th:block th:each="cat : ${categories}">
-                <a th:href="@{''(categoryId=${cat.id}, keyword=${param.keyword})}"
+                <a th:href="@{${currentUrl}(categoryId=${cat.id}, keyword=${keyword})}"
                    class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold flex-shrink-0"
                    th:classappend="${selectedCategoryId != null and selectedCategoryId == cat.id} ? 'btn-danger text-white' : 'btn-outline-secondary'"
                    th:text="${cat.categoryName}">
@@ -87,28 +100,22 @@
             </div>
         </div>
 
-        <!-- Pagination Controls -->
+        <!-- Pagination -->
         <nav th:if="${foodPage != null and foodPage.totalPages > 1}" class="d-flex justify-content-center mt-5" aria-label="Food search pagination">
             <ul class="pagination pagination-md shadow-sm rounded-pill overflow-hidden border-0">
-
-                <!-- Nút Previous -->
                 <li class="page-item" th:classappend="${foodPage.first} ? 'disabled'">
-                    <a class="page-link px-3" th:href="@{''(page=${foodPage.number - 1}, categoryId=${selectedCategoryId}, keyword=${param.keyword})}" aria-label="Previous">
+                    <a class="page-link px-3" th:href="@{${currentUrl}(page=${foodPage.number - 1}, categoryId=${selectedCategoryId}, keyword=${keyword})}" aria-label="Previous">
                         <i class="bi bi-chevron-left"></i>
                     </a>
                 </li>
 
-                <!-- Số trang (Giới hạn hiển thị thông minh, tối đa 5 nút trang quanh trang hiện tại) -->
-                <th:block th:with="start=${T(java.lang.Math).max(0, foodPage.number - 2)}, end=${T(java.lang.Math).min(foodPage.totalPages - 1, foodPage.number + 2)}">
-                    <li class="page-item" th:each="pageNum : ${#numbers.sequence(start, end)}"
-                        th:classappend="${pageNum == foodPage.number} ? 'active'">
-                        <a class="page-link px-3" th:href="@{''(page=${pageNum}, categoryId=${selectedCategoryId}, keyword=${param.keyword})}" th:text="${pageNum + 1}">1</a>
-                    </li>
-                </th:block>
+                <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, foodPage.totalPages - 1)}"
+                    th:classappend="${pageNum == foodPage.number} ? 'active'">
+                    <a class="page-link px-3" th:href="@{${currentUrl}(page=${pageNum}, categoryId=${selectedCategoryId}, keyword=${keyword})}" th:text="${pageNum + 1}">1</a>
+                </li>
 
-                <!-- Nút Next -->
                 <li class="page-item" th:classappend="${foodPage.last} ? 'disabled'">
-                    <a class="page-link px-3" th:href="@{''(page=${foodPage.number + 1}, categoryId=${selectedCategoryId}, keyword=${param.keyword})}" aria-label="Next">
+                    <a class="page-link px-3" th:href="@{${currentUrl}(page=${foodPage.number + 1}, categoryId=${selectedCategoryId}, keyword=${keyword})}" aria-label="Next">
                         <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>
