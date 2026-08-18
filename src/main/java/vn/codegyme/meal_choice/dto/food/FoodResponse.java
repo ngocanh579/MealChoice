@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,6 +16,10 @@ public class FoodResponse {
     private UUID merchantAddressId;
 
     private String merchantAddress;
+
+    private LocalTime merchantOpenTime;
+
+    private LocalTime merchantCloseTime;
 
     private String foodName;
 
