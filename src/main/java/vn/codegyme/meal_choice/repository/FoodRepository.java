@@ -226,4 +226,20 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             @Param("categoryId") Long categoryId,
             Pageable pageable
     );
+
+    // Tìm kiếm gộp Tên món hoặc Địa chỉ dành riêng cho Merchant
+    @Query("""
+            SELECT DISTINCT f FROM Food f
+            LEFT JOIN f.merchantAddress ma
+            WHERE f.merchant.id = :merchantId
+              AND f.deletedAt IS NULL
+              AND (LOWER(f.foodName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(ma.merchantAddress) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            ORDER BY f.id DESC
+            """)
+    Page<Food> searchMerchantFoodsByKeyword(
+            @Param("merchantId") UUID merchantId,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
 }
