@@ -1,6 +1,7 @@
 package vn.codegyme.meal_choice.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +21,7 @@ import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.TagRepository;
 
+import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -395,5 +397,24 @@ public class FoodService {
         );
 
         foodRepository.save(food);
+    }
+
+    // Tìm kiếm gộp món ăn của Merchant theo Tên hoặc Địa chỉ
+    @Transactional(readOnly = true)
+    public Page<FoodResponse> searchMerchantFoodsByKeyword(
+            UUID merchantId,
+            String keyword,
+            Pageable pageable) {
+
+        if (!merchantRepository.existsById(merchantId)) {
+            throw new RuntimeException("Không tìm thấy Merchant");
+        }
+
+        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
+
+        // Gọi đúng tên phương thức mới trong Repository
+        return foodRepository
+                .searchMerchantFoodsByKeyword(merchantId, cleanKeyword, pageable)
+                .map(this::mapToResponse);
     }
 }
