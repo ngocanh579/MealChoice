@@ -313,6 +313,14 @@ public class FoodService {
             response.setMerchantAddress(
                     food.getMerchantAddress().getMerchantAddress()
             );
+
+            response.setMerchantOpenTime(
+                    food.getMerchantAddress().getMerchantOpenTime()
+            );
+
+            response.setMerchantCloseTime(
+                    food.getMerchantAddress().getMerchantCloseTime()
+            );
         }
 
         response.setFoodName(food.getFoodName());
