@@ -4,6 +4,9 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -43,16 +46,13 @@ public class FoodController {
 
     // Merchant đang đăng nhập
     private Merchant getCurrentMerchant() {
-
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
             throw new RuntimeException("Người dùng chưa đăng nhập");
         }
-
-        CustomUserDetails userDetails =
-                (CustomUserDetails) authentication.getPrincipal();
 
         UUID userId = userDetails.getId();
 
@@ -94,6 +94,23 @@ public class FoodController {
         return ResponseEntity.ok(
                 foodService.getFoods(merchant.getId())
         );
+    }
+
+    // Tìm kiếm món ăn của Merchant theo từ khóa
+    @GetMapping("/api/merchant/foods/search")
+    @ResponseBody
+    public ResponseEntity<Page<FoodResponse>> searchMerchantFoods(
+            @RequestParam(value = "name", required = false, defaultValue = "") String name,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        Merchant merchant = getCurrentMerchant();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<FoodResponse> result = foodService.searchMerchantFoodsByKeyword(
+                merchant.getId(),
+                name,
+                pageable
+        );
+        return ResponseEntity.ok(result);
     }
 
     // Chi tiết món
@@ -189,6 +206,38 @@ public class FoodController {
             }
 
             model.addAttribute("food", food);
+
+            // Lấy danh sách món của Merchant theo thứ tự mới nhất
+            List<Food> merchantFoods =
+                    foodRepository
+                            .findByMerchant_IdAndDeletedAtIsNullOrderByCreatedAtDesc(
+                                    food.getMerchant().getId()
+                            );
+
+// Tìm vị trí món hiện tại
+            int currentFoodIndex = -1;
+
+            for (int i = 0; i < merchantFoods.size(); i++) {
+                if (merchantFoods.get(i).getId().equals(food.getId())) {
+                    currentFoodIndex = i;
+                    break;
+                }
+            }
+
+            Food previousFood = null;
+            Food nextFood = null;
+
+            if (currentFoodIndex > 0) {
+                previousFood = merchantFoods.get(currentFoodIndex - 1);
+            }
+
+            if (currentFoodIndex >= 0
+                    && currentFoodIndex < merchantFoods.size() - 1) {
+                nextFood = merchantFoods.get(currentFoodIndex + 1);
+            }
+
+            model.addAttribute("previousFood", previousFood);
+            model.addAttribute("nextFood", nextFood);
 
             List<String> foodImagesList = new ArrayList<>();
 
@@ -660,4 +709,6 @@ public class FoodController {
 
         return ResponseEntity.ok().build();
     }
+
+
 }

@@ -17,9 +17,7 @@
 
     <section th:fragment="content" class="d-flex flex-column gap-4">
 
-        <!-- ========================================================= -->
         <!-- HEADER -->
-        <!-- ========================================================= -->
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-1">
             <div>
                 <h2 class="fw-bold text-dark mb-1">Quản lý món ăn</h2>
@@ -35,9 +33,6 @@
             </a>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- MAIN CARD -->
-        <!-- ========================================================= -->
         <div class="merchant-page-card p-4">
 
             <!-- CARD HEADER + SEARCH -->
@@ -72,20 +67,60 @@
                     <thead class="bg-light">
                     <tr class="text-muted font-size-13 text-uppercase">
                         <th class="ps-3 border-0" style="min-width: 280px;">Món ăn</th>
+
                         <th class="border-0" style="min-width: 180px;">Danh mục</th>
+
                         <th class="border-0" style="min-width: 180px;">Tag</th>
-                        <th class="border-0">Giá bán</th>
-                        <th class="border-0">Giá khuyến mãi</th>
-                        <th class="border-0">Chuẩn bị</th>
-                        <th class="border-0 text-center">Đề cử</th>
-                        <th class="text-center border-0 pe-3" style="width: 180px;">Thao tác</th>
+
+                        <th class="border-0" style="min-width: 220px;">Địa chỉ</th>
+
+                        <th class="border-0 text-center" style="min-width: 150px;">
+                            Giờ mở cửa
+                        </th>
+
+                        <th class="border-0" style="min-width: 120px;">Giá bán</th>
+
+                        <th class="border-0" style="min-width: 140px;">Giá KM</th>
+
+                        <th class="border-0 text-center" style="min-width: 120px;">
+                            Chuẩn bị
+                        </th>
+
+                        <th class="border-0" style="min-width: 140px;">
+                            Mã giảm giá
+                        </th>
+
+                        <th class="border-0" style="min-width: 130px;">
+                            Phí dịch vụ
+                        </th>
+
+                        <th class="border-0 text-center" style="min-width: 140px;">
+                            Lượt xem / Đặt
+                        </th>
+
+                        <th class="border-0 text-center" style="min-width: 130px;">
+                            Đề cử
+                        </th>
+
+                        <th class="text-center border-0 pe-3" style="min-width: 150px;">
+                            Thao tác
+                        </th>
                     </tr>
                     </thead>
 
                     <tbody>
-                    <!-- EMPTY STATE -->
+                    <!-- 1. DÒNG THÔNG BÁO KHI TÌM KIẾM BẰNG JS KHÔNG CÓ KẾT QUẢ -->
+                    <tr id="noSearchResultRow" class="d-none">
+                        <td colspan="13" class="text-center py-5 text-muted">
+                            <i class="bi bi-search fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                            <h6 class="fw-bold text-dark mb-1">Không tìm thấy món ăn phù hợp</h6>
+                            <p class="small text-muted mb-0">Thử tìm với tên món hoặc mô tả khác.</p>
+                        </td>
+                    </tr>
+
+                    <!-- 2. EMPTY STATE: CHỈ HIỂN THỊ KHI DANH SÁCH THỰC SỰ RỖNG -->
                     <tr th:if="${foods == null || #lists.isEmpty(foods)}">
-                        <td colspan="8" class="text-center py-5">
+                        <td colspan="13" class="text-center py-5">
                             <div class="py-4">
                                 <i class="bi bi-inbox fs-1 d-block mb-3 text-muted opacity-50"></i>
                                 <h5 class="fw-bold text-dark mb-1">Chưa có món ăn nào</h5>
@@ -100,8 +135,12 @@
                         </td>
                     </tr>
 
-                    <!-- FOOD ROW -->
-                    <tr th:each="food : ${foods}" class="food-row" th:id="'food-row-' + ${food.id}">
+                    <!-- 3. DANH SÁCH MÓN ĂN -->
+                    <tr th:unless="${foods == null || #lists.isEmpty(foods)}"
+                        th:each="food : ${foods}"
+                        class="food-row"
+                        th:id="'food-row-' + ${food.id}">
+
                         <!-- FOOD INFORMATION -->
                         <td class="ps-3 py-3" style="min-width: 280px;">
                             <div class="d-flex align-items-center gap-3">
@@ -121,8 +160,8 @@
                                           class="position-absolute bottom-0 end-0 bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm"
                                           style="width: 20px; height: 20px; font-size: 9px; opacity: 0.85; transform: translate(20%, 20%);"
                                           th:text="'+' + (${#lists.size(food.imageUrls)} - 1)">
-                                            +2
-                                        </span>
+                        +2
+                    </span>
                                 </div>
 
                                 <!-- NAME & NOTE -->
@@ -144,7 +183,8 @@
                         <!-- CATEGORY -->
                         <td>
                             <div class="d-flex flex-wrap align-items-center gap-1" style="max-width: 220px;">
-                                <span th:if="${food.categoryNames == null || #lists.isEmpty(food.categoryNames)}" class="text-muted small">Chưa có</span>
+                                <span th:if="${food.categoryNames == null || #lists.isEmpty(food.categoryNames)}"
+                                      class="text-muted small">Chưa có</span>
                                 <span th:if="${food.categoryNames != null && #lists.size(food.categoryNames) >= 1}"
                                       class="badge bg-light text-dark border rounded-pill px-2 py-1 font-size-12 fw-medium"
                                       th:text="${food.categoryNames[0]}">Cơm & Món Việt</span>
@@ -161,7 +201,8 @@
                         <!-- TAG -->
                         <td>
                             <div class="d-flex flex-wrap align-items-center gap-1" style="max-width: 220px;">
-                                <span th:if="${food.tagNames == null || #lists.isEmpty(food.tagNames)}" class="text-muted small">Chưa có</span>
+                                <span th:if="${food.tagNames == null || #lists.isEmpty(food.tagNames)}"
+                                      class="text-muted small">Chưa có</span>
                                 <span th:if="${food.tagNames != null && #lists.size(food.tagNames) >= 1}"
                                       class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 font-size-12 fw-medium"
                                       th:text="${food.tagNames[0]}">Bán chạy</span>
@@ -175,25 +216,93 @@
                             </div>
                         </td>
 
-                        <!-- PRICE -->
+                        <!-- ĐỊA CHỈ -->
                         <td>
-                                <span class="fw-bold text-dark"
-                                      th:text="${#numbers.formatDecimal(food.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">50,000 đ</span>
+                            <div class="d-flex align-items-start gap-2" style="max-width: 170px;">
+                                <i class="bi bi-geo-alt-fill text-danger mt-1 flex-shrink-0"></i>
+                                <span class="small text-dark text-truncate"
+                                      style="max-width: 140px;"
+                                      th:if="${food.merchantAddress != null && !#strings.isEmpty(food.merchantAddress)}"
+                                      th:title="${food.merchantAddress}"
+                                      th:text="${#strings.length(food.merchantAddress) > 25 ? #strings.substring(food.merchantAddress, 0, 25) + '...' : food.merchantAddress}">
+                    123 Nguyễn Trãi...
+                </span>
+                                <span class="text-muted small"
+                                      th:unless="${food.merchantAddress != null && !#strings.isEmpty(food.merchantAddress)}">
+                    Chưa có
+                </span>
+                            </div>
+                        </td>
+
+                        <!-- GIỜ MỞ/ĐÓNG CỬA -->
+                        <td class="text-center">
+                            <div th:if="${food.merchantOpenTime != null && food.merchantCloseTime != null}"
+                                 class="d-inline-flex flex-column align-items-center">
+                <span class="small fw-semibold text-dark">
+                    <i class="bi bi-clock text-danger me-1"></i>
+                    <span th:text="${#temporals.format(food.merchantOpenTime, 'HH:mm')}">08:00</span>
+                </span>
+                                <span class="small text-muted">
+                    - <span th:text="${#temporals.format(food.merchantCloseTime, 'HH:mm')}">22:00</span>
+                </span>
+                            </div>
+                            <span th:unless="${food.merchantOpenTime != null && food.merchantCloseTime != null}"
+                                  class="text-muted small">
+                Chưa cập nhật
+            </span>
+                        </td>
+
+                        <!-- GIÁ BÁN -->
+                        <td>
+            <span class="fw-bold text-dark"
+                  th:text="${#numbers.formatDecimal(food.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">50,000 đ</span>
                         </td>
 
                         <!-- DISCOUNT PRICE -->
                         <td>
-                                <span th:if="${food.discountPrice != null}" class="text-danger fw-bold"
-                                      th:text="${#numbers.formatDecimal(food.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">45,000 đ</span>
+            <span th:if="${food.discountPrice != null}" class="text-danger fw-bold"
+                  th:text="${#numbers.formatDecimal(food.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">45,000 đ</span>
                             <span th:unless="${food.discountPrice != null}" class="text-muted small">-</span>
                         </td>
 
                         <!-- PREPARATION TIME -->
                         <td>
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 font-size-12 rounded-pill fw-medium">
-                                    <i class="bi bi-clock me-1"></i>
-                                    <span th:text="${food.preparationTime != null ? food.preparationTime + ' phút' : '-'}">20 phút</span>
-                                </span>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 font-size-12 rounded-pill fw-medium">
+                <i class="bi bi-clock me-1"></i>
+                <span th:text="${food.preparationTime != null ? food.preparationTime + ' phút' : '-'}">20 phút</span>
+            </span>
+                        </td>
+
+                        <!-- MÃ GIẢM GIÁ -->
+                        <td class="text-center">
+            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 font-size-12 fw-medium">
+                <i class="bi bi-ticket-perforated me-1"></i> GIAM10
+            </span>
+                        </td>
+
+                        <!-- PHÍ DỊCH VỤ -->
+                        <td>
+            <span th:if="${food.serviceFee != null}" class="fw-semibold text-dark"
+                  th:text="${#numbers.formatDecimal(food.serviceFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                5,000 đ
+            </span>
+                            <span th:unless="${food.serviceFee != null}" class="text-muted small">0 đ</span>
+                        </td>
+
+                        <!-- LƯỢT XEM / LƯỢT ĐẶT -->
+                        <td class="text-center">
+                            <div class="d-flex align-items-center justify-content-center gap-3">
+                <span class="d-inline-flex align-items-center gap-1 text-muted small"
+                      th:title="'Lượt xem: ' + ${food.views != null ? food.views : 0}">
+                    <i class="bi bi-eye"></i>
+                    <span th:text="${food.views != null ? food.views : 0}">125</span>
+                </span>
+                                <span class="d-inline-flex align-items-center gap-1 text-muted small"
+                                      th:title="'Lượt đặt: ' + ${food.orderCount != null ? food.orderCount : 0}">
+                    <i class="bi bi-bag-check"></i>
+                    <span th:text="${food.orderCount != null ? food.orderCount : 0}">32</span>
+                </span>
+                            </div>
                         </td>
 
                         <!-- RECOMMENDED -->
@@ -249,18 +358,22 @@
     <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-body p-4 text-center">
-                <div class="mb-3 d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle" style="width: 68px; height: 68px;">
+                <div class="mb-3 d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle"
+                     style="width: 68px; height: 68px;">
                     <i class="bi bi-trash3-fill fs-2"></i>
                 </div>
                 <h5 class="fw-bold text-dark mb-2" id="deleteFoodModalLabel">Xác nhận xóa món ăn</h5>
                 <p class="text-muted small mb-4">
-                    Bạn có chắc chắn muốn xóa món <strong id="deleteFoodName" class="text-dark"></strong> không? Hành động này sẽ gỡ món khỏi thực đơn hiện tại của quán.
+                    Bạn có chắc chắn muốn xóa món <strong id="deleteFoodName" class="text-dark"></strong> không? Hành
+                    động này sẽ gỡ món khỏi thực đơn hiện tại của quán.
                 </p>
                 <div class="d-flex align-items-center justify-content-center gap-2">
-                    <button type="button" class="btn btn-light rounded-pill px-4 py-2 fw-semibold text-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-light rounded-pill px-4 py-2 fw-semibold text-secondary"
+                            data-bs-dismiss="modal">
                         Hủy bỏ
                     </button>
-                    <button type="button" id="confirmDeleteFoodBtn" class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                    <button type="button" id="confirmDeleteFoodBtn"
+                            class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
                         <i class="bi bi-trash"></i>
                         <span>Xác nhận xóa</span>
                     </button>
@@ -270,218 +383,6 @@
     </div>
 </div>
 
-<!-- ============================================================= -->
-<!-- JAVASCRIPT LOGIC -->
-<!-- ============================================================= -->
-<script>
-    const searchInput = document.getElementById('searchInput');
-    const searchBtn = document.getElementById('searchBtn');
-
-    /* Search Handler */
-    function performSearch() {
-        const keyword = searchInput?.value.toLowerCase().trim() || '';
-        document.querySelectorAll('.food-row').forEach(row => {
-            const foodName = row.querySelector('.food-name')?.textContent.toLowerCase() || '';
-            row.style.display = foodName.includes(keyword) ? '' : 'none';
-        });
-    }
-
-    searchInput?.addEventListener('input', performSearch);
-    searchBtn?.addEventListener('click', performSearch);
-
-    /* Helper: Auth & Error Notice */
-    function handleAuthError() {
-        window.showMerchantNotice?.({
-            variant: 'danger',
-            title: 'Phiên đăng nhập',
-            message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
-        });
-        window.location.href = '/login';
-    }
-
-    /* Recommend Toggle Handler */
-    document.querySelectorAll('.recommend-food-btn').forEach(button => {
-        button.addEventListener('click', async function () {
-            const foodId = this.dataset.foodId;
-            const isRecommended = this.dataset.recommended === 'true';
-            const token = localStorage.getItem('accessToken');
-
-            this.disabled = true;
-
-            try {
-                const response = await fetch(`/api/merchant/foods/${foodId}/recommend`, {
-                    method: 'PATCH',
-                    credentials: 'include',
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
-
-                if (response.status === 401 || response.status === 403) {
-                    handleAuthError();
-                    return;
-                }
-
-                if (!response.ok) {
-                    let message = 'Không thể cập nhật trạng thái đề cử.';
-                    try {
-                        const errorData = await response.json();
-                        if (errorData.message) message = errorData.message;
-                    } catch (e) {
-                        console.error(e);
-                    }
-                    window.showMerchantNotice?.({
-                        variant: 'danger',
-                        title: 'Cập nhật thất bại',
-                        message: message
-                    });
-                    return;
-                }
-
-                const nextRecommended = !isRecommended;
-                this.dataset.recommended = nextRecommended.toString();
-
-                if (nextRecommended) {
-                    this.classList.remove('btn-outline-secondary');
-                    this.classList.add('btn-warning');
-                    this.innerHTML = '<i class="bi bi-star-fill me-1"></i>Đã đề cử';
-                    window.showMerchantNotice?.({
-                        variant: 'success',
-                        title: 'Đề cử món ăn thành công',
-                        message: 'Món ăn đã được đánh dấu là món đề cử.'
-                    });
-                } else {
-                    this.classList.remove('btn-warning');
-                    this.classList.add('btn-outline-secondary');
-                    this.innerHTML = '<i class="bi bi-star me-1"></i>Đề cử';
-                    window.showMerchantNotice?.({
-                        variant: 'success',
-                        title: 'Đã bỏ đề cử',
-                        message: 'Món ăn đã được bỏ khỏi danh sách đề cử.'
-                    });
-                }
-            } catch (error) {
-                console.error('Recommend food error:', error);
-                window.showMerchantNotice?.({
-                    variant: 'danger',
-                    title: 'Có lỗi xảy ra',
-                    message: 'Không thể kết nối đến máy chủ.'
-                });
-            } finally {
-                this.disabled = false;
-            }
-        });
-    });
-
-    /* Delete Food Modal & Action Handler */
-    let foodIdToDelete = null;
-    let buttonElementToDelete = null;
-    const deleteModalEl = document.getElementById('deleteFoodModal');
-    const deleteModal = deleteModalEl && typeof bootstrap !== 'undefined' ? new bootstrap.Modal(deleteModalEl) : null;
-    const deleteFoodNameEl = document.getElementById('deleteFoodName');
-    const confirmDeleteFoodBtn = document.getElementById('confirmDeleteFoodBtn');
-
-    document.querySelectorAll('.delete-food-btn').forEach(button => {
-        button.addEventListener('click', function () {
-            foodIdToDelete = this.dataset.foodId;
-            buttonElementToDelete = this;
-            const foodName = this.dataset.foodName || 'món ăn này';
-
-            if (deleteFoodNameEl) {
-                deleteFoodNameEl.textContent = `"${foodName}"`;
-            }
-
-            if (deleteModal) {
-                deleteModal.show();
-            } else {
-                // Fallback nếu modal chưa khởi tạo
-                if (confirm(`Bạn có chắc chắn muốn xóa món "${foodName}" không?`)) {
-                    executeDeleteFood(foodIdToDelete, buttonElementToDelete);
-                }
-            }
-        });
-    });
-
-    confirmDeleteFoodBtn?.addEventListener('click', async function () {
-        if (!foodIdToDelete) return;
-
-        const originalBtnHtml = confirmDeleteFoodBtn.innerHTML;
-        confirmDeleteFoodBtn.disabled = true;
-        confirmDeleteFoodBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xóa...';
-
-        await executeDeleteFood(foodIdToDelete, buttonElementToDelete);
-
-        confirmDeleteFoodBtn.disabled = false;
-        confirmDeleteFoodBtn.innerHTML = originalBtnHtml;
-
-        if (deleteModal) {
-            deleteModal.hide();
-        }
-    });
-
-    async function executeDeleteFood(foodId, buttonEl) {
-        const token = localStorage.getItem('accessToken');
-        if (buttonEl) buttonEl.disabled = true;
-
-        try {
-            const response = await fetch(`/api/merchant/foods/${foodId}`, {
-                method: 'DELETE',
-                credentials: 'include',
-                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-            });
-
-            if (response.status === 401 || response.status === 403) {
-                handleAuthError();
-                return;
-            }
-
-            if (!response.ok) {
-                let message = 'Không thể xóa món ăn.';
-                try {
-                    const errorData = await response.json();
-                    if (errorData.message) message = errorData.message;
-                } catch (e) {
-                    console.error(e);
-                }
-                window.showMerchantNotice?.({
-                    variant: 'danger',
-                    title: 'Xóa thất bại',
-                    message: message
-                });
-                return;
-            }
-
-            // Xóa dòng HTML khỏi DOM với hiệu ứng mượt
-            const targetRow = document.getElementById(`food-row-${foodId}`);
-            if (targetRow) {
-                targetRow.style.transition = 'all 0.3s ease';
-                targetRow.style.opacity = '0';
-                targetRow.style.transform = 'translateX(20px)';
-                setTimeout(() => {
-                    targetRow.remove();
-                    const remainingRows = document.querySelectorAll('.food-row');
-                    if (remainingRows.length === 0) {
-                        window.location.reload();
-                    }
-                }, 300);
-            }
-
-            window.showMerchantNotice?.({
-                variant: 'success',
-                title: 'Xóa món ăn thành công',
-                message: 'Món ăn đã được xóa khỏi thực đơn của quán.'
-            });
-
-        } catch (error) {
-            console.error('Delete food error:', error);
-            window.showMerchantNotice?.({
-                variant: 'danger',
-                title: 'Có lỗi xảy ra',
-                message: 'Không thể xóa món ăn do lỗi kết nối.'
-            });
-        } finally {
-            if (buttonEl) buttonEl.disabled = false;
-        }
-    }
-</script>
-
+<script th:src="@{/js/food-list.js}"></script>
 </body>
 </html>
