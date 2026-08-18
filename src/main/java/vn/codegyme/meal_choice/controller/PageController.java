@@ -324,6 +324,7 @@ public class PageController {
         model.addAttribute("foodPage", foodPage);
         model.addAttribute("categories", getCategories());
         model.addAttribute("selectedCategoryId", categoryId);
+        model.addAttribute("keyword", cleanKeyword);
         model.addAttribute("currentUrl", "/search");
         model.addAttribute("pageTitle", "Kết Quả Tìm Kiếm");
         model.addAttribute(
@@ -621,44 +622,22 @@ public class PageController {
                 && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
             String email = userDetails.getUsername();
-
             Optional<Merchant> merchantOpt =
                     merchantRepository.findByMerchantEmailWithAddresses(email);
 
             if (merchantOpt.isPresent()) {
                 Merchant merchant = merchantOpt.get();
-
                 model.addAttribute("merchant", merchant);
                 model.addAttribute(
                         "foodCount",
                         foodService.getFoods(merchant.getId()).size()
                 );
-
                 return "merchant/dashboard";
             }
         }
 
-        List<Merchant> merchants =
-                merchantRepository.findAllByOrderByIdDesc();
-
-        if (!merchants.isEmpty()) {
-            Optional<Merchant> merchantOpt =
-                    merchantRepository.findByIdWithAddresses(
-                            merchants.get(0).getId()
-                    );
-
-            Merchant merchant = merchantOpt.orElse(merchants.get(0));
-
-            model.addAttribute("merchant", merchant);
-            model.addAttribute(
-                    "foodCount",
-                    foodService.getFoods(merchant.getId()).size()
-            );
-
-            return "merchant/dashboard";
-        }
-
-        return "merchant/dashboard";
+        // Nếu tài khoản chưa phải là Merchant -> Chuyển hướng đến trang đăng ký
+        return "redirect:/merchant/register";
     }
 
     // Trang hồ sơ Merchant
@@ -675,7 +654,6 @@ public class PageController {
                 && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
             String email = userDetails.getUsername();
-
             Optional<Merchant> merchantOpt =
                     merchantRepository.findByMerchantEmailWithAddresses(email);
 
@@ -685,24 +663,8 @@ public class PageController {
             }
         }
 
-        List<Merchant> merchants =
-                merchantRepository.findAllByOrderByIdDesc();
-
-        if (!merchants.isEmpty()) {
-            Optional<Merchant> merchantOpt =
-                    merchantRepository.findByIdWithAddresses(
-                            merchants.get(0).getId()
-                    );
-
-            model.addAttribute(
-                    "merchant",
-                    merchantOpt.orElse(merchants.get(0))
-            );
-
-            return "merchant/profile";
-        }
-
-        return "redirect:/admin/merchants";
+        // Nếu tài khoản chưa phải là Merchant -> Chuyển hướng đến trang đăng ký
+        return "redirect:/merchant/register";
     }
 }
 
