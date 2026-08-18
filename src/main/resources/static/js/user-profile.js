@@ -348,6 +348,10 @@ async function openAddressModal(addressId = null) {
         document.getElementById('isDefault').checked = Boolean(address.isDefault);
 
         try {
+            if (window.provincesLoadedPromise) {
+                await window.provincesLoadedPromise;
+            }
+
             let selectedCityOption = Array.from(citySelect.options).find(opt => opt.value === address.city);
             if (selectedCityOption) {
                 citySelect.value = address.city;

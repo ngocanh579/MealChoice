@@ -242,6 +242,23 @@
 <script src="/js/user-profile.js"></script>
 <script>
     const host = "https://provinces.open-api.vn/api/";
+    let provincesLoadedPromise = null;
+
+    // Hàm nạp danh sách Tỉnh/Thành ban đầu
+    function initProvinces() {
+        const citySelect = document.getElementById("city");
+        provincesLoadedPromise = fetch(host + "?depth=1")
+            .then(response => response.json())
+            .then(data => {
+                let options = '<option value="" selected disabled>Tỉnh/Thành phố</option>';
+                data.forEach(item => {
+                    options += `<option value="${item.name}" data-code="${item.code}">${item.name}</option>`;
+                });
+                citySelect.innerHTML = options;
+            })
+            .catch(e => console.error("Lỗi nạp Tỉnh/Thành:", e));
+        return provincesLoadedPromise;
+    }
 
     // Hàm nạp danh sách Quận/Huyện theo Tỉnh/Thành
     async function loadDistrictsByCity(citySelect) {
@@ -305,26 +322,15 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
+        initProvinces();
+
         const citySelect = document.getElementById("city");
         const districtSelect = document.getElementById("district");
 
-        // Nạp danh sách Tỉnh/Thành phố ban đầu
-        fetch(host + "?depth=1")
-            .then(response => response.json())
-            .then(data => {
-                let options = '<option value="" selected disabled>Tỉnh/Thành phố</option>';
-                data.forEach(item => {
-                    options += `<option value="${item.name}" data-code="${item.code}">${item.name}</option>`;
-                });
-                citySelect.innerHTML = options;
-            });
-
-        // Bắt sự kiện khi người dùng chọn Tỉnh/Thành
         citySelect.addEventListener("change", function() {
             loadDistrictsByCity(this);
         });
 
-        // Bắt sự kiện khi người dùng chọn Quận/Huyện
         districtSelect.addEventListener("change", function() {
             loadWardsByDistrict(this);
         });
