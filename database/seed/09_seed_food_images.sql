@@ -1,7 +1,0 @@
-USE meal_choice;
-SET FOREIGN_KEY_CHECKS = 0;
-
-TRUNCATE TABLE food_images;
-
-SET FOREIGN_KEY_CHECKS = 1;
-
