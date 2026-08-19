@@ -12,7 +12,9 @@
                 <h3 class="fw-bold text-dark mb-0">Món Ăn Giảm Giá Nhiều Nhất</h3>
                 <p class="text-muted fs-8 mb-0 mt-1">Săn món ngon giảm giá sâu nhất từ các quán ăn được yêu thích</p>
             </div>
-            <a href="/restaurants/top-discounts" class="btn btn-danger btn-sm rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1 shadow-sm">
+
+            <!-- Chuyển href sang th:href chuẩn Thymeleaf -->
+            <a th:href="@{/restaurants/top-discounts}" class="btn btn-danger btn-sm rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1 shadow-sm">
                 <span>Xem thêm ưu đãi</span>
                 <i class="bi bi-arrow-right"></i>
             </a>

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import vn.codegyme.meal_choice.dto.merchant.MerchantAddressRequest;
@@ -21,11 +22,10 @@ import vn.codegyme.meal_choice.service.MerchantService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/merchants")
+@RequestMapping("/api/merchant")
 @RequiredArgsConstructor
 public class MerchantController {
 
@@ -34,6 +34,7 @@ public class MerchantController {
         private final MerchantRepository merchantRepository;
         private final UserRepository userRepository;
 
+        
         // Đăng ký Merchant
         @PostMapping("/register")
         public ResponseEntity<String> registerMerchant(
@@ -55,50 +56,30 @@ public class MerchantController {
         public ResponseEntity<Map<String, Object>> getMyMerchantStatus(
                 Authentication authentication) {
 
+                String userEmail = authentication.getName();
+
+                User user = userRepository.findByEmail(userEmail)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Không tìm thấy tài khoản"));
+
                 Map<String, Object> response = new HashMap<>();
 
-                if (authentication == null || !authentication.isAuthenticated()
-                        || "anonymousUser".equals(authentication.getPrincipal())
-                        || "anonymousUser".equals(authentication.getName())) {
-                    response.put("registered", false);
-                    response.put("status", null);
-                    return ResponseEntity.ok(response);
-                }
-
-                String userEmail = authentication.getName();
-                Optional<User> userOpt = userRepository.findByEmail(userEmail);
-                if (userOpt.isEmpty()) {
-                    response.put("registered", false);
-                    response.put("status", null);
-                    return ResponseEntity.ok(response);
-                }
-
-                User user = userOpt.get();
                 Merchant merchant = merchantRepository
                         .findByUser_Id(user.getId())
                         .orElse(null);
 
                 if (merchant == null) {
-                    response.put("registered", false);
-                    response.put("status", null);
 
                         response.put("registered", false);
                         response.put("status", null);
-                        response.put("rejectionReason", null);
 
                 } else {
-                    response.put("registered", true);
-                    response.put(
-                            "status",
-                            merchant.getMerchantStatus() != null ? merchant.getMerchantStatus().name() : null);
 
                         response.put("registered", true);
                         response.put(
                                 "status",
                                 merchant.getMerchantStatus().name());
-                        response.put(
-                                "rejectionReason",
-                                merchant.getRejectReason());
                 }
 
                 return ResponseEntity.ok(response);
@@ -129,24 +110,10 @@ public class MerchantController {
                 return ResponseEntity.ok(response);
         }
 
-        // Cập nhật thông tin Merchant
-        @PutMapping("/{merchantId}")
-        public ResponseEntity<String> updateMerchant(
-                @PathVariable UUID merchantId,
-                @Valid @RequestBody MerchantUpdateRequest request) {
-
-                merchantService.updateMerchant(
-                        merchantId,
-                        request);
-
-                return ResponseEntity.ok(
-                        "Cập nhật thông tin Merchant thành công");
-        }
-
         // Thêm địa chỉ Merchant
         @PostMapping("/{merchantId}/addresses")
         public ResponseEntity<String> createAddress(
-                @PathVariable UUID merchantId,
+                @PathVariable("merchantId") UUID merchantId,
                 @Valid @RequestBody MerchantAddressRequest request) {
 
                 merchantAddressService.createAddress(
@@ -160,7 +127,7 @@ public class MerchantController {
         // Lấy danh sách địa chỉ Merchant
         @GetMapping("/{merchantId}/addresses")
         public ResponseEntity<List<MerchantAddressResponse>> getAddresses(
-                @PathVariable UUID merchantId) {
+                @PathVariable("merchantId") UUID merchantId) {
 
                 List<MerchantAddressResponse> addresses =
                         merchantAddressService.getAddresses(
@@ -169,11 +136,25 @@ public class MerchantController {
                 return ResponseEntity.ok(addresses);
         }
 
+        // Cập nhật thông tin Merchant
+        @PutMapping("/{merchantId}/profile")
+        public ResponseEntity<String> updateMerchantProfile(
+                @PathVariable("merchantId") UUID merchantId,
+                @Validated (MerchantUpdateRequest.ProfileUpdate.class)
+                @RequestBody MerchantUpdateRequest request) {
+
+                merchantService.updateMerchantProfile(
+                        merchantId,
+                        request);
+
+                return ResponseEntity.ok(
+                        "Cập nhật thông tin Merchant thành công");
+        }
         // Cập nhật địa chỉ Merchant
         @PutMapping("/{merchantId}/addresses/{addressId}")
         public ResponseEntity<String> updateAddress(
-                @PathVariable UUID merchantId,
-                @PathVariable UUID addressId,
+                @PathVariable("merchantId") UUID merchantId,
+                @PathVariable("addressId") UUID addressId,
                 @Valid @RequestBody MerchantAddressRequest request) {
 
                 merchantAddressService.updateAddress(
@@ -188,8 +169,8 @@ public class MerchantController {
         // Xóa địa chỉ Merchant
         @DeleteMapping("/{merchantId}/addresses/{addressId}")
         public ResponseEntity<String> deleteAddress(
-                @PathVariable UUID merchantId,
-                @PathVariable UUID addressId) {
+                @PathVariable("merchantId") UUID merchantId,
+                @PathVariable("addressId") UUID addressId) {
 
                 merchantAddressService.deleteAddress(
                         merchantId,
@@ -202,7 +183,7 @@ public class MerchantController {
         // Lấy thông tin Merchant theo ID
         @GetMapping("/{merchantId}")
         public ResponseEntity<MerchantResponse> getMerchant(
-                @PathVariable UUID merchantId) {
+                @PathVariable("merchantId") UUID merchantId) {
 
                 MerchantResponse response =
                         merchantService.getMerchant(

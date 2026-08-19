@@ -37,6 +37,7 @@ public class FoodImage {
         if (isPrimary == null) {
             isPrimary = false;
         }
+
         createdAt = LocalDateTime.now();
     }
 }

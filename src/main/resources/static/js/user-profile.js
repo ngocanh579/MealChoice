@@ -11,9 +11,6 @@ let initialAddressData = {};
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
     setupEventListeners();
-    // Tự động làm mới access token trước khi hết hạn
-    silentRefresh();
-    setInterval(silentRefresh, 14 * 60 * 1000); // Mỗi 14 phút
 });
 
 // Helper to get Auth Headers with JWT Bearer Token
@@ -95,10 +92,6 @@ function setupEventListeners() {
     if (profileForm) {
         profileForm.addEventListener('submit', handleProfileSubmit);
     }
-    const addressForm = document.getElementById('addressForm');
-    if (addressForm) {
-        addressForm.addEventListener('submit', handleAddressSubmit);
-    }
 }
 
 // ==================== PROFILE FUNCTIONS ====================
@@ -140,19 +133,27 @@ function displayProfile(user) {
     const displayNameEl = document.getElementById('displayName');
     if (displayNameEl) displayNameEl.value = user.displayName || user.name || '';
 
-    document.getElementById('email').value = user.email || '';
-    document.getElementById('phoneNumber').value = user.phoneNumber || '';
+    const emailEl = document.getElementById('email');
+    if (emailEl) emailEl.value = user.email || '';
+
+    const phoneEl = document.getElementById('phoneNumber');
+    if (phoneEl) phoneEl.value = user.phoneNumber || '';
 
     const dobEl = document.getElementById('dob');
     if (dobEl) {
         let dobValue = user.dob || user.dateOfBirth || '';
+
         if (dobValue && dobValue.includes('T')) {
             dobValue = dobValue.split('T')[0];
         }
+
         dobEl.value = dobValue;
     }
 
-    document.getElementById('gender').value = user.gender || '';
+    // Gender
+    document.getElementById('genderMale').checked = user.gender === 'MALE';
+    document.getElementById('genderFemale').checked = user.gender === 'FEMALE';
+    document.getElementById('genderOther').checked = user.gender === 'OTHER';
 }
 
 // Enable profile editing
@@ -162,7 +163,9 @@ function editProfile() {
     if (displayNameEl) displayNameEl.disabled = false;
     const dobEl = document.getElementById('dob');
     if (dobEl) dobEl.disabled = false;
-    document.getElementById('gender').disabled = false;
+    document.querySelectorAll('input[name="gender"]').forEach(input => {
+    input.disabled = false;
+   });
     document.getElementById('profileActions').style.display = 'block';
 
     let dobValue = currentUser.dob || currentUser.dateOfBirth || '';
@@ -174,7 +177,7 @@ function editProfile() {
     initialProfileData = {
         displayName: displayNameEl ? displayNameEl.value : '',
         dob: dobValue,
-        gender: document.getElementById('gender').value || ''
+        gender: document.querySelector('input[name="gender"]:checked')?.value || ''
     };
 }
 
@@ -185,7 +188,9 @@ function cancelEdit() {
     if (displayNameEl) displayNameEl.disabled = true;
     const dobEl = document.getElementById('dob');
     if (dobEl) dobEl.disabled = true;
-    document.getElementById('gender').disabled = true;
+    document.querySelectorAll('input[name="gender"]').forEach(input => {
+    input.disabled = true;
+    });
     document.getElementById('profileActions').style.display = 'none';
     displayProfile(currentUser); // Reset to original data
 }
@@ -196,7 +201,7 @@ async function handleProfileSubmit(e) {
 
     const currentDisplayName = document.getElementById('displayName').value;
     const currentDob = document.getElementById('dob').value;
-    const currentGender = document.getElementById('gender').value || '';
+    const currentGender = document.querySelector('input[name="gender"]:checked')?.value || '';
 
     // Chỉ đưa vào payload các trường có sự thay đổi (dirty fields)
     const payload = {};
@@ -204,8 +209,8 @@ async function handleProfileSubmit(e) {
         payload.displayName = currentDisplayName;
     }
     if (currentDob !== initialProfileData.dob) {
-        payload.dob = currentDob ? currentDob + 'T00:00:00' : null;
-    }
+    payload.dob = currentDob || null;
+}
     if (currentGender !== initialProfileData.gender) {
         payload.gender = currentGender || null;
     }
@@ -302,56 +307,86 @@ function displayAddresses(addresses) {
     `).join('');
 }
 
-// Open address modal
-function openAddressModal(addressId = null) {
+// Open address modal ( Tỉnh/Huyện/Xã)
+async function openAddressModal(addressId = null) {
     const modalEl = document.getElementById('addressModal');
     if (!modalEl) return;
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     const form = document.getElementById('addressForm');
 
     form.reset();
-    document.getElementById('addressId').value = ''; // Reset hidden ID input
+    document.getElementById('addressId').value = '';
 
     const contactNameInput = document.getElementById('contactName');
     const contactPhoneInput = document.getElementById('contactPhone');
     const contactNotice = document.getElementById('contactNotice');
 
+    const citySelect = document.getElementById('city');
+    const districtSelect = document.getElementById('district');
+    const wardSelect = document.getElementById('ward');
+
     if (addressId) {
-        const address = currentUser && currentUser.addresses ? currentUser.addresses.find(a => a.id === addressId) : null;
-        if (address) {
-            document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil me-2 text-danger"></i>Chỉnh Sửa Địa Chỉ';
-            document.getElementById('addressId').value = address.id;
-            contactNameInput.value = address.contactName;
-            contactPhoneInput.value = address.contactPhone;
+        const selectedAddressId = Number(addressId);
+        const address = currentUser?.addresses?.find(a => Number(a.id) === selectedAddressId);
 
-            // QUY TẮC GEMINI.MD: Cho phép sửa địa chỉ, KHÔNG cho phép sửa liên hệ khi chỉnh sửa
-            contactNameInput.disabled = true;
-            contactPhoneInput.disabled = true;
-            if (contactNotice) contactNotice.classList.remove('d-none');
-
-            document.getElementById('city').value = address.city;
-            document.getElementById('district').value = address.district;
-            document.getElementById('ward').value = address.ward;
-            document.getElementById('street').value = address.street;
-            document.getElementById('note').value = address.note || '';
-            document.getElementById('isDefault').checked = Boolean(address.isDefault);
-
-            // Lưu dữ liệu ban đầu để so sánh khi sửa địa chỉ
-            initialAddressData = {
-                city: address.city || '',
-                district: address.district || '',
-                ward: address.ward || '',
-                street: address.street || '',
-                note: address.note || '',
-                isDefault: Boolean(address.isDefault)
-            };
+        if (!address) {
+            showAlert('error', 'Địa chỉ không hợp lệ hoặc đã bị xóa');
+            return;
         }
+
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil me-2 text-danger"></i>Chỉnh Sửa Địa Chỉ';
+        document.getElementById('addressId').value = address.id;
+        contactNameInput.value = address.contactName;
+        contactPhoneInput.value = address.contactPhone;
+
+        contactNameInput.disabled = false;
+        contactPhoneInput.disabled = true;
+        if (contactNotice) contactNotice.classList.remove('d-none');
+
+        document.getElementById('street').value = address.street || '';
+        document.getElementById('note').value = address.note || '';
+        document.getElementById('isDefault').checked = Boolean(address.isDefault);
+
+        try {
+            if (window.provincesLoadedPromise) {
+                await window.provincesLoadedPromise;
+            }
+
+            let selectedCityOption = Array.from(citySelect.options).find(opt => opt.value === address.city);
+            if (selectedCityOption) {
+                citySelect.value = address.city;
+                await loadDistrictsByCity(citySelect);
+
+                let selectedDistrictOption = Array.from(districtSelect.options).find(opt => opt.value === address.district);
+                if (selectedDistrictOption) {
+                    districtSelect.value = address.district;
+                    await loadWardsByDistrict(districtSelect);
+                    wardSelect.value = address.ward;
+                }
+            }
+        } catch (err) {
+            console.error('Lỗi nạp địa chỉ cũ:', err);
+        }
+
+        initialAddressData = {
+            city: address.city || '',
+            district: address.district || '',
+            ward: address.ward || '',
+            street: address.street || '',
+            note: address.note || '',
+            isDefault: Boolean(address.isDefault)
+        };
     } else {
         document.getElementById('modalTitle').innerHTML = '<i class="bi bi-house-add me-2 text-danger"></i>Thêm Địa Chỉ Mới';
-        // Cho phép nhập liên hệ khi tạo địa chỉ mới
         contactNameInput.disabled = false;
         contactPhoneInput.disabled = false;
         if (contactNotice) contactNotice.classList.add('d-none');
+
+        districtSelect.innerHTML = '<option value="" selected disabled>Quận/Huyện</option>';
+        wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
+        districtSelect.disabled = true;
+        wardSelect.disabled = true;
+
         initialAddressData = {};
     }
 
@@ -370,13 +405,18 @@ function closeAddressModal() {
 
 // Edit address
 function editAddress(addressId) {
-    openAddressModal(addressId);
+    const target = currentUser?.addresses?.find(a => Number(a.id) === Number(addressId));
+
+    if (!target) {
+        showAlert('error', 'Không tìm thấy địa chỉ để sửa');
+        return;
+    }
+
+    openAddressModal(Number(addressId));
 }
 
-// Handle address form submit (Thêm: POST đầy đủ, Sửa: PATCH partial update)
-async function handleAddressSubmit(e) {
-    e.preventDefault();
-
+// lưu địa chỉ
+async function submitAddressForm() {
     const addressId = document.getElementById('addressId').value;
     const isEdit = Boolean(addressId);
 
@@ -404,7 +444,7 @@ async function handleAddressSubmit(e) {
         if (currentIsDefault !== initialAddressData.isDefault) formData.isDefault = currentIsDefault;
 
         if (Object.keys(formData).length === 0) {
-            showAlert('info', 'Không có thông tin địa chỉ nào thay đổi');
+            showAlert('info', 'Bạn chưa thay đổi thông tin nào để sửa');
             closeAddressModal();
             return;
         }
@@ -437,7 +477,12 @@ async function handleAddressSubmit(e) {
             currentUser = result.data;
             displayAddresses(currentUser.addresses);
             closeAddressModal();
-            showAlert('success', isEdit ? 'Cập nhật địa chỉ thành công!' : 'Lưu địa chỉ mới thành công!');
+
+            if (isEdit) {
+                showAlert('success', 'Sửa địa chỉ thành công!');
+            } else {
+                showAlert('success', 'Thêm địa chỉ thành công!');
+            }
         } else {
             showAlert('error', result.message || 'Lưu địa chỉ thất bại');
         }

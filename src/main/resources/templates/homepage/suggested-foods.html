@@ -12,7 +12,9 @@
                 <h3 class="fw-bold text-dark mb-0">Gợi ý món ngon gần bạn</h3>
                 <p class="text-muted fs-8 mb-0 mt-1">Được lựa chọn dựa trên địa chỉ giao hàng và sở thích của bạn</p>
             </div>
-            <a href="/restaurants/near-you" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1">
+
+            <!-- Chuyển href -> th:href -->
+            <a th:href="@{/restaurants/near-you}" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1">
                 <span>Xem tất cả</span>
                 <i class="bi bi-arrow-right"></i>
             </a>

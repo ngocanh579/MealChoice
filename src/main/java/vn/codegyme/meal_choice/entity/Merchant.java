@@ -1,11 +1,7 @@
 package vn.codegyme.meal_choice.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -13,8 +9,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.Set;
-import java.util.HashSet;
 
 @Entity
 @Table(name = "merchants")
@@ -61,9 +55,12 @@ public class Merchant {
     )
     private MerchantStatus merchantStatus;
 
+    // ===== Lock / Reject =====
+
     @Column(name = "lock_reason", length = 500)
     private String lockReason;
 
+    @Column(name = "locked_at")
     private LocalDateTime lockedAt;
 
     @Column(name = "reject_reason", length = 500)
@@ -71,6 +68,8 @@ public class Merchant {
 
     @Column(name = "rejected_at")
     private LocalDateTime rejectedAt;
+
+    // ===== Other =====
 
     @Column(name = "is_trusted_partner", nullable = false)
     private boolean trustedPartner = false;
@@ -89,11 +88,18 @@ public class Merchant {
     )
     private List<MerchantAddress> addresses = new ArrayList<>();
 
+    @OneToMany(
+            mappedBy = "merchant",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Food> foods = new ArrayList<>();
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "merchant_likes",
-        joinColumns = @JoinColumn(name = "merchant_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
+            name = "merchant_likes",
+            joinColumns = @JoinColumn(name = "merchant_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private Set<User> likedByUsers = new HashSet<>();
+    private List<User> likedByUsers = new ArrayList<>();
 }

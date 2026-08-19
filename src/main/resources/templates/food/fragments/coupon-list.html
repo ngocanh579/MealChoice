@@ -35,11 +35,11 @@
                 </div>
             </div>
 
-            <!-- Coupon 3 -->
-            <div class="col" th:if="${food.discountPercentage != null}">
+            <!-- Coupon 3 (nếu có giảm giá) -->
+            <div class="col" th:if="${food.discountPrice != null and food.price != null and food.price > 0}">
                 <div class="d-flex align-items-center bg-light border border-light-subtle rounded-3 p-3 position-relative overflow-hidden shadow-xs hover-shadow transition-hover" style="border-left: 5px solid #f59e0b !important;">
                     <div class="pe-3 border-end border-dashed border-secondary border-opacity-25 text-center d-flex flex-column justify-content-center" style="min-width: 80px;">
-                        <span class="fw-bold text-warning fs-5" th:text="${food.discountPercentage} + '%'">50%</span>
+                        <span class="fw-bold text-warning fs-5" th:text="${#numbers.formatDecimal((food.price - food.discountPrice) / food.price * 100, 0, 0)} + '%'">20%</span>
                         <span class="text-muted fs-9 fw-semibold">HOT</span>
                     </div>
                     <div class="ps-3 flex-grow-1 overflow-hidden">
@@ -51,7 +51,7 @@
             </div>
             
             <!-- Default Coupon 3 fallback if no discount -->
-            <div class="col" th:if="${food.discountPercentage == null}">
+            <div class="col" th:unless="${food.discountPrice != null and food.price != null and food.price > 0}">
                 <div class="d-flex align-items-center bg-light border border-light-subtle rounded-3 p-3 position-relative overflow-hidden shadow-xs hover-shadow transition-hover" style="border-left: 5px solid #3b82f6 !important;">
                     <div class="pe-3 border-end border-dashed border-secondary border-opacity-25 text-center d-flex flex-column justify-content-center" style="min-width: 80px;">
                         <span class="fw-bold text-primary fs-5">10%</span>

@@ -29,14 +29,25 @@ public class MerchantService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
+        @Transactional
+        public void updateMerchantProfile(UUID merchantId, MerchantUpdateRequest request) {
+        Merchant merchant = merchantRepository.findById(merchantId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Merchant"));
+
+        if (request.getMerchantRestaurantName() != null
+                && !request.getMerchantRestaurantName().trim().isEmpty()) {
+                merchant.setMerchantRestaurantName(request.getMerchantRestaurantName().trim());
+        }
+
+        merchantRepository.save(merchant);
+        }
+
     @Transactional
     public void registerMerchant(
             MerchantRegisterRequest request,
             String userEmail) {
 
-        // =========================================
         // 1. TÌM USER
-        // =========================================
 
         User user = userRepository
                 .findByEmail(userEmail)
@@ -46,11 +57,7 @@ public class MerchantService {
                         )
                 );
 
-
-        // =========================================
         // 2. KIỂM TRA MẬT KHẨU NHẬP LẠI
-        // =========================================
-
         if (!request.getPassword()
                 .equals(request.getConfirmPassword())) {
 
@@ -59,11 +66,7 @@ public class MerchantService {
             );
         }
 
-
-        // =========================================
         // 3. KIỂM TRA MẬT KHẨU TÀI KHOẢN
-        // =========================================
-
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword())) {
@@ -73,15 +76,10 @@ public class MerchantService {
             );
         }
 
-
-        // =========================================
         // 4. KIỂM TRA MERCHANT CŨ
-        // =========================================
-
         Merchant merchant = merchantRepository
                 .findByUser_Id(user.getId())
                 .orElse(null);
-
 
         /*
          * Khai báo MerchantAddress ở ngoài
@@ -92,27 +90,17 @@ public class MerchantService {
          */
         MerchantAddress merchantAddress;
 
-
-        // =========================================
         // 5. USER ĐÃ TỪNG ĐĂNG KÝ MERCHANT
-        // =========================================
-
         if (merchant != null) {
-
             // Chỉ cho đăng ký lại nếu trước đó bị từ chối
             if (merchant.getMerchantStatus()
                     != MerchantStatus.REJECTED) {
-
                 throw new RuntimeException(
                         "Tài khoản này đã đăng ký Merchant"
                 );
             }
 
-
-            // =====================================
             // KIỂM TRA EMAIL TRÙNG
-            // =====================================
-
             if (!merchant.getMerchantEmail()
                     .equals(request.getMerchantEmail())
                     && merchantRepository
@@ -125,11 +113,7 @@ public class MerchantService {
                 );
             }
 
-
-            // =====================================
             // KIỂM TRA PHONE TRÙNG
-            // =====================================
-
             if (!merchant.getMerchantPhone()
                     .equals(request.getMerchantPhone())
                     && merchantRepository
@@ -140,13 +124,9 @@ public class MerchantService {
                 throw new RuntimeException(
                         "Số điện thoại đã tồn tại"
                 );
-            }
+            }  
 
-
-            // =====================================
             // CẬP NHẬT MERCHANT CŨ
-            // =====================================
-
             merchant.setMerchantRestaurantName(
                     request.getMerchantRestaurantName()
             );
@@ -166,20 +146,14 @@ public class MerchantService {
             // Xóa lý do từ chối cũ
             merchant.setRejectReason(null);
 
-
             merchantRepository.save(merchant);
 
-
-            // =====================================
             // LẤY ĐỊA CHỈ CŨ
-            // =====================================
-
             List<MerchantAddress> addresses =
                     merchantAddressRepository
                             .findByMerchantId(
                                     merchant.getId()
                             );
-
 
             if (!addresses.isEmpty()) {
 
@@ -198,11 +172,7 @@ public class MerchantService {
 
         }
 
-
-        // =========================================
         // 6. ĐĂNG KÝ MERCHANT LẦN ĐẦU
-        // =========================================
-
         else {
 
             // Kiểm tra email
@@ -216,7 +186,6 @@ public class MerchantService {
                 );
             }
 
-
             // Kiểm tra phone
             if (merchantRepository
                     .existsByMerchantPhone(
@@ -228,11 +197,7 @@ public class MerchantService {
                 );
             }
 
-
-            // =====================================
             // TẠO MERCHANT
-            // =====================================
-
             merchant = new Merchant();
 
             merchant.setMerchantRestaurantName(
@@ -255,16 +220,11 @@ public class MerchantService {
                     MerchantStatus.PENDING
             );
 
-
             merchantRepository.save(
                     merchant
             );
 
-
-            // =====================================
             // TẠO ĐỊA CHỈ MỚI
-            // =====================================
-
             merchantAddress =
                     new MerchantAddress();
 
@@ -274,52 +234,50 @@ public class MerchantService {
         }
 
 
-        // =========================================
         // 7. CẬP NHẬT THÔNG TIN ĐỊA CHỈ
-        // =========================================
-
         merchantAddress.setMerchantAddress(
                 request.getMerchantAddress()
         );
-
 
         merchantAddress.setProvinceCode(
                 request.getProvinceCode()
         );
 
-
         merchantAddress.setDistrictCode(
                 request.getDistrictCode()
         );
-
 
         merchantAddress.setWardCode(
                 request.getWardCode()
         );
 
-
         merchantAddress.setDefault(
                 true
         );
-
 
         merchantAddressRepository.save(
                 merchantAddress
         );
 
-
-        // =========================================
         // 8. GỬI EMAIL
-        // =========================================
-
         emailService.sendMerchantRegisterEmail(
                 request.getMerchantEmail(),
                 request.getMerchantRestaurantName()
         );
     }
 
-    @Transactional
-    public void updateMerchant(
+        @Transactional
+        
+        public void updateMerchantProfile(UUID merchantId, String merchantRestaurantName) {
+             Merchant merchant = merchantRepository.findById(merchantId)
+                  .orElseThrow(() -> new RuntimeException("Không tìm thấy Merchant"));
+
+              merchant.setMerchantRestaurantName(merchantRestaurantName);
+              merchantRepository.save(merchant);
+}
+
+        @Transactional
+        public void updateMerchant(
             UUID merchantId,
             MerchantUpdateRequest request) {
 
@@ -431,7 +389,7 @@ public class MerchantService {
                         .toList();
 
         response.setAddresses(addressResponses);
-
         return response;
     }
+    
 }

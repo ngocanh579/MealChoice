@@ -83,21 +83,8 @@ public class GlobalMerchantModelAdvice {
         }
 
 
-        /*
-         * Không cần sửa MerchantRepository hiện tại.
-         */
         return merchantRepository
-                .findAll()
-                .stream()
-                .filter(merchant ->
-
-                        merchant.getUser() != null
-
-                                && merchant.getUser()
-                                .getId()
-                                .equals(user.getId())
-                )
-                .findFirst()
+                .findByUser_Id(user.getId())
                 .orElse(null);
     }
 }

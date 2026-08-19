@@ -8,38 +8,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "food_categories")
+@Table(name = "tags")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FoodCategory {
+public class Tag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(
-            name = "category_name",
-            nullable = false,
-            unique = true,
-            length = 100
-    )
-    private String categoryName;
+    @Column(name = "tag_name", nullable = false, unique = true, length = 100)
+    private String tagName;
 
-    @Column(name = "category_description", length = 255)
-    private String categoryDescription;
+    @ManyToMany(mappedBy = "tags")
+    @Builder.Default
+    private List<Food> foods = new ArrayList<>();
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @ManyToMany(mappedBy = "foodCategories")
-    @Builder.Default
-    private List<Food> foods = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

@@ -1,332 +1,714 @@
 package vn.codegyme.meal_choice.controller;
 
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import vn.codegyme.meal_choice.entity.Address;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.ui.Model;
+import vn.codegyme.meal_choice.dto.food.FoodCreateRequest;
+import vn.codegyme.meal_choice.dto.food.FoodResponse;
+import vn.codegyme.meal_choice.dto.food.FoodUpdateRequest;
 import vn.codegyme.meal_choice.entity.Food;
+import vn.codegyme.meal_choice.entity.FoodCategory;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.User;
-import vn.codegyme.meal_choice.repository.AddressRepository;
 import vn.codegyme.meal_choice.repository.FoodRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.security.CustomUserDetails;
+import vn.codegyme.meal_choice.service.FoodService;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Controller
 @RequiredArgsConstructor
 public class FoodController {
 
+    private final FoodService foodService;
     private final FoodRepository foodRepository;
     private final MerchantRepository merchantRepository;
     private final UserRepository userRepository;
-    private final AddressRepository addressRepository;
 
-    // Helper lấy địa chỉ khu vực của user hiện tại
-    private String getUserLocation(Authentication authentication) {
-        try {
-            if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
-                Optional<User> userOpt = userRepository.findByEmail(userDetails.getUsername());
-                if (userOpt.isPresent()) {
-                    List<Address> addresses = addressRepository.findByUserId(userOpt.get().getId());
-                    if (!addresses.isEmpty()) {
-                        Address targetAddress = addresses.stream()
-                                .filter(a -> Boolean.TRUE.equals(a.getIsDefault()))
-                                .findFirst()
-                                .orElse(addresses.get(addresses.size() - 1));
-                        return targetAddress.getDistrict() != null ? targetAddress.getDistrict() : targetAddress.getCity();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Không thể lấy user location: {}", e.getMessage());
-        }
-        return null;
-    }
+    // Merchant đang đăng nhập
+    private Merchant getCurrentMerchant() {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
 
-    // Helper nạp trạng thái thích món ăn và theo dõi quán ăn của user vào model
-    private void addLikeStatusToModel(Authentication authentication, Model model) {
-        boolean isLoggedIn = false;
-        List<Long> likedFoodIds = Collections.emptyList();
-        List<UUID> likedMerchantIds = Collections.emptyList();
-
-        if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
-            Optional<User> userOpt = userRepository.findByEmail(userDetails.getUsername());
-            if (userOpt.isPresent()) {
-                isLoggedIn = true;
-                UUID userId = userOpt.get().getId();
-                likedFoodIds = foodRepository.findLikedFoodIdsByUserId(userId);
-                likedMerchantIds = merchantRepository.findLikedMerchantIdsByUserId(userId);
-            }
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            throw new RuntimeException("Người dùng chưa đăng nhập");
         }
 
-        model.addAttribute("isLoggedIn", isLoggedIn);
-        model.addAttribute("likedFoodIds", likedFoodIds);
-        model.addAttribute("likedMerchantIds", likedMerchantIds);
+        UUID userId = userDetails.getId();
+
+        return merchantRepository.findByUser_Id(userId)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy Merchant"));
     }
 
-    // Trang chi tiết món ăn (Food Detail Page) với các fragments
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    // ==================== MERCHANT FOOD API ====================
+
+    // Thêm món
+    @PostMapping(
+            value = "/api/merchant/foods",
+            consumes = "multipart/form-data"
+    )
+    @ResponseBody
+    public ResponseEntity<FoodResponse> createFood(
+            @Valid @ModelAttribute FoodCreateRequest request,
+            @RequestParam("images") List<MultipartFile> images) {
+
+        Merchant merchant = getCurrentMerchant();
+
+        FoodResponse response = foodService.createFood(
+                merchant.getId(),
+                request,
+                images
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Lấy danh sách món
+    @GetMapping("/api/merchant/foods")
+    @ResponseBody
+    public ResponseEntity<List<FoodResponse>> getFoods() {
+
+        Merchant merchant = getCurrentMerchant();
+
+        return ResponseEntity.ok(
+                foodService.getFoods(merchant.getId())
+        );
+    }
+
+    // Tìm kiếm món ăn của Merchant theo từ khóa
+    @GetMapping("/api/merchant/foods/search")
+    @ResponseBody
+    public ResponseEntity<Page<FoodResponse>> searchMerchantFoods(
+            @RequestParam(value = "name", required = false, defaultValue = "") String name,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        Merchant merchant = getCurrentMerchant();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<FoodResponse> result = foodService.searchMerchantFoodsByKeyword(
+                merchant.getId(),
+                name,
+                pageable
+        );
+        return ResponseEntity.ok(result);
+    }
+
+    // Chi tiết món
+    @GetMapping("/api/merchant/foods/{foodId}")
+    @ResponseBody
+    public ResponseEntity<FoodResponse> getFood(
+            @PathVariable("foodId") Long foodId) {
+
+        Merchant merchant = getCurrentMerchant();
+
+        return ResponseEntity.ok(
+                foodService.getFood(
+                        merchant.getId(),
+                        foodId
+                )
+        );
+    }
+
+    // Cập nhật món
+    @PutMapping(
+            value = "/api/merchant/foods/{foodId}",
+            consumes = "multipart/form-data"
+    )
+    @ResponseBody
+    public ResponseEntity<FoodResponse> updateFood(
+            @PathVariable("foodId") Long foodId,
+            @Valid @ModelAttribute FoodUpdateRequest request,
+            @RequestParam(
+                    value = "images",
+                    required = false
+            ) List<MultipartFile> images) {
+
+        Merchant merchant = getCurrentMerchant();
+
+        return ResponseEntity.ok(
+                foodService.updateFood(
+                        merchant.getId(),
+                        foodId,
+                        request,
+                        images
+                )
+        );
+    }
+
+    // Xóa mềm
+    @DeleteMapping("/api/merchant/foods/{foodId}")
+    @ResponseBody
+    public ResponseEntity<String> deleteFood(
+            @PathVariable("foodId") Long foodId) {
+
+        Merchant merchant = getCurrentMerchant();
+
+        foodService.deleteFood(
+                merchant.getId(),
+                foodId
+        );
+
+        return ResponseEntity.ok("Xóa món ăn thành công");
+    }
+
+    // Bật/tắt đề xuất
+    @PatchMapping("/api/merchant/foods/{foodId}/recommend")
+    @ResponseBody
+    public ResponseEntity<Void> toggleRecommendation(
+            @PathVariable("foodId") Long foodId) {
+
+        Merchant merchant = getCurrentMerchant();
+
+        foodService.toggleRecommendation(
+                merchant.getId(),
+                foodId
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+    // ==================== FOOD DETAIL PAGE ====================
+
+    @Transactional
     @GetMapping("/foods/{id}")
-    public String foodDetailPage(@PathVariable("id") Long id,
-                                Authentication authentication,
-                                Model model) {
+    public String foodDetailPage(
+            @PathVariable("id") Long id,
+            Authentication authentication,
+            Model model) {
+
         try {
-            addLikeStatusToModel(authentication, model);
-            // 1. Tải món ăn chi tiết
-            Optional<Food> foodOpt = foodRepository.findById(id);
-            if (foodOpt.isEmpty() || !Boolean.TRUE.equals(foodOpt.get().getIsActive())) {
+            Food food = foodRepository.findById(id).orElse(null);
+
+            if (food == null
+                    || !Boolean.TRUE.equals(food.getIsActive())
+                    || food.getDeletedAt() != null) {
                 return "redirect:/";
             }
-            Food food = foodOpt.get();
+
             model.addAttribute("food", food);
 
-            // Nạp danh sách tất cả các ảnh của món ăn (bao gồm cả ảnh chính ở vị trí 0)
+            // Lấy danh sách món của Merchant theo thứ tự mới nhất
+            List<Food> merchantFoods =
+                    foodRepository
+                            .findByMerchant_IdAndDeletedAtIsNullOrderByCreatedAtDesc(
+                                    food.getMerchant().getId()
+                            );
+
+// Tìm vị trí món hiện tại
+            int currentFoodIndex = -1;
+
+            for (int i = 0; i < merchantFoods.size(); i++) {
+                if (merchantFoods.get(i).getId().equals(food.getId())) {
+                    currentFoodIndex = i;
+                    break;
+                }
+            }
+
+            Food previousFood = null;
+            Food nextFood = null;
+
+            if (currentFoodIndex > 0) {
+                previousFood = merchantFoods.get(currentFoodIndex - 1);
+            }
+
+            if (currentFoodIndex >= 0
+                    && currentFoodIndex < merchantFoods.size() - 1) {
+                nextFood = merchantFoods.get(currentFoodIndex + 1);
+            }
+
+            model.addAttribute("previousFood", previousFood);
+            model.addAttribute("nextFood", nextFood);
+
             List<String> foodImagesList = new ArrayList<>();
-            if (food.getImageUrl() != null && !food.getImageUrl().isBlank()) {
-                foodImagesList.add(food.getImageUrl());
-            }
-            if (food.getFoodImages() != null) {
-                for (vn.codegyme.meal_choice.entity.FoodImage img : food.getFoodImages()) {
-                    if (img.getImageUrl() != null && !img.getImageUrl().isBlank() && !foodImagesList.contains(img.getImageUrl())) {
-                        foodImagesList.add(img.getImageUrl());
-                    }
-                }
-            }
-            model.addAttribute("foodImagesList", foodImagesList);
 
-            // 2. Trích xuất thành phố từ MerchantAddress của món ăn
-            String city = "";
-            if (food.getMerchant() != null && food.getMerchant().getAddresses() != null && !food.getMerchant().getAddresses().isEmpty()) {
-                String fullAddress = food.getMerchant().getAddresses().get(0).getMerchantAddress();
-                if (fullAddress != null && !fullAddress.isBlank()) {
-                    String[] parts = fullAddress.split(",");
-                    city = parts[parts.length - 1].trim();
-                }
+            if (food.getImages() != null) {
+                food.getImages().stream()
+                        .filter(image ->
+                                image.getImageUrl() != null
+                                        && !image.getImageUrl().isBlank())
+                        .sorted((a, b) -> Boolean.compare(
+                                !Boolean.TRUE.equals(a.getIsPrimary()),
+                                !Boolean.TRUE.equals(b.getIsPrimary())
+                        ))
+                        .forEach(image -> {
+                            if (!foodImagesList.contains(
+                                    image.getImageUrl())) {
+                                foodImagesList.add(
+                                        image.getImageUrl()
+                                );
+                            }
+                        });
             }
 
-            // 3. Tải danh sách món ăn cùng thành phố
-            List<Food> foodsInCity = new ArrayList<>();
-            if (!city.isBlank()) {
-                foodsInCity = foodRepository.findAllActiveInCity(city);
-            } else {
-                foodsInCity = foodRepository.findAll();
-            }
+            model.addAttribute(
+                    "foodImagesList",
+                    foodImagesList
+            );
 
-            // 4. Khối "Món dành riêng cho bạn" (Recommended Foods) - 8 món
-            final List<Food> recommendedFoods = new ArrayList<>();
-            if (food.getMerchant() != null && food.getCategory() != null) {
-                UUID merchantId = food.getMerchant().getId();
-                Long categoryId = food.getCategory().getId();
+            List<Food> allActiveFoods =
+                    foodRepository
+                            .findAllByIsActiveTrueAndDeletedAtIsNullOrderByIdDesc(
+                                    org.springframework.data.domain.Pageable.unpaged()
+                            )
+                            .getContent();
 
-                // Danh sách món cùng thành phố (loại trừ món hiện tại)
-                List<Food> cityFoodsExcludeCurrent = foodsInCity.stream()
-                        .filter(f -> f != null && !f.getId().equals(id))
+            List<Food> recommendedFoods =
+                    buildRecommendedFoods(
+                            food,
+                            allActiveFoods
+                    );
+
+            model.addAttribute(
+                    "recommendedFoods",
+                    recommendedFoods
+            );
+
+            List<Food> peopleAlsoLiked =
+                    buildPeopleAlsoLiked(
+                            food,
+                            allActiveFoods
+                    );
+
+            model.addAttribute(
+                    "peopleAlsoLiked",
+                    peopleAlsoLiked
+            );
+
+            addUserInformation(
+                    authentication,
+                    model
+            );
+
+            return "food/customer-detail";
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Lỗi tải chi tiết món: {}",
+                    e.getMessage(),
+                    e
+            );
+
+            return "redirect:/";
+        }
+    }
+
+    // Món đề xuất
+    private List<Food> buildRecommendedFoods(
+            Food food,
+            List<Food> allActiveFoods) {
+
+        List<Food> recommendedFoods =
+                new ArrayList<>();
+
+        Merchant merchant =
+                food.getMerchant();
+
+        Long currentFoodId =
+                food.getId();
+
+        List<FoodCategory> categories =
+                food.getFoodCategories();
+
+        List<Long> categoryIds =
+                categories == null
+                        ? Collections.emptyList()
+                        : categories.stream()
+                        .map(FoodCategory::getId)
                         .toList();
 
-                // Lấy phần 1: cùng category & cùng merchant, xếp theo lượt thích giảm dần
-                List<Food> part1 = cityFoodsExcludeCurrent.stream()
-                        .filter(f -> f.getMerchant() != null && f.getMerchant().getId().equals(merchantId)
-                                && f.getCategory() != null && f.getCategory().getId().equals(categoryId))
-                        .sorted((f1, f2) -> {
-                            int likes1 = f1.getLikedByUsers() != null ? f1.getLikedByUsers().size() : 0;
-                            int likes2 = f2.getLikedByUsers() != null ? f2.getLikedByUsers().size() : 0;
-                            return Integer.compare(likes2, likes1);
-                        })
+        List<Food> candidates =
+                allActiveFoods.stream()
+                        .filter(f ->
+                                f != null
+                                        && !f.getId()
+                                        .equals(currentFoodId))
                         .toList();
-                recommendedFoods.addAll(part1);
 
-                // Lấy phần 2: cùng category & cùng merchant, xếp theo ID giảm dần (loại bỏ món đã lấy)
-                if (recommendedFoods.size() < 8) {
-                    List<Food> part2 = cityFoodsExcludeCurrent.stream()
-                           .filter(f -> f.getMerchant() != null && f.getMerchant().getId().equals(merchantId)
-                                   && f.getCategory() != null && f.getCategory().getId().equals(categoryId))
-                           .filter(f -> !recommendedFoods.contains(f))
-                           .sorted((f1, f2) -> Long.compare(f2.getId(), f1.getId()))
-                           .toList();
-                    recommendedFoods.addAll(part2);
-                }
-
-                // Lấy phần 3: cùng merchant, xếp theo ID giảm dần (loại bỏ món đã lấy)
-                if (recommendedFoods.size() < 8) {
-                    List<Food> part3 = cityFoodsExcludeCurrent.stream()
-                            .filter(f -> f.getMerchant() != null && f.getMerchant().getId().equals(merchantId))
-                            .filter(f -> !recommendedFoods.contains(f))
-                            .sorted((f1, f2) -> Long.compare(f2.getId(), f1.getId()))
+        // 1. Món cùng Merchant và cùng Danh mục
+        if (merchant != null) {
+            List<Food> sameMerchantAndCategory =
+                    candidates.stream()
+                            .filter(f ->
+                                    f.getMerchant() != null
+                                            && f.getMerchant()
+                                            .getId()
+                                            .equals(merchant.getId()))
+                            .filter(f ->
+                                    f.getFoodCategories() != null
+                                            && f.getFoodCategories()
+                                            .stream()
+                                            .anyMatch(category ->
+                                                    categoryIds.contains(
+                                                            category.getId())))
+                            .sorted((a, b) ->
+                                    Long.compare(b.getId(), a.getId()))
+                            .limit(8)
                             .toList();
-                    recommendedFoods.addAll(part3);
-                }
-            }
 
-            List<Food> finalRecommended = recommendedFoods;
-            if (recommendedFoods.size() > 8) {
-                finalRecommended = recommendedFoods.subList(0, 8);
-            }
-            model.addAttribute("recommendedFoods", finalRecommended);
+            recommendedFoods.addAll(sameMerchantAndCategory);
 
-            // 5. Khối "Mọi người cũng thích" (People Also Liked) - 8 món
-            List<Food> peopleAlsoLiked = new ArrayList<>();
-            if (food.getCategory() != null) {
-                Long categoryId = food.getCategory().getId();
-                peopleAlsoLiked = foodsInCity.stream()
-                        .filter(f -> f != null && !f.getId().equals(id) && f.getCategory() != null && f.getCategory().getId().equals(categoryId))
-                        .sorted((f1, f2) -> {
-                            int m1Likes = (f1.getMerchant() != null && f1.getMerchant().getLikedByUsers() != null) ? f1.getMerchant().getLikedByUsers().size() : 0;
-                            int m2Likes = (f2.getMerchant() != null && f2.getMerchant().getLikedByUsers() != null) ? f2.getMerchant().getLikedByUsers().size() : 0;
-                            return Integer.compare(m2Likes, m1Likes);
+            // 2. Món cùng Merchant (khác danh mục)
+            if (recommendedFoods.size() < 8) {
+                List<Food> sameMerchantOther =
+                        candidates.stream()
+                                .filter(f ->
+                                        !recommendedFoods.contains(f))
+                                .filter(f ->
+                                        f.getMerchant() != null
+                                                && f.getMerchant()
+                                                .getId()
+                                                .equals(merchant.getId()))
+                                .limit(8 - recommendedFoods.size())
+                                .toList();
+
+                recommendedFoods.addAll(sameMerchantOther);
+            }
+        }
+
+        // 3. Món cùng danh mục từ các quán khác
+        if (recommendedFoods.size() < 8) {
+            List<Food> sameCategory =
+                    candidates.stream()
+                            .filter(f ->
+                                    !recommendedFoods.contains(f))
+                            .filter(f ->
+                                    f.getFoodCategories() != null
+                                            && f.getFoodCategories()
+                                            .stream()
+                                            .anyMatch(category ->
+                                                    categoryIds.contains(
+                                                            category.getId())))
+                            .sorted((a, b) -> {
+                                int orderA = a.getOrderCount() != null ? a.getOrderCount() : 0;
+                                int orderB = b.getOrderCount() != null ? b.getOrderCount() : 0;
+                                return Integer.compare(orderB, orderA);
+                            })
+                            .limit(8 - recommendedFoods.size())
+                            .toList();
+
+            recommendedFoods.addAll(sameCategory);
+        }
+
+        // 4. Món đề cử hoặc món bán chạy/view cao trên hệ thống
+        if (recommendedFoods.size() < 8) {
+            List<Food> popularFallback =
+                    candidates.stream()
+                            .filter(f ->
+                                    !recommendedFoods.contains(f))
+                            .sorted((a, b) -> {
+                                boolean recA = Boolean.TRUE.equals(a.getIsRecommended());
+                                boolean recB = Boolean.TRUE.equals(b.getIsRecommended());
+                                if (recA != recB) return Boolean.compare(recB, recA);
+                                int viewsA = a.getViews() != null ? a.getViews() : 0;
+                                int viewsB = b.getViews() != null ? b.getViews() : 0;
+                                return Integer.compare(viewsB, viewsA);
+                            })
+                            .limit(8 - recommendedFoods.size())
+                            .toList();
+
+            recommendedFoods.addAll(popularFallback);
+        }
+
+        return recommendedFoods;
+    }
+
+    // Món mọi người cùng thích
+    private List<Food> buildPeopleAlsoLiked(
+            Food food,
+            List<Food> allActiveFoods) {
+
+        List<Food> peopleAlsoLiked =
+                new ArrayList<>();
+
+        Long currentFoodId =
+                food.getId();
+
+        List<FoodCategory> categories =
+                food.getFoodCategories();
+
+        List<Long> categoryIds =
+                categories == null
+                        ? Collections.emptyList()
+                        : categories.stream()
+                        .map(FoodCategory::getId)
+                        .toList();
+
+        List<Food> candidates =
+                allActiveFoods.stream()
+                        .filter(f ->
+                                f != null
+                                        && !f.getId()
+                                        .equals(currentFoodId))
+                        .toList();
+
+        // 1. Món cùng danh mục có lượt mua / lượt xem cao
+        List<Food> sameCategoryTopOrders =
+                candidates.stream()
+                        .filter(f ->
+                                f.getFoodCategories() != null
+                                        && f.getFoodCategories()
+                                        .stream()
+                                        .anyMatch(category ->
+                                                categoryIds.contains(
+                                                        category.getId())))
+                        .sorted((a, b) -> {
+                            int orderA = a.getOrderCount() != null ? a.getOrderCount() : 0;
+                            int orderB = b.getOrderCount() != null ? b.getOrderCount() : 0;
+                            if (orderA != orderB) return Integer.compare(orderB, orderA);
+                            int viewsA = a.getViews() != null ? a.getViews() : 0;
+                            int viewsB = b.getViews() != null ? b.getViews() : 0;
+                            return Integer.compare(viewsB, viewsA);
                         })
                         .limit(8)
                         .toList();
-            }
-            model.addAttribute("peopleAlsoLiked", peopleAlsoLiked);
 
-            // 6. Truyền location của user
-            model.addAttribute("userLocation", getUserLocation(authentication));
+        peopleAlsoLiked.addAll(sameCategoryTopOrders);
 
-            // 7. Kiểm tra trạng thái đăng nhập & thông tin User
-            boolean isLoggedIn = false;
-            String userDisplayName = null;
-            boolean isAdmin = false;
-            boolean isMerchant = false;
+        // 2. Món phổ biến nhất trên toàn hệ thống
+        if (peopleAlsoLiked.size() < 8) {
+            List<Food> fallback =
+                    candidates.stream()
+                            .filter(f ->
+                                    !peopleAlsoLiked.contains(f))
+                            .sorted((a, b) -> {
+                                int viewsA = a.getViews() != null ? a.getViews() : 0;
+                                int viewsB = b.getViews() != null ? b.getViews() : 0;
+                                return Integer.compare(viewsB, viewsA);
+                            })
+                            .limit(8 - peopleAlsoLiked.size())
+                            .toList();
 
-            if (authentication != null && authentication.isAuthenticated()
-                    && !"anonymousUser".equals(authentication.getPrincipal())
-                    && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
-                Optional<User> userOpt = userRepository.findByEmail(userDetails.getUsername());
-                if (userOpt.isPresent()) {
-                    isLoggedIn = true;
-                    User user = userOpt.get();
-                    userDisplayName = user.getDisplayName();
-                    isAdmin = user.getRoles() != null && user.getRoles().stream()
-                            .anyMatch(r -> r.getName() != null && r.getName().name().contains("ADMIN"));
-                    isMerchant = user.getRoles() != null && user.getRoles().stream()
-                            .anyMatch(r -> r.getName() != null && r.getName().name().contains("MERCHANT"));
-                }
-            }
-
-            model.addAttribute("isLoggedIn", isLoggedIn);
-            model.addAttribute("userDisplayName", userDisplayName);
-            model.addAttribute("isAdmin", isAdmin);
-            model.addAttribute("isMerchant", isMerchant);
-
-        } catch (Exception e) {
-            log.error("Lỗi khi tải trang chi tiết món ăn: {}", e.getMessage(), e);
-            return "redirect:/";
+            peopleAlsoLiked.addAll(fallback);
         }
-        return "food/detail";
+
+        return peopleAlsoLiked;
     }
 
-    // 8. REST API: Thích món ăn (Food Like)
+    // Thêm thông tin User
+    private void addUserInformation(
+            Authentication authentication,
+            Model model) {
+
+        boolean isLoggedIn = false;
+        String userDisplayName = null;
+        boolean isAdmin = false;
+        boolean isMerchant = false;
+        List<Long> likedFoodIds = Collections.emptyList();
+        List<UUID> likedMerchantIds = Collections.emptyList();
+
+        if (authentication != null
+                && authentication.isAuthenticated()
+                && authentication.getPrincipal()
+                instanceof CustomUserDetails userDetails) {
+
+            Optional<User> userOpt =
+                    userRepository.findByEmail(
+                            userDetails.getUsername()
+                    );
+
+            if (userOpt.isPresent()) {
+
+                User user = userOpt.get();
+
+                isLoggedIn = true;
+                userDisplayName =
+                        user.getDisplayName();
+
+                if (user.getRoles() != null) {
+
+                    isAdmin =
+                            user.getRoles()
+                                    .stream()
+                                    .anyMatch(role ->
+                                            role.getName() != null
+                                                    && role.getName()
+                                                    .name()
+                                                    .contains("ADMIN"));
+
+                    isMerchant =
+                            user.getRoles()
+                                    .stream()
+                                    .anyMatch(role ->
+                                            role.getName() != null
+                                                    && role.getName()
+                                                    .name()
+                                                    .contains("MERCHANT"));
+                }
+
+                likedFoodIds = foodRepository.findLikedFoodIdsByUserId(user.getId());
+                likedMerchantIds = merchantRepository.findLikedMerchantIdsByUserId(user.getId());
+            }
+        }
+
+        model.addAttribute(
+                "isLoggedIn",
+                isLoggedIn
+        );
+
+        model.addAttribute(
+                "userDisplayName",
+                userDisplayName
+        );
+
+        model.addAttribute(
+                "isAdmin",
+                isAdmin
+        );
+
+        model.addAttribute(
+                "isMerchant",
+                isMerchant
+        );
+
+        model.addAttribute(
+                "likedFoodIds",
+                likedFoodIds
+        );
+
+        model.addAttribute(
+                "likedMerchantIds",
+                likedMerchantIds
+        );
+    }
+
+    private User getAuthenticatedUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        if (authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+            return userRepository.findById(userDetails.getId()).orElse(null);
+        }
+        return userRepository.findByEmail(authentication.getName()).orElse(null);
+    }
+
+    // ==================== LIKE FOOD ====================
+
+    @Transactional
     @ResponseBody
     @PostMapping("/api/foods/{id}/like")
-    public org.springframework.http.ResponseEntity<?> likeFood(@PathVariable("id") Long id, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body("Chưa đăng nhập");
+    public ResponseEntity<?> likeFood(
+            @PathVariable("id") Long id,
+            Authentication authentication) {
+
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Chưa đăng nhập");
         }
-        try {
-            Optional<Food> foodOpt = foodRepository.findById(id);
-            if (foodOpt.isEmpty()) {
-                return org.springframework.http.ResponseEntity.notFound().build();
-            }
-            Food food = foodOpt.get();
-            String email = ((CustomUserDetails) authentication.getPrincipal()).getUsername();
-            Optional<User> userOpt = userRepository.findByEmail(email);
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                food.getLikedByUsers().add(user);
-                foodRepository.save(food);
-                return org.springframework.http.ResponseEntity.ok().build();
-            }
-        } catch (Exception e) {
-            log.error("Lỗi khi thích món ăn: {}", e.getMessage(), e);
+
+        Food food = foodRepository.findById(id).orElse(null);
+        if (food == null) {
+            return ResponseEntity.notFound().build();
         }
-        return org.springframework.http.ResponseEntity.badRequest().build();
+
+        if (!food.getLikedByUsers().contains(user)) {
+            food.getLikedByUsers().add(user);
+            foodRepository.save(food);
+        }
+
+        return ResponseEntity.ok().build();
     }
 
-    // 9. REST API: Hủy thích món ăn (Food Unlike)
+    @Transactional
     @ResponseBody
     @PostMapping("/api/foods/{id}/unlike")
-    public org.springframework.http.ResponseEntity<?> unlikeFood(@PathVariable("id") Long id, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body("Chưa đăng nhập");
+    public ResponseEntity<?> unlikeFood(
+            @PathVariable("id") Long id,
+            Authentication authentication) {
+
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Chưa đăng nhập");
         }
-        try {
-            Optional<Food> foodOpt = foodRepository.findById(id);
-            if (foodOpt.isEmpty()) {
-                return org.springframework.http.ResponseEntity.notFound().build();
-            }
-            Food food = foodOpt.get();
-            String email = ((CustomUserDetails) authentication.getPrincipal()).getUsername();
-            Optional<User> userOpt = userRepository.findByEmail(email);
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                food.getLikedByUsers().remove(user);
-                foodRepository.save(food);
-                return org.springframework.http.ResponseEntity.ok().build();
-            }
-        } catch (Exception e) {
-            log.error("Lỗi khi hủy thích món ăn: {}", e.getMessage(), e);
+
+        Food food = foodRepository.findById(id).orElse(null);
+        if (food == null) {
+            return ResponseEntity.notFound().build();
         }
-        return org.springframework.http.ResponseEntity.badRequest().build();
+
+        food.getLikedByUsers().removeIf(u -> u.getId().equals(user.getId()));
+        foodRepository.save(food);
+
+        return ResponseEntity.ok().build();
     }
 
-    // 10. REST API: Theo dõi quán ăn (Merchant Follow)
+    // ==================== FOLLOW MERCHANT ====================
+
+    @Transactional
     @ResponseBody
     @PostMapping("/api/merchants/{id}/follow")
-    public org.springframework.http.ResponseEntity<?> followMerchant(@PathVariable("id") UUID id, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body("Chưa đăng nhập");
+    public ResponseEntity<?> followMerchant(
+            @PathVariable("id") UUID id,
+            Authentication authentication) {
+
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Chưa đăng nhập");
         }
-        try {
-            Optional<Merchant> merchantOpt = merchantRepository.findById(id);
-            if (merchantOpt.isEmpty()) {
-                return org.springframework.http.ResponseEntity.notFound().build();
-            }
-            Merchant merchant = merchantOpt.get();
-            String email = ((CustomUserDetails) authentication.getPrincipal()).getUsername();
-            Optional<User> userOpt = userRepository.findByEmail(email);
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                merchant.getLikedByUsers().add(user);
-                merchantRepository.save(merchant);
-                return org.springframework.http.ResponseEntity.ok().build();
-            }
-        } catch (Exception e) {
-            log.error("Lỗi khi theo dõi quán: {}", e.getMessage(), e);
+
+        Merchant merchant = merchantRepository.findById(id).orElse(null);
+        if (merchant == null) {
+            return ResponseEntity.notFound().build();
         }
-        return org.springframework.http.ResponseEntity.badRequest().build();
+
+        if (!merchant.getLikedByUsers().contains(user)) {
+            merchant.getLikedByUsers().add(user);
+            merchantRepository.save(merchant);
+        }
+
+        return ResponseEntity.ok().build();
     }
 
-    // 11. REST API: Hủy theo dõi quán ăn (Merchant Unfollow)
+    @Transactional
     @ResponseBody
     @PostMapping("/api/merchants/{id}/unfollow")
-    public org.springframework.http.ResponseEntity<?> unfollowMerchant(@PathVariable("id") UUID id, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body("Chưa đăng nhập");
+    public ResponseEntity<?> unfollowMerchant(
+            @PathVariable("id") UUID id,
+            Authentication authentication) {
+
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Chưa đăng nhập");
         }
-        try {
-            Optional<Merchant> merchantOpt = merchantRepository.findById(id);
-            if (merchantOpt.isEmpty()) {
-                return org.springframework.http.ResponseEntity.notFound().build();
-            }
-            Merchant merchant = merchantOpt.get();
-            String email = ((CustomUserDetails) authentication.getPrincipal()).getUsername();
-            Optional<User> userOpt = userRepository.findByEmail(email);
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                merchant.getLikedByUsers().remove(user);
-                merchantRepository.save(merchant);
-                return org.springframework.http.ResponseEntity.ok().build();
-            }
-        } catch (Exception e) {
-            log.error("Lỗi khi hủy theo dõi quán: {}", e.getMessage(), e);
+
+        Merchant merchant = merchantRepository.findById(id).orElse(null);
+        if (merchant == null) {
+            return ResponseEntity.notFound().build();
         }
-        return org.springframework.http.ResponseEntity.badRequest().build();
+
+        merchant.getLikedByUsers().removeIf(u -> u.getId().equals(user.getId()));
+        merchantRepository.save(merchant);
+
+        return ResponseEntity.ok().build();
     }
+
+
 }

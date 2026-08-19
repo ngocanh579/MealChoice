@@ -24,42 +24,28 @@ import vn.codegyme.meal_choice.security.MerchantBlockedFilter;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
-
-    // THÊM FILTER NÀY
     private final MerchantBlockedFilter merchantBlockedFilter;
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // =====================================
                         // OPTIONS
-                        // =====================================
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
                                 "/**"
-                        )
-                        .permitAll()
+                        ).permitAll()
 
-                        // Public (Xem trang chủ, tìm kiếm, nhà hàng, món ăn, danh mục, auth, static files)
-
-                        // =====================================
-                        // PUBLIC
-                        // =====================================
+                        // Public
                         .requestMatchers(
                                 "/",
                                 "/home",
@@ -74,134 +60,91 @@ public class SecurityConfig {
                                 "/register",
                                 "/activate",
                                 "/api/auth/**",
-
-                                // Trang báo Merchant bị khóa
                                 "/merchant-blocked",
-
+                                "/uploads/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
                                 "/favicon.ico",
-                                "/error",
-                                "/favicon.ico"
-                        )
-                        .permitAll()
+                                "/error"
+                        ).permitAll()
 
-
-                        // =====================================
-                        // USER ĐĂNG KÝ MERCHANT
-                        // =====================================
-
-                        // Mở trang đăng ký Merchant
+                        // User đã đăng nhập được mở trang đăng ký Merchant
                         .requestMatchers(
-                                "/merchant/register",
-                                "/merchants/register"
-                        )
-                        .authenticated()
+                                HttpMethod.GET,
+                                "/merchant/register"
+                        ).hasRole("USER")
 
-
-                        // Gửi đăng ký Merchant
+                        // User đăng ký Merchant
                         .requestMatchers(
                                 HttpMethod.POST,
-                                "/api/merchants/register"
-                        )
-                        .authenticated()
+                                "/api/merchant/register"
+                        ).hasRole("USER")
 
-
-                        // =====================================
-                        // ADMIN
-                        // =====================================
+                        // Admin
                         .requestMatchers(
                                 "/admin/**",
                                 "/api/admin/**"
-                        )
-                        .hasRole("ADMIN")
+                        ).hasRole("ADMIN")
 
+                        // API kiểm tra trạng thái Merchant của User
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/merchant/my-status"
+                        ).authenticated()
 
-                        // =====================================
-                        // MERCHANT
-                        // =====================================
+                        // API thông tin Merchant public
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/merchants/**"
+                        ).permitAll()
+
+                        // Merchant
                         .requestMatchers(
                                 "/merchant/**",
-                                "/merchants/**",
                                 "/api/merchant/**"
-                        )
-                        .hasAnyRole(
+                        ).hasAnyRole(
                                 "MERCHANT",
                                 "ADMIN"
                         )
 
-
-                        // =====================================
-                        // API THÔNG TIN MERCHANT PUBLIC
-                        // =====================================
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/merchants/**"
-                        )
-                        .permitAll()
-
-
-                        // =====================================
-                        // USER
-                        // =====================================
+                        // User
                         .requestMatchers(
                                 "/user/**",
                                 "/api/user/**"
-                        )
-                        .authenticated()
+                        ).authenticated()
 
-
-                        // =====================================
-                        // CÁC REQUEST CÒN LẠI
-                        // =====================================
+                        // Các request còn lại
                         .anyRequest()
                         .authenticated()
                 )
 
-
-                // =========================================
-                // CHƯA ĐĂNG NHẬP -> /login
-                // =========================================
+                // Chưa đăng nhập -> /login
                 .exceptionHandling(ex -> ex
                         .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint(
-                                        "/login"
-                                ),
-                                new MediaTypeRequestMatcher(
-                                        MediaType.TEXT_HTML
-                                )
+                                new LoginUrlAuthenticationEntryPoint("/login"),
+                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )
                 )
 
-
-                // =========================================
-                // JWT -> STATELESS
-                // =========================================
+                // JWT -> Stateless
                 .sessionManagement(sess ->
                         sess.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
 
-
-                // =========================================
-                // FILTER 1: XÁC THỰC JWT
-                // =========================================
+                // JWT Filter
                 .addFilterBefore(
                         jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class
                 )
 
-
-                // =========================================
-                // FILTER 2: KIỂM TRA MERCHANT BỊ KHÓA
-                // =========================================
+                // Kiểm tra Merchant bị khóa
                 .addFilterAfter(
                         merchantBlockedFilter,
                         JwtAuthFilter.class
                 );
-
 
         return http.build();
     }

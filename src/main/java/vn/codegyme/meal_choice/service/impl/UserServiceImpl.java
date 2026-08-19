@@ -194,10 +194,13 @@ public class UserServiceImpl implements UserService {
     // === Helper Methods ===
 
     private User getCurrentUser() {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
+        org.springframework.security.core.Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated()
+                || !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            throw new RuntimeException("Người dùng chưa đăng nhập");
+        }
 
         UUID userId = userDetails.getId();
 

@@ -9,24 +9,27 @@ import java.time.LocalTime;
 @Data
 public class MerchantUpdateRequest {
 
-    @NotBlank(message = "Tên nhà hàng không được để trống")
+    public interface ProfileUpdate {}
+    public interface AddressUpdate {}
+
+    @NotBlank(groups = ProfileUpdate.class, message = "Tên nhà hàng không được để trống")
     private String merchantRestaurantName;
 
-    @NotBlank(message = "Địa chỉ không được để trống")
+    @NotBlank(groups = AddressUpdate.class, message = "Địa chỉ không được để trống")
     private String merchantAddress;
 
-    @NotBlank(message = "Vui lòng chọn tỉnh/thành phố")
+    @NotBlank(groups = AddressUpdate.class, message = "Vui lòng chọn tỉnh/thành phố")
     private String provinceCode;
 
-    @NotBlank(message = "Vui lòng chọn quận/huyện")
+    @NotBlank(groups = AddressUpdate.class, message = "Vui lòng chọn quận/huyện")
     private String districtCode;
 
-    @NotBlank(message = "Vui lòng chọn phường/xã")
+    @NotBlank(groups = AddressUpdate.class, message = "Vui lòng chọn phường/xã")
     private String wardCode;
 
-    @NotNull(message = "Giờ mở cửa không được để trống")
+    @NotNull(groups = AddressUpdate.class, message = "Giờ mở cửa không được để trống")
     private LocalTime merchantOpenTime;
 
-    @NotNull(message = "Giờ đóng cửa không được để trống")
+    @NotNull(groups = AddressUpdate.class, message = "Giờ đóng cửa không được để trống")
     private LocalTime merchantCloseTime;
 }

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trang Chủ - MealChoice | Đặt Đồ Ăn Trực Tuyến</title>
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,10 +67,36 @@
                     left: direction * scrollAmount,
                     behavior: 'smooth'
                 });
+                setTimeout(updateCategorySliderNav, 320);
             }
         }
+
+        function updateCategorySliderNav() {
+            const container = document.getElementById('categoryScrollBox');
+            const prevBtn = document.getElementById('catSliderPrevBtn');
+            const nextBtn = document.getElementById('catSliderNextBtn');
+            if (container && prevBtn && nextBtn) {
+                const isOverflowing = container.scrollWidth > container.clientWidth + 5;
+                if (!isOverflowing) {
+                    // Nếu ít item, ẩn bớt nút cuộn hoặc vô hiệu hóa để không bị vướng
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
+                } else {
+                    prevBtn.style.display = 'flex';
+                    nextBtn.style.display = 'flex';
+                    prevBtn.style.opacity = container.scrollLeft <= 5 ? '0.5' : '1';
+                    prevBtn.disabled = container.scrollLeft <= 5;
+                    const isEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 5;
+                    nextBtn.style.opacity = isEnd ? '0.5' : '1';
+                    nextBtn.disabled = isEnd;
+                }
+            }
+        }
+
+        window.addEventListener('load', updateCategorySliderNav);
+        window.addEventListener('resize', updateCategorySliderNav);
+        document.getElementById('categoryScrollBox')?.addEventListener('scroll', updateCategorySliderNav);
     </script>
-    <div th:replace="~{layout/merchant-blocked-modal :: merchantBlockedModal}"></div>
 </body>
 
 </html>
