@@ -27,8 +27,6 @@ public class Food {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "food_category_mapping",
