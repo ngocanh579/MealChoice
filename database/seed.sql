@@ -2,6 +2,8 @@ USE meal_choice;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+TRUNCATE TABLE order_items;
+TRUNCATE TABLE orders;
 TRUNCATE TABLE merchant_likes;
 TRUNCATE TABLE food_likes;
 TRUNCATE TABLE food_images;
@@ -48,9 +50,9 @@ INSERT INTO addresses (id, contact_name, contact_phone, city, district, ward, st
                                                                                                                      (3, 'Trần Thị Bình', '0900000003', 'Hà Nội', 'Quận Đống Đa', 'Phường Láng Hạ', 'Số 45 Láng Hạ', 'Gửi bảo vệ tòa nhà', TRUE, '00000000-0000-0000-0000-000000000003');
 
 -- 5. Merchants
-INSERT INTO merchants (id, user_id, merchant_restaurant_name, merchant_email, merchant_phone, merchant_status, lock_reason, locked_at, reject_reason, rejected_at, is_trusted_partner) VALUES
-                                                                                                                                                                                           ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000004', 'Quán Ngon Hà Nội - Phở & Bún Chả', 'merchant1@gmail.com', '0911111111', 'APPROVED', NULL, NULL, NULL, NULL, TRUE),
-                                                                                                                                                                                           ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000005', 'Tiệm Trà & Ăn Vặt Chill', 'merchant2@gmail.com', '0911111112', 'APPROVED', NULL, NULL, NULL, NULL, FALSE);
+INSERT INTO merchants (id, user_id, merchant_restaurant_name, merchant_email, merchant_phone, merchant_status, lock_reason, locked_at, reject_reason, rejected_at, is_trusted_partner, bank_name, bank_account_number) VALUES
+                                                                                                                                                                                            ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000004', 'Quán Ngon Hà Nội - Phở & Bún Chả', 'merchant1@gmail.com', '0911111111', 'APPROVED', NULL, NULL, NULL, NULL, TRUE, 'Vietcombank', '999888777666'),
+                                                                                                                                                                                            ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000005', 'Tiệm Trà & Ăn Vặt Chill', 'merchant2@gmail.com', '0911111112', 'APPROVED', NULL, NULL, NULL, NULL, FALSE, NULL, NULL);
 
 -- 6. Merchant Addresses
 INSERT INTO merchant_addresses (id, merchant_id, merchant_address, province_code, district_code, ward_code, merchant_open_time, merchant_close_time, is_default, created_at, updated_at) VALUES
@@ -118,3 +120,20 @@ INSERT INTO food_likes (user_id, food_id) VALUES
 INSERT INTO merchant_likes (user_id, merchant_id) VALUES
                                                       ('00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001'),
                                                       ('00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000002');
+
+-- 15. Orders
+INSERT INTO orders (id, order_code, user_id, merchant_id, contact_name, contact_phone, delivery_address, note, status, payment_method, subtotal_price, shipping_fee, service_fee, discount_amount, total_amount, cancel_reason, estimated_delivery_time, created_at, updated_at) VALUES
+(1, 'MC-20260821-001', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'Nguyễn Văn Anh', '0900000002', 'Số 12 Ngõ 68 Cầu Giấy, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội', 'Cho nhiều tương ớt và quẩy giòn', 'PENDING', 'COD', 95000.00, 15000.00, 5000.00, 0.00, 115000.00, NULL, DATE_ADD(NOW(), INTERVAL 30 MINUTE), NOW(), NOW()),
+(2, 'MC-20260821-002', '00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', 'Trần Thị Bình', '0900000003', 'Số 45 Láng Hạ, Phường Láng Hạ, Quận Đống Đa, Hà Nội', 'Giao giờ hành chính', 'PREPARING', 'CARD', 100000.00, 15000.00, 5000.00, 0.00, 120000.00, NULL, DATE_ADD(NOW(), INTERVAL 20 MINUTE), DATE_SUB(NOW(), INTERVAL 15 MINUTE), NOW()),
+(3, 'MC-20260820-003', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'Nguyễn Văn Anh', '0900000002', 'Số 12 Ngõ 68 Cầu Giấy, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội', '', 'COMPLETED', 'COD', 50000.00, 15000.00, 5000.00, 0.00, 70000.00, NULL, DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_SUB(NOW(), INTERVAL 3 HOUR), DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+(4, 'MC-20260821-004', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 'Nguyễn Văn Anh', '0900000002', 'Tòa nhà Sông Đà, Phạm Hùng, Phường Mỹ Đình 1, Quận Nam Từ Liêm, Hà Nội', 'Trà ít đường, nhiều đá', 'PENDING', 'COD', 93000.00, 15000.00, 3000.00, 0.00, 111000.00, NULL, DATE_ADD(NOW(), INTERVAL 25 MINUTE), NOW(), NOW());
+
+-- 16. Order Items
+INSERT INTO order_items (id, order_id, food_id, food_name, food_image, price, quantity, subtotal, note) VALUES
+(1, 1, 1, 'Phở Bò Tái Nạm', 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43', 50000.00, 1, 50000.00, 'Không hành'),
+(2, 1, 2, 'Bún Chả Hà Nội Đặc Biệt', 'https://images.unsplash.com/photo-1569058242253-92a9c755a0ec', 45000.00, 1, 45000.00, 'Thêm bún'),
+(3, 2, 3, 'Cơm Rang Dưa Bò', 'https://images.unsplash.com/photo-1603133872878-684f208fb84b', 50000.00, 2, 100000.00, 'Nhiều dưa chua'),
+(4, 3, 1, 'Phở Bò Tái Nạm', 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43', 50000.00, 1, 50000.00, NULL),
+(5, 4, 4, 'Trà Đào Cam Sả Tươi', 'https://images.unsplash.com/photo-1556679343-c7306c1976bc', 29000.00, 2, 58000.00, '30% đường'),
+(6, 4, 6, 'Nem Rán Hà Nội (5 Chiếc)', 'https://images.unsplash.com/photo-1541544741938-0af808871cc0', 35000.00, 1, 35000.00, NULL);
+

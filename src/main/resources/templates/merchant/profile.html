@@ -105,6 +105,26 @@
                         Đã khóa
                     </span>
                 </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <label class="text-muted small fw-medium d-block mb-1">
+                        Ngân hàng nhận tiền
+                    </label>
+                    <div class="fw-semibold text-dark"
+                         th:text="${merchant.bankName != null && !merchant.bankName.isBlank() ? merchant.bankName : 'Chưa cập nhật'}">
+                        Vietcombank
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <label class="text-muted small fw-medium d-block mb-1">
+                        Số tài khoản ngân hàng
+                    </label>
+                    <div class="fw-bold text-danger font-monospace fs-6"
+                         th:text="${merchant.bankAccountNumber != null && !merchant.bankAccountNumber.isBlank() ? merchant.bankAccountNumber : 'Chưa cập nhật'}">
+                        999888777666
+                    </div>
+                </div>
             </div>
 
             <div class="pt-3 border-top text-end">
@@ -300,6 +320,34 @@
                                th:value="${merchant.merchantPhone}"
                                readonly>
                         <div class="form-text font-size-12">Số điện thoại đăng ký không thể chỉnh sửa.</div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-bank me-1 text-danger"></i>Ngân hàng nhận tiền
+                            </label>
+                            <input type="text"
+                                   class="form-control bg-light border-0"
+                                   id="editBankName"
+                                   th:value="${merchant.bankName}"
+                                   placeholder="Ví dụ: Vietcombank, MBBank...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-credit-card-2-back me-1 text-danger"></i>Số tài khoản
+                            </label>
+                            <input type="text"
+                                   class="form-control bg-light border-0 font-monospace"
+                                   id="editBankAccountNumber"
+                                   th:value="${merchant.bankAccountNumber}"
+                                   placeholder="Ví dụ: 0123456789">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-text font-size-12 text-muted">
+                                * Lưu ý: Nhập đầy đủ cả 2 ô để nhận chuyển khoản hoặc để trống cả 2 nếu quán không nhận chuyển khoản.
+                            </div>
+                        </div>
                     </div>
 
                     <div class="alert alert-light border rounded-3 mb-0 font-size-13 text-muted">
@@ -780,7 +828,12 @@
 
                 const merchantId = this.getAttribute("data-merchant-id");
                 const nameInput = document.getElementById("editRestaurantName");
+                const bankNameInput = document.getElementById("editBankName");
+                const bankAccountInput = document.getElementById("editBankAccountNumber");
+
                 const name = nameInput.value.trim();
+                const bankName = bankNameInput ? bankNameInput.value.trim() : "";
+                const bankAccountNumber = bankAccountInput ? bankAccountInput.value.trim() : "";
 
                 if (!name) {
                     showNotice(
@@ -791,16 +844,14 @@
                     return;
                 }
 
-                const originalName =
-                    nameInput.getAttribute("data-original-value") ??
-                    nameInput.defaultValue ??
-                    "";
+                const hasBankName = bankName.length > 0;
+                const hasBankAccount = bankAccountNumber.length > 0;
 
-                if (name === originalName.trim()) {
+                if ((hasBankName && !hasBankAccount) || (!hasBankName && hasBankAccount)) {
                     showNotice(
-                        "info",
-                        "Không có thay đổi",
-                        "Bạn chưa thay đổi tên nhà hàng."
+                        "danger",
+                        "Dữ liệu không hợp lệ",
+                        "Vui lòng nhập cả Tên ngân hàng và Số tài khoản hoặc để trống cả hai."
                     );
                     return;
                 }
@@ -811,7 +862,9 @@
                         {
                             method: "PUT",
                             body: JSON.stringify({
-                                merchantRestaurantName: name
+                                merchantRestaurantName: name,
+                                bankName: bankName,
+                                bankAccountNumber: bankAccountNumber
                             })
                         }
                     );

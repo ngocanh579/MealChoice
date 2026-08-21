@@ -71,6 +71,9 @@ CREATE TABLE merchants (
 
                            is_trusted_partner BOOLEAN NOT NULL DEFAULT FALSE,
 
+                           bank_name VARCHAR(100),
+                           bank_account_number VARCHAR(50),
+
                            FOREIGN KEY (user_id)
                                REFERENCES users(id)
 );
@@ -249,4 +252,46 @@ CREATE TABLE vouchers (
                           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                           FOREIGN KEY (merchant_id) REFERENCES merchants(id),
                           UNIQUE (merchant_id, voucher_code)
+);
+
+-- Orders (Đơn hàng)
+CREATE TABLE orders (
+                        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                        order_code VARCHAR(50) UNIQUE NOT NULL,
+                        user_id VARCHAR(36) NOT NULL,
+                        merchant_id VARCHAR(36) NOT NULL,
+                        contact_name VARCHAR(100) NOT NULL,
+                        contact_phone VARCHAR(20) NOT NULL,
+                        delivery_address VARCHAR(500) NOT NULL,
+                        note TEXT,
+                        status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+                        payment_method VARCHAR(30) NOT NULL DEFAULT 'COD',
+                        subtotal_price DECIMAL(12,2) NOT NULL,
+                        shipping_fee DECIMAL(12,2) NOT NULL DEFAULT 0,
+                        service_fee DECIMAL(12,2) NOT NULL DEFAULT 0,
+                        discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+                        total_amount DECIMAL(12,2) NOT NULL,
+                        cancel_reason VARCHAR(500),
+                        estimated_delivery_time DATETIME,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                        FOREIGN KEY (user_id) REFERENCES users(id),
+                        FOREIGN KEY (merchant_id) REFERENCES merchants(id)
+);
+
+-- Order Items (Chi tiết món ăn trong đơn hàng)
+CREATE TABLE order_items (
+                             id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                             order_id BIGINT NOT NULL,
+                             food_id BIGINT NOT NULL,
+                             food_name VARCHAR(150) NOT NULL,
+                             food_image VARCHAR(500),
+                             price DECIMAL(12,2) NOT NULL,
+                             quantity INT NOT NULL,
+                             subtotal DECIMAL(12,2) NOT NULL,
+                             note VARCHAR(255),
+
+                             FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                             FOREIGN KEY (food_id) REFERENCES foods(id)
 );
