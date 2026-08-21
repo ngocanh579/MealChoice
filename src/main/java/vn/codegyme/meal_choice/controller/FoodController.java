@@ -602,6 +602,22 @@ public class FoodController {
         return userRepository.findByEmail(authentication.getName()).orElse(null);
     }
 
+    @ResponseBody
+    @GetMapping("/api/foods/{id}/merchant-info")
+    public ResponseEntity<?> getFoodMerchantInfo(@PathVariable("id") Long id) {
+        Food food = foodRepository.findById(id).orElse(null);
+        if (food == null || food.getMerchant() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Merchant m = food.getMerchant();
+        return ResponseEntity.ok(Map.of(
+                "merchantId", m.getId().toString(),
+                "merchantRestaurantName", m.getMerchantRestaurantName() != null ? m.getMerchantRestaurantName() : "",
+                "bankName", m.getBankName() != null ? m.getBankName() : "",
+                "bankAccountNumber", m.getBankAccountNumber() != null ? m.getBankAccountNumber() : ""
+        ));
+    }
+
     // ==================== LIKE FOOD ====================
 
     @Transactional
