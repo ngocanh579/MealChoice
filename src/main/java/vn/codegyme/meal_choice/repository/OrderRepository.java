@@ -14,14 +14,19 @@ import java.util.UUID;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
     List<Order> findByMerchant_IdOrderByCreatedAtDesc(UUID merchantId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
     List<Order> findByMerchant_IdAndStatusOrderByCreatedAtDesc(UUID merchantId, OrderStatus status);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
     Optional<Order> findByIdAndMerchant_Id(Long id, UUID merchantId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
     Optional<Order> findByOrderCode(String orderCode);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
     List<Order> findByUser_IdOrderByCreatedAtDesc(UUID userId);
 
     long countByMerchant_IdAndStatus(UUID merchantId, OrderStatus status);

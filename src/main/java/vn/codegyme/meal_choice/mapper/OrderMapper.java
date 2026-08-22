@@ -170,22 +170,35 @@ public class OrderMapper {
      * Lấy địa chỉ cửa hàng an toàn
      */
     private String getMerchantAddress(Merchant merchant) {
-        if (merchant == null || merchant.getMerchantAddresses() == null || merchant.getMerchantAddresses().isEmpty()) {
+        if (merchant == null) {
             return "";
         }
-        return merchant.getMerchantAddresses().get(0).getMerchantAddress();
+        try {
+            if (merchant.getAddresses() == null || merchant.getAddresses().isEmpty()) {
+                return "";
+            }
+            return merchant.getAddresses().get(0).getMerchantAddress();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     /**
      * Tìm ảnh đại diện của món ăn (ưu tiên ảnh lưu trong item, fallback sang ảnh của Food)
      */
     private String resolveFoodImage(OrderItem item) {
+        if (item == null) {
+            return "";
+        }
         if (item.getFoodImage() != null && !item.getFoodImage().isBlank()) {
             return item.getFoodImage();
         }
-        Food food = item.getFood();
-        if (food != null && food.getImages() != null && !food.getImages().isEmpty()) {
-            return food.getImages().get(0).getImageUrl();
+        try {
+            Food food = item.getFood();
+            if (food != null && food.getImages() != null && !food.getImages().isEmpty()) {
+                return food.getImages().get(0).getImageUrl();
+            }
+        } catch (Exception ignored) {
         }
         return "";
     }

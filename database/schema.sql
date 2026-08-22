@@ -1,297 +1,305 @@
-DROP DATABASE IF EXISTS meal_choice;
+-- =============================================================================
+-- MEALCHOICE DATABASE SCHEMA
+-- Hệ Quản Trị Cơ Sở Dữ Liệu: MySQL 8.0+ / Aiven Cloud MySQL
+-- =============================================================================
 
-CREATE DATABASE meal_choice;
+SET FOREIGN_KEY_CHECKS = 0;
 
-USE meal_choice;
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS vouchers;
+DROP TABLE IF EXISTS merchant_likes;
+DROP TABLE IF EXISTS food_likes;
+DROP TABLE IF EXISTS food_images;
+DROP TABLE IF EXISTS food_tag_mapping;
+DROP TABLE IF EXISTS food_category_mapping;
+DROP TABLE IF EXISTS foods;
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS food_categories;
+DROP TABLE IF EXISTS merchant_addresses;
+DROP TABLE IF EXISTS merchants;
+DROP TABLE IF EXISTS addresses;
+DROP TABLE IF EXISTS refresh_tokens;
+DROP TABLE IF EXISTS activation_tokens;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS roles;
 
--- Roles
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- =============================================================================
+-- 1. BẢNG ROLES (Vai trò người dùng)
+-- =============================================================================
 CREATE TABLE roles (
-                       id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                       name VARCHAR(50) UNIQUE NOT NULL
-);
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50) UNIQUE NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Users
+-- =============================================================================
+-- 2. BẢNG USERS (Người dùng hệ thống)
+-- =============================================================================
 CREATE TABLE users (
-                       id VARCHAR(36) PRIMARY KEY,
-                       email VARCHAR(255) UNIQUE NOT NULL,
-                       password VARCHAR(60) NOT NULL,
-                       display_name VARCHAR(32) NOT NULL,
-                       phone_number VARCHAR(20) UNIQUE NOT NULL,
-                       gender ENUM('MALE', 'FEMALE', 'OTHER'),
-                       avatar_url VARCHAR(255),
-                       dob DATE,
-                       is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                       created_at DATETIME(6)
-);
+    id VARCHAR(36) PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(60) NOT NULL,
+    display_name VARCHAR(32) NOT NULL,
+    phone_number VARCHAR(20) UNIQUE NOT NULL,
+    gender VARCHAR(20) NULL,
+    avatar_url VARCHAR(255) NULL,
+    dob DATE NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME(6) NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- User Roles
+-- =============================================================================
+-- 3. BẢNG USER_ROLES (Phân quyền người dùng)
+-- =============================================================================
 CREATE TABLE user_roles (
-                            user_id VARCHAR(36) NOT NULL,
-                            role_id BIGINT NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    role_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_roles_role FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                            PRIMARY KEY (user_id, role_id),
+-- =============================================================================
+-- 4. BẢNG ACTIVATION_TOKENS (Token kích hoạt tài khoản qua email)
+-- =============================================================================
+CREATE TABLE activation_tokens (
+    id VARCHAR(36) PRIMARY KEY,
+    token VARCHAR(36) UNIQUE NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    expiry_date DATETIME(6) NOT NULL,
+    CONSTRAINT fk_activation_tokens_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                            FOREIGN KEY (user_id)
-                                REFERENCES users(id),
+-- =============================================================================
+-- 5. BẢNG REFRESH_TOKENS (Token làm mới phiên đăng nhập JWT)
+-- =============================================================================
+CREATE TABLE refresh_tokens (
+    id VARCHAR(36) PRIMARY KEY,
+    token VARCHAR(500) UNIQUE NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    expiry_date DATETIME(6) NOT NULL,
+    CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                            FOREIGN KEY (role_id)
-                                REFERENCES roles(id)
-);
-
--- Addresses (Địa chỉ khách hàng)
+-- =============================================================================
+-- 6. BẢNG ADDRESSES (Sổ địa chỉ nhận hàng của User)
+-- =============================================================================
 CREATE TABLE addresses (
-                           id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                           contact_name VARCHAR(100) NOT NULL,
-                           contact_phone VARCHAR(20) NOT NULL,
-                           city VARCHAR(100) NOT NULL,
-                           district VARCHAR(100) NOT NULL,
-                           ward VARCHAR(100) NOT NULL,
-                           street VARCHAR(255) NOT NULL,
-                           note VARCHAR(500),
-                           is_default BOOLEAN NOT NULL DEFAULT FALSE,
-                           user_id VARCHAR(36) NOT NULL,
-                           FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    contact_name VARCHAR(100) NOT NULL,
+    contact_phone VARCHAR(20) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    district VARCHAR(100) NOT NULL,
+    ward VARCHAR(100) NOT NULL,
+    street VARCHAR(255) NOT NULL,
+    note VARCHAR(500) NULL,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    user_id VARCHAR(36) NOT NULL,
+    CONSTRAINT fk_addresses_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Merchants
+-- =============================================================================
+-- 7. BẢNG MERCHANTS (Thông tin Cửa hàng / Đối tác Merchant)
+-- =============================================================================
 CREATE TABLE merchants (
-                           id VARCHAR(36) PRIMARY KEY,
-                           user_id VARCHAR(36) UNIQUE,
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) UNIQUE NULL,
+    merchant_restaurant_name VARCHAR(150) NOT NULL,
+    merchant_email VARCHAR(255) UNIQUE NOT NULL,
+    merchant_phone VARCHAR(20) UNIQUE NOT NULL,
+    merchant_status VARCHAR(30) DEFAULT 'PENDING',
+    lock_reason VARCHAR(500) NULL,
+    locked_at DATETIME(6) NULL,
+    reject_reason VARCHAR(500) NULL,
+    rejected_at DATETIME(6) NULL,
+    is_trusted_partner BOOLEAN NOT NULL DEFAULT FALSE,
+    bank_name VARCHAR(100) NULL,
+    bank_account_number VARCHAR(50) NULL,
+    CONSTRAINT fk_merchants_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                           merchant_restaurant_name VARCHAR(150) NOT NULL,
-                           merchant_email VARCHAR(255) UNIQUE NOT NULL,
-                           merchant_phone VARCHAR(20) UNIQUE NOT NULL,
-
-                           merchant_status VARCHAR(30) DEFAULT 'PENDING',
-
-                           lock_reason VARCHAR(500),
-                           locked_at DATETIME(6),
-                           reject_reason VARCHAR(500),
-                           rejected_at DATETIME(6),
-
-                           is_trusted_partner BOOLEAN NOT NULL DEFAULT FALSE,
-
-                           bank_name VARCHAR(100),
-                           bank_account_number VARCHAR(50),
-
-                           FOREIGN KEY (user_id)
-                               REFERENCES users(id)
-);
-
--- Merchant Addresses
+-- =============================================================================
+-- 8. BẢNG MERCHANT_ADDRESSES (Chi nhánh / Địa chỉ của Cửa hàng)
+-- =============================================================================
 CREATE TABLE merchant_addresses (
-                                    id VARCHAR(36) PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
+    merchant_id VARCHAR(36) NOT NULL,
+    merchant_address VARCHAR(255) NOT NULL,
+    province_code VARCHAR(20) NOT NULL,
+    district_code VARCHAR(20) NOT NULL,
+    ward_code VARCHAR(20) NOT NULL,
+    merchant_open_time TIME NULL,
+    merchant_close_time TIME NULL,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_merchant_addresses_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                                    merchant_id VARCHAR(36) NOT NULL,
-                                    merchant_address VARCHAR(255) NOT NULL,
-
-                                    province_code VARCHAR(20) NOT NULL,
-                                    district_code VARCHAR(20) NOT NULL,
-                                    ward_code VARCHAR(20) NOT NULL,
-
-                                    merchant_open_time TIME NULL,
-                                    merchant_close_time TIME NULL,
-
-                                    is_default BOOLEAN NOT NULL DEFAULT FALSE,
-
-                                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                                        ON UPDATE CURRENT_TIMESTAMP,
-
-                                    FOREIGN KEY (merchant_id)
-                                        REFERENCES merchants(id)
-);
-
--- Food Categories
+-- =============================================================================
+-- 9. BẢNG FOOD_CATEGORIES (Danh mục món ăn)
+-- =============================================================================
 CREATE TABLE food_categories (
-                                 id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    category_name VARCHAR(100) NOT NULL UNIQUE,
+    category_description VARCHAR(255) NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                                 category_name VARCHAR(100) NOT NULL UNIQUE,
-                                 category_description VARCHAR(255),
-
-                                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                                     ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Tags
+-- =============================================================================
+-- 10. BẢNG TAGS (Thẻ phân loại / Nhãn món ăn)
+-- =============================================================================
 CREATE TABLE tags (
-                      id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    tag_name VARCHAR(100) NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                      tag_name VARCHAR(100) NOT NULL UNIQUE,
-
-                      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                          ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Foods
+-- =============================================================================
+-- 11. BẢNG FOODS (Món ăn / Sản phẩm)
+-- =============================================================================
 CREATE TABLE foods (
-                       id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    merchant_id VARCHAR(36) NOT NULL,
+    merchant_address_id VARCHAR(36) NOT NULL,
+    food_name VARCHAR(150) NOT NULL,
+    preparation_time INT NULL,
+    food_note TEXT NULL,
+    price DECIMAL(12,2) NOT NULL,
+    discount_price DECIMAL(12,2) NULL,
+    service_fee DECIMAL(12,2) DEFAULT 0,
+    views INT NOT NULL DEFAULT 0,
+    order_count INT NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_recommended BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL,
+    CONSTRAINT fk_foods_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id) ON DELETE CASCADE,
+    CONSTRAINT fk_foods_merchant_address FOREIGN KEY (merchant_address_id) REFERENCES merchant_addresses(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                       merchant_id VARCHAR(36) NOT NULL,
-                       merchant_address_id VARCHAR(36) NOT NULL,
-
-                       food_name VARCHAR(150) NOT NULL,
-                       preparation_time INT,
-                       food_note TEXT,
-
-                       price DECIMAL(12,2) NOT NULL,
-                       discount_price DECIMAL(12,2),
-                       service_fee DECIMAL(12,2) DEFAULT 0,
-
-                       views INT NOT NULL DEFAULT 0,
-                       order_count INT NOT NULL DEFAULT 0,
-
-                       is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                       is_recommended BOOLEAN NOT NULL DEFAULT FALSE,
-
-                       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                           ON UPDATE CURRENT_TIMESTAMP,
-                       deleted_at DATETIME NULL,
-
-                       FOREIGN KEY (merchant_id)
-                           REFERENCES merchants(id),
-
-                       FOREIGN KEY (merchant_address_id)
-                           REFERENCES merchant_addresses(id)
-);
-
--- Food Category Mapping
+-- =============================================================================
+-- 12. BẢNG FOOD_CATEGORY_MAPPING (Quan hệ nhiều - nhiều Món ăn & Danh mục)
+-- =============================================================================
 CREATE TABLE food_category_mapping (
-                                       food_id BIGINT NOT NULL,
-                                       food_category_id BIGINT NOT NULL,
+    food_id BIGINT NOT NULL,
+    food_category_id BIGINT NOT NULL,
+    PRIMARY KEY (food_id, food_category_id),
+    CONSTRAINT fk_fcm_food FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE,
+    CONSTRAINT fk_fcm_category FOREIGN KEY (food_category_id) REFERENCES food_categories(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                                       PRIMARY KEY (food_id, food_category_id),
-
-                                       FOREIGN KEY (food_id)
-                                           REFERENCES foods(id)
-                                           ON DELETE CASCADE,
-
-                                       FOREIGN KEY (food_category_id)
-                                           REFERENCES food_categories(id)
-                                           ON DELETE CASCADE
-);
-
--- Food Tag Mapping
+-- =============================================================================
+-- 13. BẢNG FOOD_TAG_MAPPING (Quan hệ nhiều - nhiều Món ăn & Thẻ Tag)
+-- =============================================================================
 CREATE TABLE food_tag_mapping (
-                                  food_id BIGINT NOT NULL,
-                                  tag_id BIGINT NOT NULL,
+    food_id BIGINT NOT NULL,
+    tag_id BIGINT NOT NULL,
+    PRIMARY KEY (food_id, tag_id),
+    CONSTRAINT fk_ftm_food FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ftm_tag FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                                  PRIMARY KEY (food_id, tag_id),
-
-                                  FOREIGN KEY (food_id)
-                                      REFERENCES foods(id)
-                                      ON DELETE CASCADE,
-
-                                  FOREIGN KEY (tag_id)
-                                      REFERENCES tags(id)
-                                      ON DELETE CASCADE
-);
-
--- Food Images
+-- =============================================================================
+-- 14. BẢNG FOOD_IMAGES (Bộ sưu tập hình ảnh món ăn)
+-- =============================================================================
 CREATE TABLE food_images (
-                             id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    food_id BIGINT NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_food_images_food FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                             food_id BIGINT NOT NULL,
-                             image_url VARCHAR(500) NOT NULL,
-                             is_primary BOOLEAN NOT NULL DEFAULT FALSE,
-
-                             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-                             FOREIGN KEY (food_id)
-                                 REFERENCES foods(id)
-                                 ON DELETE CASCADE
-);
-
--- Food Likes
+-- =============================================================================
+-- 15. BẢNG FOOD_LIKES (Người dùng yêu thích món ăn)
+-- =============================================================================
 CREATE TABLE food_likes (
-                            user_id VARCHAR(36) NOT NULL,
-                            food_id BIGINT NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    food_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, food_id),
+    CONSTRAINT fk_food_likes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_food_likes_food FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                            PRIMARY KEY (user_id, food_id),
-
-                            FOREIGN KEY (user_id)
-                                REFERENCES users(id)
-                                ON DELETE CASCADE,
-
-                            FOREIGN KEY (food_id)
-                                REFERENCES foods(id)
-                                ON DELETE CASCADE
-);
-
--- Merchant Likes
+-- =============================================================================
+-- 16. BẢNG MERCHANT_LIKES (Người dùng yêu thích quán ăn)
+-- =============================================================================
 CREATE TABLE merchant_likes (
-                                user_id VARCHAR(36) NOT NULL,
-                                merchant_id VARCHAR(36) NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    merchant_id VARCHAR(36) NOT NULL,
+    PRIMARY KEY (user_id, merchant_id),
+    CONSTRAINT fk_merchant_likes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_merchant_likes_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                                PRIMARY KEY (user_id, merchant_id),
-
-                                FOREIGN KEY (user_id)
-                                    REFERENCES users(id)
-                                    ON DELETE CASCADE,
-
-                                FOREIGN KEY (merchant_id)
-                                    REFERENCES merchants(id)
-                                    ON DELETE CASCADE
-);
--- mã giảm giá
+-- =============================================================================
+-- 17. BẢNG VOUCHERS (Mã giảm giá khuyến mãi)
+-- =============================================================================
 CREATE TABLE vouchers (
-                          id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                          merchant_id VARCHAR(36) NOT NULL,
-                          voucher_code VARCHAR(50) NOT NULL,
-                          discount_type ENUM('PERCENT', 'FIXED') NOT NULL,
-                          discount_value DECIMAL(12,2) NOT NULL,
-                          start_at DATETIME,
-                          end_at DATETIME,
-                          usage_limit INT,
-                          used_count INT NOT NULL DEFAULT 0,
-                          is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                          FOREIGN KEY (merchant_id) REFERENCES merchants(id),
-                          UNIQUE (merchant_id, voucher_code)
-);
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    merchant_id VARCHAR(36) NOT NULL,
+    voucher_code VARCHAR(50) NOT NULL,
+    discount_type ENUM('PERCENT', 'FIXED') NOT NULL,
+    discount_value DECIMAL(12,2) NOT NULL,
+    start_at DATETIME NULL,
+    end_at DATETIME NULL,
+    usage_limit INT NULL,
+    used_count INT NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_vouchers_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id) ON DELETE CASCADE,
+    UNIQUE (merchant_id, voucher_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Orders (Đơn hàng)
+-- =============================================================================
+-- 18. BẢNG ORDERS (Đơn đặt hàng)
+-- =============================================================================
 CREATE TABLE orders (
-                        id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                        order_code VARCHAR(50) UNIQUE NOT NULL,
-                        user_id VARCHAR(36) NOT NULL,
-                        merchant_id VARCHAR(36) NOT NULL,
-                        contact_name VARCHAR(100) NOT NULL,
-                        contact_phone VARCHAR(20) NOT NULL,
-                        delivery_address VARCHAR(500) NOT NULL,
-                        note TEXT,
-                        status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
-                        payment_method VARCHAR(30) NOT NULL DEFAULT 'COD',
-                        subtotal_price DECIMAL(12,2) NOT NULL,
-                        shipping_fee DECIMAL(12,2) NOT NULL DEFAULT 0,
-                        service_fee DECIMAL(12,2) NOT NULL DEFAULT 0,
-                        discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
-                        total_amount DECIMAL(12,2) NOT NULL,
-                        cancel_reason VARCHAR(500),
-                        estimated_delivery_time DATETIME,
-                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_code VARCHAR(50) UNIQUE NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    merchant_id VARCHAR(36) NOT NULL,
+    contact_name VARCHAR(100) NOT NULL,
+    contact_phone VARCHAR(20) NOT NULL,
+    delivery_address VARCHAR(500) NOT NULL,
+    note TEXT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    payment_method VARCHAR(30) NOT NULL DEFAULT 'COD',
+    subtotal_price DECIMAL(12,2) NOT NULL,
+    shipping_fee DECIMAL(12,2) NOT NULL DEFAULT 0,
+    service_fee DECIMAL(12,2) NOT NULL DEFAULT 0,
+    discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    total_amount DECIMAL(12,2) NOT NULL,
+    cancel_reason VARCHAR(500) NULL,
+    estimated_delivery_time DATETIME NULL,
+    created_at DATETIME(6) NULL,
+    updated_at DATETIME(6) NULL,
+    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_orders_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                        FOREIGN KEY (user_id) REFERENCES users(id),
-                        FOREIGN KEY (merchant_id) REFERENCES merchants(id)
-);
-
--- Order Items (Chi tiết món ăn trong đơn hàng)
+-- =============================================================================
+-- 19. BẢNG ORDER_ITEMS (Chi tiết từng món ăn trong đơn hàng)
+-- =============================================================================
 CREATE TABLE order_items (
-                             id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                             order_id BIGINT NOT NULL,
-                             food_id BIGINT NOT NULL,
-                             food_name VARCHAR(150) NOT NULL,
-                             food_image VARCHAR(500),
-                             price DECIMAL(12,2) NOT NULL,
-                             quantity INT NOT NULL,
-                             subtotal DECIMAL(12,2) NOT NULL,
-                             note VARCHAR(255),
-
-                             FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-                             FOREIGN KEY (food_id) REFERENCES foods(id)
-);
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_id BIGINT NOT NULL,
+    food_id BIGINT NOT NULL,
+    food_name VARCHAR(150) NOT NULL,
+    food_image VARCHAR(500) NULL,
+    price DECIMAL(12,2) NOT NULL,
+    quantity INT NOT NULL,
+    subtotal DECIMAL(12,2) NOT NULL,
+    note VARCHAR(255) NULL,
+    CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    CONSTRAINT fk_order_items_food FOREIGN KEY (food_id) REFERENCES foods(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

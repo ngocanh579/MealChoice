@@ -16,16 +16,70 @@ function formatCurrency(val) {
     return new Intl.NumberFormat('vi-VN').format(Math.round(val)) + ' đ';
 }
 
-// 1. CHỌN ĐỊA CHỈ
-function selectAddress(cardEl) {
-    document.querySelectorAll('.address-card').forEach(c => {
-        c.classList.remove('selected');
+let currentSelectedAddress = null;
+
+// 1. CHỌN ĐỊA CHỈ TRONG MODAL
+function selectModalAddress(cardEl) {
+    document.querySelectorAll('.address-modal-card').forEach(c => {
+        c.classList.remove('selected', 'border-danger', 'bg-danger-subtle');
+        c.classList.add('border-light-subtle', 'bg-white');
         const radio = c.querySelector('input[type="radio"]');
         if (radio) radio.checked = false;
     });
-    cardEl.classList.add('selected');
+    cardEl.classList.add('selected', 'border-danger', 'bg-danger-subtle');
+    cardEl.classList.remove('border-light-subtle', 'bg-white');
     const r = cardEl.querySelector('input[type="radio"]');
     if (r) r.checked = true;
+}
+
+// Xác nhận chọn địa chỉ từ modal
+function confirmAddressSelection() {
+    const selectedModalCard = document.querySelector('.address-modal-card.selected');
+    if (!selectedModalCard) {
+        alert('Vui lòng chọn một địa chỉ nhận hàng!');
+        return;
+    }
+
+    const id = selectedModalCard.getAttribute('data-id');
+    const name = selectedModalCard.getAttribute('data-name') || '';
+    const phone = selectedModalCard.getAttribute('data-phone') || '';
+    const address = selectedModalCard.getAttribute('data-address') || '';
+    const note = selectedModalCard.getAttribute('data-note') || '';
+    const isDefault = selectedModalCard.getAttribute('data-default') === 'true';
+
+    currentSelectedAddress = { id, name, phone, address, note, isDefault };
+
+    const nameEl = document.getElementById('selectedContactName');
+    if (nameEl) nameEl.innerText = name;
+
+    const phoneEl = document.getElementById('selectedContactPhone');
+    if (phoneEl) phoneEl.innerText = phone;
+
+    const addrEl = document.getElementById('selectedFullAddress');
+    if (addrEl) addrEl.innerText = address;
+
+    const defaultBadge = document.getElementById('selectedDefaultBadge');
+    if (defaultBadge) {
+        defaultBadge.style.display = isDefault ? 'inline-block' : 'none';
+    }
+
+    const noteBox = document.getElementById('selectedNoteContainer');
+    const noteText = document.getElementById('selectedNoteText');
+    if (noteBox && noteText) {
+        if (note && note.trim().length > 0) {
+            noteText.innerText = note;
+            noteBox.style.display = 'block';
+        } else {
+            noteBox.style.display = 'none';
+        }
+    }
+
+    // Đóng modal chọn địa chỉ
+    const modalEl = document.getElementById('chooseAddressModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+    }
 }
 
 // 2. CHỌN PHƯƠNG THỨC THANH TOÁN
@@ -224,6 +278,18 @@ function updatePriceSummary() {
 document.addEventListener('DOMContentLoaded', () => {
     loadCheckoutCart();
 
+    // Khởi tạo hiển thị địa chỉ đang chọn từ danh sách modal
+    const initialSelectedCard = document.querySelector('.address-modal-card.selected') || document.querySelector('.address-modal-card');
+    if (initialSelectedCard) {
+        const id = initialSelectedCard.getAttribute('data-id');
+        const name = initialSelectedCard.getAttribute('data-name') || '';
+        const phone = initialSelectedCard.getAttribute('data-phone') || '';
+        const address = initialSelectedCard.getAttribute('data-address') || '';
+        const note = initialSelectedCard.getAttribute('data-note') || '';
+        const isDefault = initialSelectedCard.getAttribute('data-default') === 'true';
+        currentSelectedAddress = { id, name, phone, address, note, isDefault };
+    }
+
     // 4. ÁP DỤNG VOUCHER
     document.getElementById('btnApplyVoucher')?.addEventListener('click', () => {
         const codeInput = document.getElementById('voucherInput');
@@ -302,48 +368,74 @@ document.addEventListener('DOMContentLoaded', () => {
         const ward = document.getElementById('modalWard')?.value.trim();
         const street = document.getElementById('modalStreet')?.value.trim();
         const note = document.getElementById('modalNote')?.value.trim();
+        const isDefault = document.getElementById('modalIsDefault')?.checked ?? true;
 
         if (!contactName || !contactPhone || !city || !district || !ward || !street) {
             alert('Vui lòng điền đầy đủ các thông tin bắt buộc (*)');
             return;
         }
 
+        const phoneRegex = /^(0|\+84)[0-9]{9,10}$/;
+        if (!phoneRegex.test(contactPhone)) {
+            alert('Số điện thoại không hợp lệ (ví dụ: 0987654321 hoặc +84987654321)');
+            return;
+        }
+
+        const saveBtn = document.getElementById('btnSaveAddress');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang lưu...';
+        }
+
         try {
-            const response = await fetch('/api/user/address', {
+            const fetchFn = (typeof fetchWithAuth === 'function') ? fetchWithAuth : fetch;
+            const response = await fetchFn('/api/user/address', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(typeof getAuthHeaders === 'function' ? getAuthHeaders() : {})
                 },
                 body: JSON.stringify({
-                    contactName, contactPhone, city, district, ward, street, note, isDefault: true
+                    contactName, contactPhone, city, district, ward, street, note, isDefault
                 })
             });
 
             if (response.ok) {
-                alert('Thêm địa chỉ mới thành công!');
+                // Đóng modal và tải lại trang để nạp danh sách địa chỉ mới
+                const modalEl = document.getElementById('newAddressModal');
+                if (modalEl && typeof bootstrap !== 'undefined') {
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                }
                 location.reload();
             } else {
                 const err = await response.json();
                 alert(err.message || 'Không thể lưu địa chỉ');
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = 'Lưu địa chỉ';
+                }
             }
         } catch (e) {
             console.error('Lỗi lưu địa chỉ:', e);
             alert('Đã xảy ra lỗi kết nối');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = 'Lưu địa chỉ';
+            }
         }
     });
 
     // 6. XỬ LÝ ĐẶT HÀNG (PLACE ORDER)
     document.getElementById('btnPlaceOrder')?.addEventListener('click', async () => {
-        const selectedAddressCard = document.querySelector('.address-card.selected');
-        if (!selectedAddressCard) {
+        if (!currentSelectedAddress || !currentSelectedAddress.address) {
             alert('Vui lòng chọn hoặc thêm địa chỉ giao hàng trước khi đặt món!');
             return;
         }
 
-        const contactName = selectedAddressCard.getAttribute('data-name');
-        const contactPhone = selectedAddressCard.getAttribute('data-phone');
-        const deliveryAddress = selectedAddressCard.getAttribute('data-address');
+        const contactName = currentSelectedAddress.name;
+        const contactPhone = currentSelectedAddress.phone;
+        const deliveryAddress = currentSelectedAddress.address;
         const note = document.getElementById('orderNoteInput')?.value.trim() || '';
 
         const cart = (typeof getGlobalCart === 'function') ? getGlobalCart() : [];
@@ -376,7 +468,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch('/api/checkout/place-order', {
+            const fetchFn = (typeof fetchWithAuth === 'function') ? fetchWithAuth : fetch;
+            const response = await fetchFn('/api/checkout/place-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
