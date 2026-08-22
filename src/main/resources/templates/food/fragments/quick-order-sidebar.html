@@ -237,6 +237,11 @@
                 btnCheckout.addEventListener('click', () => {
                     if (drawerCart.length === 0) return;
                     
+                    // Đồng bộ drawerCart vào giỏ hàng toàn cục
+                    if (typeof saveGlobalCart === 'function') {
+                        saveGlobalCart(drawerCart);
+                    }
+                    
                     // Đóng offcanvas
                     const offcanvasEl = document.getElementById('quickOrderOffcanvas');
                     if (offcanvasEl) {
@@ -244,7 +249,8 @@
                         bsOffcanvas.hide();
                     }
                     
-                    alert('Chức năng thanh toán đang được phát triển!');
+                    // Chuyển hướng sang trang thanh toán
+                    window.location.href = '/checkout';
                 });
             }
         });
