@@ -43,7 +43,8 @@
                     <div th:each="imgUrl, iterStat : ${foodImagesList}" 
                          th:class="${iterStat.first} ? 'ratio ratio-1x1 rounded-3 overflow-hidden border border-2 border-danger cursor-pointer thumb-img-container' : 'ratio ratio-1x1 rounded-3 overflow-hidden border border-2 border-light cursor-pointer thumb-img-container'"
                          style="width: 60px; height: 60px; flex-shrink: 0;" 
-                         th:onclick="changeMainImage(this, [[${imgUrl}]])">
+                         th:data-img-url="${imgUrl}"
+                         onclick="changeMainImage(this, this.dataset.imgUrl)">
                         <img th:src="${imgUrl}" class="w-100 h-100 object-fit-cover" th:alt="'Ảnh chi tiết ' + ${iterStat.count}">
                     </div>
                 </div>

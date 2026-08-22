@@ -96,6 +96,7 @@ public class SecurityConfig {
                         // API thông tin Merchant public
                         .requestMatchers(
                                 HttpMethod.GET,
+                                "/api/merchant/*",
                                 "/api/merchants/**"
                         ).permitAll()
 

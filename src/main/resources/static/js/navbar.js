@@ -561,9 +561,7 @@ document.addEventListener("DOMContentLoaded", () => {
             e.stopPropagation();
 
             if (getGlobalCart().length) {
-                alert(
-                    "Chức năng thanh toán đang được phát triển!"
-                );
+                window.location.href = "/checkout";
             }
         });
 });

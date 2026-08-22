@@ -31,6 +31,7 @@ import vn.codegyme.meal_choice.service.FoodService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -600,6 +601,22 @@ public class FoodController {
             return userRepository.findById(userDetails.getId()).orElse(null);
         }
         return userRepository.findByEmail(authentication.getName()).orElse(null);
+    }
+
+    @ResponseBody
+    @GetMapping("/api/foods/{id}/merchant-info")
+    public ResponseEntity<?> getFoodMerchantInfo(@PathVariable("id") Long id) {
+        Food food = foodRepository.findById(id).orElse(null);
+        if (food == null || food.getMerchant() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Merchant m = food.getMerchant();
+        return ResponseEntity.ok(Map.of(
+                "merchantId", m.getId().toString(),
+                "merchantRestaurantName", m.getMerchantRestaurantName() != null ? m.getMerchantRestaurantName() : "",
+                "bankName", m.getBankName() != null ? m.getBankName() : "",
+                "bankAccountNumber", m.getBankAccountNumber() != null ? m.getBankAccountNumber() : ""
+        ));
     }
 
     // ==================== LIKE FOOD ====================

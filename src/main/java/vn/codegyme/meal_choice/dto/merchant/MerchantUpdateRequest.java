@@ -15,6 +15,10 @@ public class MerchantUpdateRequest {
     @NotBlank(groups = ProfileUpdate.class, message = "Tên nhà hàng không được để trống")
     private String merchantRestaurantName;
 
+    private String bankName;
+
+    private String bankAccountNumber;
+
     @NotBlank(groups = AddressUpdate.class, message = "Địa chỉ không được để trống")
     private String merchantAddress;
 

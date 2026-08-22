@@ -36,6 +36,16 @@
                 <span class="merchant-sidebar-label">Danh sách món ăn</span>
             </a>
 
+            <!-- Quản lý đơn hàng -->
+            <a href="/merchant/orders"
+               class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center justify-content-between gap-2"
+               th:classappend="${activeMenu == 'orders'} ? ' active bg-danger text-white fw-bold' : ' hover-bg-light'">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-receipt merchant-sidebar-icon fs-5"></i>
+                    <span class="merchant-sidebar-label">Quản lý đơn hàng</span>
+                </div>
+            </a>
+
             <!-- Thông tin Merchant -->
             <a href="/merchant/profile"
                class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center gap-3"

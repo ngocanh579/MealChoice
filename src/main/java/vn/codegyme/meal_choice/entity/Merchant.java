@@ -55,6 +55,12 @@ public class Merchant {
     )
     private MerchantStatus merchantStatus;
 
+    @Column(name = "bank_name", length = 100)
+    private String bankName;
+
+    @Column(name = "bank_account_number", length = 50)
+    private String bankAccountNumber;
+
     // ===== Lock / Reject =====
 
     @Column(name = "lock_reason", length = 500)

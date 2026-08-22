@@ -29,18 +29,32 @@ public class MerchantService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
-        @Transactional
-        public void updateMerchantProfile(UUID merchantId, MerchantUpdateRequest request) {
+    @Transactional
+    public void updateMerchantProfile(UUID merchantId, MerchantUpdateRequest request) {
         Merchant merchant = merchantRepository.findById(merchantId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Merchant"));
 
         if (request.getMerchantRestaurantName() != null
                 && !request.getMerchantRestaurantName().trim().isEmpty()) {
-                merchant.setMerchantRestaurantName(request.getMerchantRestaurantName().trim());
+            merchant.setMerchantRestaurantName(request.getMerchantRestaurantName().trim());
         }
 
-        merchantRepository.save(merchant);
+        String bankName = request.getBankName() != null ? request.getBankName().trim() : null;
+        String bankAccountNumber = request.getBankAccountNumber() != null ? request.getBankAccountNumber().trim() : null;
+
+        boolean hasBankName = bankName != null && !bankName.isEmpty();
+        boolean hasBankAccount = bankAccountNumber != null && !bankAccountNumber.isEmpty();
+
+        // Ràng buộc: Hoặc cả 2 cùng có, hoặc cả 2 cùng trống
+        if ((hasBankName && !hasBankAccount) || (!hasBankName && hasBankAccount)) {
+            throw new IllegalArgumentException("Vui lòng nhập đầy đủ cả Tên ngân hàng và Số tài khoản hoặc để trống cả hai.");
         }
+
+        merchant.setBankName(hasBankName ? bankName : null);
+        merchant.setBankAccountNumber(hasBankAccount ? bankAccountNumber : null);
+
+        merchantRepository.save(merchant);
+    }
 
     @Transactional
     public void registerMerchant(
@@ -351,6 +365,12 @@ public class MerchantService {
 
         response.setMerchantStatus(
                 merchant.getMerchantStatus());
+
+        response.setBankName(
+                merchant.getBankName());
+
+        response.setBankAccountNumber(
+                merchant.getBankAccountNumber());
 
         List<MerchantAddressResponse> addressResponses =
                 merchantAddressRepository

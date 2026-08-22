@@ -10,10 +10,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
+import vn.codegyme.meal_choice.dto.order.OrderResponseDTO;
 import vn.codegyme.meal_choice.entity.Address;
 import vn.codegyme.meal_choice.entity.Food;
 import vn.codegyme.meal_choice.entity.FoodCategory;
 import vn.codegyme.meal_choice.entity.Merchant;
+import vn.codegyme.meal_choice.entity.OrderStatus;
+import vn.codegyme.meal_choice.entity.PaymentMethod;
 import vn.codegyme.meal_choice.entity.User;
 import vn.codegyme.meal_choice.repository.AddressRepository;
 import vn.codegyme.meal_choice.repository.FoodCategoryRepository;
@@ -23,6 +27,8 @@ import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.security.CustomUserDetails;
 import vn.codegyme.meal_choice.service.AuthService;
 import vn.codegyme.meal_choice.service.FoodService;
+import vn.codegyme.meal_choice.service.MerchantOrderService;
+import vn.codegyme.meal_choice.service.UserOrderService;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -43,6 +49,8 @@ public class PageController {
     private final AddressRepository addressRepository;
     private final AuthService authService;
     private final FoodService foodService;
+    private final MerchantOrderService merchantOrderService;
+    private final UserOrderService userOrderService;
 
     // Lấy danh sách category
     private List<FoodCategory> getCategories() {
@@ -665,6 +673,133 @@ public class PageController {
 
         // Nếu tài khoản chưa phải là Merchant -> Chuyển hướng đến trang đăng ký
         return "redirect:/merchant/register";
+    }
+
+    // ==================== CHECKOUT & USER ORDERS ====================
+
+    // Trang thanh toán đơn hàng (Checkout)
+    @GetMapping("/checkout")
+    public String checkoutPage(Authentication authentication, Model model) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            return "redirect:/login?redirect=/checkout";
+        }
+
+        User user = userRepository.findById(userDetails.getId()).orElse(null);
+        if (user == null) {
+            return "redirect:/login?redirect=/checkout";
+        }
+
+        List<Address> addresses = addressRepository.findByUserId(user.getId());
+        model.addAttribute("user", user);
+        model.addAttribute("addresses", addresses);
+        model.addAttribute("paymentMethods", PaymentMethod.values());
+
+        return "checkout/checkout";
+    }
+
+    // Trang đặt hàng thành công
+    @GetMapping("/checkout/success")
+    public String checkoutSuccess(
+            @RequestParam(name = "orderCode", required = false) String orderCode,
+            Model model) {
+
+        if (orderCode != null && !orderCode.isBlank()) {
+            try {
+                OrderResponseDTO order = userOrderService.getOrderDetailByCode(orderCode);
+                model.addAttribute("order", order);
+            } catch (Exception e) {
+                log.warn("Không tìm thấy đơn hàng mã {}: {}", orderCode, e.getMessage());
+            }
+        }
+
+        return "checkout/success";
+    }
+
+    // Trang lịch sử đơn hàng của User
+    @GetMapping("/user/orders")
+    public String userOrdersPage(Authentication authentication, Model model) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            return "redirect:/login";
+        }
+
+        User user = userRepository.findById(userDetails.getId()).orElse(null);
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        List<OrderResponseDTO> orders = userOrderService.getUserOrders(user.getId());
+        model.addAttribute("user", user);
+        model.addAttribute("orders", orders);
+
+        return "user/orders";
+    }
+
+    // ==================== MERCHANT ORDERS ====================
+
+    // Trang danh sách đơn hàng của Merchant
+    @GetMapping("/merchant/orders")
+    public String merchantOrdersPage(
+            @RequestParam(name = "status", required = false) OrderStatus status,
+            @RequestParam(name = "search", required = false) String search,
+            Authentication authentication,
+            Model model) {
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            return "redirect:/login";
+        }
+
+        Merchant merchant = merchantRepository.findByUser_Id(userDetails.getId()).orElse(null);
+        if (merchant == null) {
+            return "redirect:/merchant/register";
+        }
+
+        List<OrderResponseDTO> orders = merchantOrderService.getMerchantOrders(merchant.getId(), status, search);
+        
+        long pendingCount = merchantOrderService.countOrdersByStatus(merchant.getId(), OrderStatus.PENDING);
+        long preparingCount = merchantOrderService.countOrdersByStatus(merchant.getId(), OrderStatus.PREPARING);
+        long deliveringCount = merchantOrderService.countOrdersByStatus(merchant.getId(), OrderStatus.DELIVERING);
+        long completedCount = merchantOrderService.countOrdersByStatus(merchant.getId(), OrderStatus.COMPLETED);
+        long cancelledCount = merchantOrderService.countOrdersByStatus(merchant.getId(), OrderStatus.CANCELLED);
+
+        model.addAttribute("merchant", merchant);
+        model.addAttribute("orders", orders);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("searchKeyword", search);
+        model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("preparingCount", preparingCount);
+        model.addAttribute("deliveringCount", deliveringCount);
+        model.addAttribute("completedCount", completedCount);
+        model.addAttribute("cancelledCount", cancelledCount);
+        model.addAttribute("orderStatuses", OrderStatus.values());
+
+        return "merchant/orders/list";
+    }
+
+    // Trang chi tiết đơn hàng của Merchant
+    @GetMapping("/merchant/orders/{id}")
+    public String merchantOrderDetailPage(
+            @PathVariable("id") Long id,
+            Authentication authentication,
+            Model model) {
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            return "redirect:/login";
+        }
+
+        Merchant merchant = merchantRepository.findByUser_Id(userDetails.getId()).orElse(null);
+        if (merchant == null) {
+            return "redirect:/merchant/register";
+        }
+
+        OrderResponseDTO order = merchantOrderService.getMerchantOrderDetail(merchant.getId(), id);
+        model.addAttribute("merchant", merchant);
+        model.addAttribute("order", order);
+
+        return "merchant/orders/detail";
     }
 }
 

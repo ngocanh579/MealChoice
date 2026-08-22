@@ -19,5 +19,9 @@ public class MerchantResponse {
 
     private MerchantStatus merchantStatus;
 
+    private String bankName;
+
+    private String bankAccountNumber;
+
     private List<MerchantAddressResponse> addresses;
 }
