@@ -8,7 +8,6 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 TRUNCATE TABLE order_items;
 TRUNCATE TABLE orders;
-TRUNCATE TABLE vouchers;
 TRUNCATE TABLE merchant_likes;
 TRUNCATE TABLE food_likes;
 TRUNCATE TABLE food_images;
@@ -157,15 +156,7 @@ INSERT INTO merchant_likes (user_id, merchant_id) VALUES
 ('00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000002');
 
 -- =============================================================================
--- 15. VOUCHERS (Mã giảm giá)
--- =============================================================================
-INSERT INTO vouchers (id, merchant_id, voucher_code, discount_type, discount_value, start_at, end_at, usage_limit, used_count, is_active, created_at, updated_at) VALUES
-(1, '10000000-0000-0000-0000-000000000001', 'GIAM10K', 'FIXED', 10000.00, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), 100, 5, TRUE, NOW(), NOW()),
-(2, '10000000-0000-0000-0000-000000000001', 'GIAM20%', 'PERCENT', 20.00, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), 50, 2, TRUE, NOW(), NOW()),
-(3, '10000000-0000-0000-0000-000000000002', 'GIAM50PT', 'PERCENT', 50.00, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), 30, 0, TRUE, NOW(), NOW());
-
--- =============================================================================
--- 16. ORDERS (Đơn hàng mẫu)
+-- 15. ORDERS (Đơn hàng mẫu)
 -- =============================================================================
 INSERT INTO orders (id, order_code, user_id, merchant_id, contact_name, contact_phone, delivery_address, note, status, payment_method, subtotal_price, shipping_fee, service_fee, discount_amount, total_amount, cancel_reason, estimated_delivery_time, created_at, updated_at) VALUES
 (1, 'MC-20260821-001', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'Nguyễn Văn Anh', '0900000002', 'Số 12 Ngõ 68 Cầu Giấy, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội', 'Cho nhiều tương ớt và quẩy giòn', 'PENDING', 'COD', 95000.00, 15000.00, 5000.00, 0.00, 115000.00, NULL, DATE_ADD(NOW(), INTERVAL 30 MINUTE), NOW(), NOW()),

@@ -44,10 +44,12 @@ public class MerchantOrderRestController {
      * REST API: Lấy danh sách đơn hàng của Merchant (có thể lọc theo trạng thái)
      */
     @GetMapping
-    public ResponseEntity<?> getOrders(@RequestParam(name = "status", required = false) OrderStatus status) {
+    public ResponseEntity<?> getOrders(
+            @RequestParam(name = "status", required = false) OrderStatus status,
+            @RequestParam(name = "search", required = false) String search) {
         try {
             Merchant merchant = getCurrentMerchant();
-            List<OrderResponseDTO> orders = merchantOrderService.getMerchantOrders(merchant.getId(), status);
+            List<OrderResponseDTO> orders = merchantOrderService.getMerchantOrders(merchant.getId(), status, search);
             long pendingCount = merchantOrderService.countPendingOrders(merchant.getId());
 
             return ResponseEntity.ok(Map.of(

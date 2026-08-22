@@ -20,6 +20,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
     List<Order> findByMerchant_IdAndStatusOrderByCreatedAtDesc(UUID merchantId, OrderStatus status);
 
+    @Query("SELECT o FROM Order o " +
+           "WHERE o.merchant.id = :merchantId " +
+           "AND (:status IS NULL OR o.status = :status) " +
+           "AND (:search IS NULL OR :search = '' " +
+           "     OR LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "     OR LOWER(o.contactName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "     OR o.contactPhone LIKE CONCAT('%', :search, '%')) " +
+           "ORDER BY o.createdAt DESC")
+    List<Order> searchMerchantOrders(
+            @Param("merchantId") UUID merchantId,
+            @Param("status") OrderStatus status,
+            @Param("search") String search);
+
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
     Optional<Order> findByIdAndMerchant_Id(Long id, UUID merchantId);
 

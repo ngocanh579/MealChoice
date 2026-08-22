@@ -28,13 +28,8 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<OrderResponseDTO> getMerchantOrders(UUID merchantId, OrderStatus status) {
-        List<Order> orders;
-        if (status != null) {
-            orders = orderRepository.findByMerchant_IdAndStatusOrderByCreatedAtDesc(merchantId, status);
-        } else {
-            orders = orderRepository.findByMerchant_IdOrderByCreatedAtDesc(merchantId);
-        }
+    public List<OrderResponseDTO> getMerchantOrders(UUID merchantId, OrderStatus status, String search) {
+        List<Order> orders = orderRepository.searchMerchantOrders(merchantId, status, search);
         return orderMapper.toOrderResponseDTOList(orders);
     }
 
@@ -146,6 +141,15 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
     @Transactional(readOnly = true)
     public long countPendingOrders(UUID merchantId) {
         return orderRepository.countByMerchant_IdAndStatus(merchantId, OrderStatus.PENDING);
+    }
+
+    /**
+     * Đếm số lượng đơn hàng theo trạng thái cụ thể (Task 13)
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public long countOrdersByStatus(UUID merchantId, OrderStatus status) {
+        return orderRepository.countByMerchant_IdAndStatus(merchantId, status);
     }
 
     // ==================== HELPER METHOD ====================

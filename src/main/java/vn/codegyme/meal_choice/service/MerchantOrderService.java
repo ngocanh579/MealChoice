@@ -14,7 +14,7 @@ public interface MerchantOrderService {
     /**
      * TÍNH NĂNG 1: Lấy danh sách đơn hàng của quán (hỗ trợ lọc theo trạng thái)
      */
-    List<OrderResponseDTO> getMerchantOrders(UUID merchantId, OrderStatus status);
+    List<OrderResponseDTO> getMerchantOrders(UUID merchantId, OrderStatus status, String search);
 
     /**
      * TÍNH NĂNG 2: Xem chi tiết một đơn hàng của quán
@@ -45,4 +45,9 @@ public interface MerchantOrderService {
      * Đếm số lượng đơn hàng đang chờ tiếp nhận (PENDING)
      */
     long countPendingOrders(UUID merchantId);
+
+    /**
+     * Đếm số lượng đơn hàng theo trạng thái cụ thể (Task 13)
+     */
+    long countOrdersByStatus(UUID merchantId, OrderStatus status);
 }

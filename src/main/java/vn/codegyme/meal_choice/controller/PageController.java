@@ -742,6 +742,7 @@ public class PageController {
     @GetMapping("/merchant/orders")
     public String merchantOrdersPage(
             @RequestParam(name = "status", required = false) OrderStatus status,
+            @RequestParam(name = "search", required = false) String search,
             Authentication authentication,
             Model model) {
 
@@ -755,13 +756,23 @@ public class PageController {
             return "redirect:/merchant/register";
         }
 
-        List<OrderResponseDTO> orders = merchantOrderService.getMerchantOrders(merchant.getId(), status);
-        long pendingCount = merchantOrderService.countPendingOrders(merchant.getId());
+        List<OrderResponseDTO> orders = merchantOrderService.getMerchantOrders(merchant.getId(), status, search);
+        
+        long pendingCount = merchantOrderService.countOrdersByStatus(merchant.getId(), OrderStatus.PENDING);
+        long preparingCount = merchantOrderService.countOrdersByStatus(merchant.getId(), OrderStatus.PREPARING);
+        long deliveringCount = merchantOrderService.countOrdersByStatus(merchant.getId(), OrderStatus.DELIVERING);
+        long completedCount = merchantOrderService.countOrdersByStatus(merchant.getId(), OrderStatus.COMPLETED);
+        long cancelledCount = merchantOrderService.countOrdersByStatus(merchant.getId(), OrderStatus.CANCELLED);
 
         model.addAttribute("merchant", merchant);
         model.addAttribute("orders", orders);
         model.addAttribute("selectedStatus", status);
+        model.addAttribute("searchKeyword", search);
         model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("preparingCount", preparingCount);
+        model.addAttribute("deliveringCount", deliveringCount);
+        model.addAttribute("completedCount", completedCount);
+        model.addAttribute("cancelledCount", cancelledCount);
         model.addAttribute("orderStatuses", OrderStatus.values());
 
         return "merchant/orders/list";
