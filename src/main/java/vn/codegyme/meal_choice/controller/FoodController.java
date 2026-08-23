@@ -130,7 +130,6 @@ public class FoodController {
         );
     }
 
-    // Cập nhật món
     @PutMapping(
             value = "/api/merchant/foods/{foodId}",
             consumes = "multipart/form-data"
@@ -139,10 +138,8 @@ public class FoodController {
     public ResponseEntity<FoodResponse> updateFood(
             @PathVariable("foodId") Long foodId,
             @Valid @ModelAttribute FoodUpdateRequest request,
-            @RequestParam(
-                    value = "images",
-                    required = false
-            ) List<MultipartFile> images) {
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @RequestParam(value = "deletedImages", required = false) List<String> deletedImages) {
 
         Merchant merchant = getCurrentMerchant();
 
@@ -151,7 +148,8 @@ public class FoodController {
                         merchant.getId(),
                         foodId,
                         request,
-                        images
+                        images,
+                        deletedImages
                 )
         );
     }
