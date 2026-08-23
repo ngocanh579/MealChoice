@@ -33,17 +33,19 @@ public class FoodCreateRequest {
     @NotNull(message = "Giá món ăn không được để trống")
     @DecimalMin(
             value = "0.0",
-            inclusive = true,
-            message = "Giá món ăn không được nhỏ hơn 0"
+            inclusive = false,
+            message = "Giá món ăn phải lớn hơn 0"
     )
     private BigDecimal price;
 
+    private String discountType;
+
     @DecimalMin(
             value = "0.0",
-            inclusive = true,
-            message = "Giá khuyến mãi không được nhỏ hơn 0"
+            inclusive = false,
+            message = "Giá trị khuyến mãi phải lớn hơn 0"
     )
-    private BigDecimal discountPrice;
+    private BigDecimal discountValue;
 
     @DecimalMin(
             value = "0.0",
