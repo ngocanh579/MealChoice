@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.codegyme.meal_choice.entity.Food;
+import vn.codegyme.meal_choice.entity.FoodCategory;
 
 import java.util.List;
 import java.util.Optional;
@@ -171,15 +172,20 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     );
 
     // Lấy ID các món user đã thích
-    @Query("""
-            SELECT f.id
-            FROM Food f
-            JOIN f.likedByUsers u
-            WHERE u.id = :userId
-            """)
+    @Query(value = "SELECT food_id FROM food_likes WHERE user_id = :userId", nativeQuery = true)
     List<Long> findLikedFoodIdsByUserId(
-            @Param("userId") UUID userId
+            @Param("userId") String userId
     );
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = "INSERT IGNORE INTO food_likes (food_id, user_id) VALUES (:foodId, :userId)", nativeQuery = true)
+    int likeFood(@Param("foodId") Long foodId, @Param("userId") String userId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = "DELETE FROM food_likes WHERE food_id = :foodId AND user_id = :userId", nativeQuery = true)
+    int unlikeFood(@Param("foodId") Long foodId, @Param("userId") String userId);
 
     // Lấy món mới nhất theo danh mục
     @Query("""
@@ -242,4 +248,73 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             @Param("keyword") String keyword,
             Pageable pageable
     );
+
+    // Lấy danh sách danh mục phân biệt mà quán có món đang hoạt động
+    @Query("""
+            SELECT DISTINCT c
+            FROM Food f
+            JOIN f.foodCategories c
+            WHERE f.merchant.id = :merchantId
+              AND f.isActive = true
+              AND f.deletedAt IS NULL
+            ORDER BY c.id ASC
+            """)
+    List<FoodCategory> findDistinctCategoriesByMerchantId(
+            @Param("merchantId") UUID merchantId
+    );
+
+    // Lấy danh sách danh mục có nhiều món ăn nhất của quán (Top thế mạnh quán)
+    @Query("""
+            SELECT c
+            FROM Food f
+            JOIN f.foodCategories c
+            WHERE f.merchant.id = :merchantId
+              AND f.isActive = true
+              AND f.deletedAt IS NULL
+            GROUP BY c.id, c.categoryName, c.categoryDescription, c.createdAt, c.updatedAt
+            ORDER BY COUNT(f.id) DESC
+            """)
+    List<FoodCategory> findTopCategoriesByMerchantId(
+            @Param("merchantId") UUID merchantId,
+            Pageable pageable
+    );
+
+    // Lấy danh sách món đang hoạt động của quán theo danh mục
+    @Query("""
+            SELECT DISTINCT f
+            FROM Food f
+            JOIN f.foodCategories c
+            WHERE f.merchant.id = :merchantId
+              AND f.isActive = true
+              AND f.deletedAt IS NULL
+              AND c.id = :categoryId
+            ORDER BY f.id DESC
+            """)
+    Page<Food> findActiveFoodsByMerchantAndCategory(
+            @Param("merchantId") UUID merchantId,
+            @Param("categoryId") Long categoryId,
+            Pageable pageable
+    );
+
+    // Tìm kiếm món trong quán dành cho khách hàng
+    @Query("""
+            SELECT DISTINCT f
+            FROM Food f
+            LEFT JOIN f.foodCategories c
+            WHERE f.merchant.id = :merchantId
+              AND f.isActive = true
+              AND f.deletedAt IS NULL
+              AND LOWER(f.foodName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              AND (:categoryId IS NULL OR c.id = :categoryId)
+            ORDER BY f.id DESC
+            """)
+    Page<Food> searchCustomerFoodsInMerchant(
+            @Param("merchantId") UUID merchantId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            Pageable pageable
+    );
+
+    // Đếm số món đang hoạt động của quán
+    long countByMerchant_IdAndIsActiveTrueAndDeletedAtIsNull(UUID merchantId);
 }

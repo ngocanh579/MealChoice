@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -12,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -51,6 +53,7 @@ public class SecurityConfig {
                                 "/home",
                                 "/search/**",
                                 "/restaurants/**",
+                                "/stores/**",
                                 "/food/**",
                                 "/foods/**",
                                 "/categories/**",
@@ -100,6 +103,13 @@ public class SecurityConfig {
                                 "/api/merchants/**"
                         ).permitAll()
 
+                        // API tương tác Merchant (follow / unfollow)
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/merchants/*/follow",
+                                "/api/merchants/*/unfollow"
+                        ).authenticated()
+
                         // Merchant
                         .requestMatchers(
                                 "/merchant/**",
@@ -120,8 +130,12 @@ public class SecurityConfig {
                         .authenticated()
                 )
 
-                // Chưa đăng nhập -> /login
+                // Xử lý khi chưa xác thực
                 .exceptionHandling(ex -> ex
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                request -> request.getRequestURI().startsWith("/api/")
+                        )
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint("/login"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
