@@ -626,26 +626,30 @@ public class PageController {
             Authentication authentication,
             Model model) {
 
-        if (authentication != null
-                && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
 
-            String email = userDetails.getUsername();
-            Optional<Merchant> merchantOpt =
-                    merchantRepository.findByMerchantEmailWithAddresses(email);
-
-            if (merchantOpt.isPresent()) {
-                Merchant merchant = merchantOpt.get();
-                model.addAttribute("merchant", merchant);
-                model.addAttribute(
-                        "foodCount",
-                        foodService.getFoods(merchant.getId()).size()
-                );
-                return "merchant/dashboard";
-            }
+            return "redirect:/login";
         }
 
-        // Nếu tài khoản chưa phải là Merchant -> Chuyển hướng đến trang đăng ký
-        return "redirect:/merchant/register";
+        Optional<Merchant> merchantOpt =
+                merchantRepository.findByUser_Id(userDetails.getId());
+
+        if (merchantOpt.isEmpty()) {
+            return "redirect:/merchant/register";
+        }
+
+        Merchant merchant = merchantOpt.get();
+
+        model.addAttribute("merchant", merchant);
+
+        model.addAttribute(
+                "foodCount",
+                foodService.getFoods(merchant.getId()).size()
+        );
+
+        return "merchant/dashboard";
     }
 
     // Trang hồ sơ Merchant
@@ -658,21 +662,25 @@ public class PageController {
             Authentication authentication,
             Model model) {
 
-        if (authentication != null
-                && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
 
-            String email = userDetails.getUsername();
-            Optional<Merchant> merchantOpt =
-                    merchantRepository.findByMerchantEmailWithAddresses(email);
-
-            if (merchantOpt.isPresent()) {
-                model.addAttribute("merchant", merchantOpt.get());
-                return "merchant/profile";
-            }
+            return "redirect:/login";
         }
 
-        // Nếu tài khoản chưa phải là Merchant -> Chuyển hướng đến trang đăng ký
-        return "redirect:/merchant/register";
+        Optional<Merchant> merchantOpt =
+                merchantRepository.findByUser_Id(userDetails.getId());
+
+        if (merchantOpt.isEmpty()) {
+            return "redirect:/merchant/register";
+        }
+
+        Merchant merchant = merchantOpt.get();
+
+        model.addAttribute("merchant", merchant);
+
+        return "merchant/profile";
     }
 
     // ==================== CHECKOUT & USER ORDERS ====================
