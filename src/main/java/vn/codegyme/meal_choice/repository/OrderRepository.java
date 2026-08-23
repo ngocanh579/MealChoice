@@ -10,6 +10,8 @@ import vn.codegyme.meal_choice.entity.OrderStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -36,4 +38,23 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.food WHERE o.orderCode = :orderCode")
     Optional<Order> findByOrderCodeWithItems(@Param("orderCode") String orderCode);
+
+    /**
+     * Tính tổng doanh thu của Merchant trong một khoảng thời gian.
+     * Chỉ tính các đơn hàng đã hoàn thành (COMPLETED).
+     */
+    @Query("""
+    SELECT COALESCE(SUM(o.totalAmount), 0)
+    FROM Order o
+    WHERE o.merchant.id = :merchantId
+      AND o.status = :status
+      AND o.createdAt >= :startDate
+      AND o.createdAt < :endDate
+""")
+    BigDecimal calculateRevenue(
+            @Param("merchantId") UUID merchantId,
+            @Param("status") OrderStatus status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }
