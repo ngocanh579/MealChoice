@@ -27,8 +27,16 @@ public class FoodResponse {
 
     private String foodNote;
 
+    // Giá gốc
     private BigDecimal price;
 
+    // Loại khuyến mãi: PERCENT hoặc AMOUNT
+    private String discountType;
+
+    // Giá trị khuyến mãi: 20 (%) hoặc 20.000 (VNĐ)
+    private BigDecimal discountValue;
+
+    // Giá sau khi áp dụng khuyến mãi
     private BigDecimal discountPrice;
 
     private BigDecimal serviceFee;
