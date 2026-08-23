@@ -6,20 +6,23 @@
     <title>Thêm món ăn - Merchant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
     <link rel="stylesheet" th:href="@{/css/merchant.css}">
 </head>
+
 <body class="merchant-page">
 <div th:replace="~{merchant/layout :: shell('Thêm món ăn', 'foods', ~{::content})}">
     <section th:fragment="content" class="d-flex flex-column gap-4">
 
-        <!-- HEADER TỐI GIẢN -->
         <div class="d-flex align-items-center justify-content-between mb-1">
             <div>
                 <h2 class="fw-bold text-dark mb-1">Thêm món ăn mới</h2>
                 <p class="text-muted mb-0 font-size-14">Nhập thông tin món ăn, ảnh và giá để đưa món lên kệ.</p>
             </div>
+
             <div>
-                <a href="/merchant/foods" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                <a href="/merchant/foods"
+                   class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
                     <i class="bi bi-arrow-left"></i>
                     <span>Hủy</span>
                 </a>
@@ -29,17 +32,16 @@
         <form id="foodCreateForm" enctype="multipart/form-data">
             <div class="row g-4">
 
-                <!-- CỘT TRÁI: THÔNG TIN CƠ BẢN & MÔ TẢ -->
                 <div class="col-lg-7 d-flex flex-column gap-4">
-
-                    <!-- Card 1: Thông tin chung -->
                     <div class="merchant-page-card p-4">
                         <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
                             <i class="bi bi-info-circle text-danger me-2"></i>Thông tin cơ bản
                         </h5>
 
                         <div class="mb-3">
-                            <label for="foodName" class="form-label fw-semibold">Tên món ăn <span class="text-danger">*</span></label>
+                            <label for="foodName" class="form-label fw-semibold">
+                                Tên món ăn <span class="text-danger">*</span>
+                            </label>
                             <input type="text"
                                    id="foodName"
                                    name="foodName"
@@ -49,7 +51,9 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="merchantAddressId" class="form-label fw-semibold">Địa chỉ cửa hàng <span class="text-danger">*</span></label>
+                            <label for="merchantAddressId" class="form-label fw-semibold">
+                                Địa chỉ cửa hàng <span class="text-danger">*</span>
+                            </label>
                             <select id="merchantAddressId"
                                     name="merchantAddressId"
                                     class="form-select form-select-lg bg-light border-0"
@@ -63,64 +67,40 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Danh mục món ăn <span class="text-danger">*</span></label>
+                            <label for="categoryIds" class="form-label fw-semibold">
+                                Danh mục món ăn <span class="text-danger">*</span>
+                            </label>
 
-                            <div class="p-3 bg-light rounded-3 border-0">
-                                <div th:if="${categories == null || #lists.isEmpty(categories)}"
-                                     class="text-muted small">
-                                    Chưa có danh mục nào.
-                                </div>
-
-                                <div th:each="category : ${categories}"
-                                     class="form-check form-check-inline me-4 mb-2">
-
-                                    <input class="form-check-input category-checkbox"
-                                           type="checkbox"
-                                           name="categoryIds"
-                                           th:id="'category-' + ${category.id}"
-                                           th:value="${category.id}">
-
-                                    <label class="form-check-label fw-medium"
-                                           th:for="'category-' + ${category.id}"
-                                           th:text="${category.categoryName}">
-                                    </label>
-
-                                </div>
-                            </div>
+                            <select id="categoryIds"
+                                    name="categoryIds"
+                                    class="form-select"
+                                    multiple
+                                    required>
+                                <option th:each="category : ${categories}"
+                                        th:value="${category.id}"
+                                        th:text="${category.categoryName}">
+                                </option>
+                            </select>
 
                             <div class="form-text font-size-12 mt-1">
                                 Có thể chọn nhiều danh mục cho cùng một món ăn.
                             </div>
                         </div>
 
-                        <!-- Tag món ăn -->
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">
+                            <label for="tagIds" class="form-label fw-semibold">
                                 Tag món ăn
                             </label>
 
-                            <div class="p-3 bg-light rounded-3 border-0">
-                                <div th:if="${tags == null || #lists.isEmpty(tags)}"
-                                     class="text-muted small">
-                                    Chưa có tag nào.
-                                </div>
-
-                                <div th:each="tag : ${tags}"
-                                     class="form-check form-check-inline me-4 mb-2">
-
-                                    <input class="form-check-input tag-checkbox"
-                                           type="checkbox"
-                                           name="tagIds"
-                                           th:id="'tag-' + ${tag.id}"
-                                           th:value="${tag.id}">
-
-                                    <label class="form-check-label fw-medium"
-                                           th:for="'tag-' + ${tag.id}"
-                                           th:text="${tag.tagName}">
-                                    </label>
-
-                                </div>
-                            </div>
+                            <select id="tagIds"
+                                    name="tagIds"
+                                    class="form-select"
+                                    multiple>
+                                <option th:each="tag : ${tags}"
+                                        th:value="${tag.id}"
+                                        th:text="${tag.tagName}">
+                                </option>
+                            </select>
 
                             <div class="form-text font-size-12 mt-1">
                                 Có thể chọn nhiều tag cho món ăn. Không bắt buộc.
@@ -141,13 +121,14 @@
                                        style="max-width: 140px; height: 42px;"
                                        placeholder="20"
                                        required>
-
                                 <span class="text-muted fw-semibold">phút</span>
                             </div>
                         </div>
 
                         <div class="mb-0">
-                            <label for="foodNote" class="form-label fw-semibold">Mô tả / Ghi chú món ăn</label>
+                            <label for="foodNote" class="form-label fw-semibold">
+                                Mô tả / Ghi chú món ăn
+                            </label>
                             <textarea id="foodNote"
                                       name="foodNote"
                                       class="form-control bg-light border-0"
@@ -155,20 +136,20 @@
                                       placeholder="Mô tả chi tiết về thành phần, hương vị..."></textarea>
                         </div>
                     </div>
-
                 </div>
 
-                <!-- CỘT PHẢI: GIÁ CẢ & TẢI ẢNH -->
                 <div class="col-lg-5 d-flex flex-column gap-4">
 
-                    <!-- Card 2: Giá & Phí -->
                     <div class="merchant-page-card p-4">
                         <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
                             <i class="bi bi-tag text-danger me-2"></i>Giá & Phí dịch vụ
                         </h5>
 
                         <div class="mb-3">
-                            <label for="price" class="form-label fw-semibold">Giá bán chính thức <span class="text-danger">*</span></label>
+                            <label for="price" class="form-label fw-semibold">
+                                Giá bán chính thức <span class="text-danger">*</span>
+                            </label>
+
                             <div class="input-group">
                                 <input type="number"
                                        id="price"
@@ -178,27 +159,91 @@
                                        step="0.01"
                                        placeholder="50000"
                                        required>
-                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">
+                                    vnđ
+                                </span>
                             </div>
                         </div>
 
+                        <!-- Hình thức giảm giá -->
                         <div class="mb-3">
-                            <label for="discountPrice" class="form-label fw-semibold">Giá khuyến mãi <span class="text-danger">*</span></label>
+                            <label for="discountType" class="form-label fw-semibold">
+                                Hình thức giảm giá <span class="text-danger">*</span>
+                            </label>
+
+                            <select id="discountType"
+                                    name="discountType"
+                                    class="form-select bg-light border-0"
+                                    required>
+
+                                <option value="NONE" selected>
+                                    Không giảm giá
+                                </option>
+
+                                <option value="FIXED_PRICE">
+                                    Giá sau giảm
+                                </option>
+
+                                <option value="PERCENT">
+                                    Phần trăm (%)
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Mức giảm / Giá khuyến mãi -->
+                        <div class="mb-3 d-none" id="discountValueGroup">
+
+                            <label for="discountValue"
+                                   id="discountValueLabel"
+                                   class="form-label fw-semibold">
+                                Mức giảm
+                            </label>
+
                             <div class="input-group">
+
+                                <input type="number"
+                                       id="discountValue"
+                                       name="discountValue"
+                                       class="form-control bg-light border-0"
+                                       min="0"
+                                       step="0.01">
+
+                                <span id="discountUnit"
+                                      class="input-group-text bg-light border-0 text-muted fw-semibold">
+                                    %
+                                </span>
+
+                            </div>
+                        </div>
+
+                        <!-- Giá sau khuyến mãi -->
+                        <div class="mb-3">
+                            <label for="discountPrice"
+                                   class="form-label fw-semibold">
+                                Giá sau khuyến mãi
+                            </label>
+
+                            <div class="input-group">
+
                                 <input type="number"
                                        id="discountPrice"
                                        name="discountPrice"
                                        class="form-control bg-light border-0"
                                        min="0"
-                                       step="0.01"
-                                       placeholder="45000"
-                                       required>
-                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                                       step="0.01">
+
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">
+                                    vnđ
+                                </span>
+
                             </div>
                         </div>
 
                         <div class="mb-0">
-                            <label for="serviceFee" class="form-label fw-semibold">Phí dịch vụ</label>
+                            <label for="serviceFee" class="form-label fw-semibold">
+                                Phí dịch vụ
+                            </label>
+
                             <div class="input-group">
                                 <input type="number"
                                        id="serviceFee"
@@ -208,23 +253,30 @@
                                        step="0.01"
                                        value="0"
                                        placeholder="0">
-                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">
+                                    vnđ
+                                </span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Card 3: Tải ảnh món ăn -->
                     <div class="merchant-page-card p-4">
                         <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
                             <i class="bi bi-images text-danger me-2"></i>Hình ảnh món ăn
                         </h5>
 
                         <div>
-                            <label for="images" class="form-label fw-semibold">Ảnh món ăn <span class="text-danger">*</span></label>
+                            <label for="images" class="form-label fw-semibold">
+                                Ảnh món ăn <span class="text-danger">*</span>
+                            </label>
+
                             <div class="border border-2 border-dashed rounded-3 p-4 text-center bg-light bg-opacity-50">
                                 <i class="bi bi-cloud-arrow-up fs-1 text-danger d-block mb-2"></i>
                                 <p class="fw-semibold mb-1">Chọn hoặc kéo thả ảnh vào đây</p>
-                                <p class="text-muted small mb-3">Hỗ trợ định dạng JPG, JPEG, PNG hoặc WEBP</p>
+                                <p class="text-muted small mb-3">
+                                    Hỗ trợ định dạng JPG, JPEG, PNG hoặc WEBP
+                                </p>
 
                                 <input type="file"
                                        id="images"
@@ -236,16 +288,18 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
 
-            <!-- NÚT THAO TÁC CUỐI TRANG -->
             <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
-                <a href="/merchant/foods" class="btn btn-light rounded-pill px-4 py-2 fw-semibold border">
+                <a href="/merchant/foods"
+                   class="btn btn-light rounded-pill px-4 py-2 fw-semibold border">
                     Hủy
                 </a>
-                <button type="submit" id="submitButton" class="btn btn-danger rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+
+                <button type="submit"
+                        id="submitButton"
+                        class="btn btn-danger rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
                     <i class="bi bi-check-lg"></i>
                     <span>Thêm món ăn</span>
                 </button>
@@ -253,82 +307,300 @@
         </form>
     </section>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
     const form = document.getElementById("foodCreateForm");
     const submitButton = document.getElementById("submitButton");
 
-    function buildAuthHeaders() {
-        const token = localStorage.getItem("accessToken");
-        const headers = {};
+    const categorySelect = document.getElementById("categoryIds");
+    const tagSelect = document.getElementById("tagIds");
 
-        if (token) {
-            headers.Authorization = `Bearer ${token}`;
-        }
+    const priceInput = document.getElementById("price");
+    const discountType = document.getElementById("discountType");
+    const discountValue = document.getElementById("discountValue");
+    const discountValueGroup = document.getElementById("discountValueGroup");
+    const discountValueLabel = document.getElementById("discountValueLabel");
+    const discountUnit = document.getElementById("discountUnit");
+    const discountPrice = document.getElementById("discountPrice");
+    const serviceFeeInput = document.getElementById("serviceFee");
 
-        return headers;
+    let categoryChoices = null;
+    let tagChoices = null;
+
+    // Khởi tạo danh mục
+    if (categorySelect) {
+        categoryChoices = new Choices(categorySelect, {
+            removeItemButton: true,
+            searchEnabled: true,
+            searchPlaceholderValue: "Tìm danh mục...",
+            placeholder: true,
+            placeholderValue: "Chọn danh mục món ăn",
+            noResultsText: "Không tìm thấy danh mục",
+            noChoicesText: "Không có danh mục",
+            itemSelectText: "Chọn",
+            shouldSort: false,
+            allowHTML: false
+        });
     }
 
+    // Khởi tạo tag
+    if (tagSelect) {
+        tagChoices = new Choices(tagSelect, {
+            removeItemButton: true,
+            searchEnabled: true,
+            searchPlaceholderValue: "Tìm tag...",
+            placeholder: true,
+            placeholderValue: "Chọn tag",
+            noResultsText: "Không tìm thấy tag",
+            noChoicesText: "Không có tag",
+            itemSelectText: "Chọn",
+            shouldSort: false,
+            allowHTML: false
+        });
+    }
+
+    // Lấy token đăng nhập
+    function buildAuthHeaders() {
+        const token = localStorage.getItem("accessToken");
+        return token ? {Authorization: `Bearer ${token}`} : {};
+    }
+
+    // Cập nhật giao diện giảm giá
+    function updateDiscountUI() {
+        const type = discountType.value;
+
+        discountValueGroup.classList.add("d-none");
+        discountValue.value = "";
+
+        if (type === "NONE") {
+            discountPriceLabel.textContent = "Giá sau khuyến mãi";
+            discountPrice.value = priceInput.value || "";
+            return;
+        }
+
+        if (type === "FIXED_PRICE") {
+            discountPriceLabel.textContent = "Giá khuyến mãi";
+            discountPrice.placeholder = "40000";
+            return;
+        }
+
+        if (type === "PERCENT") {
+            discountValueGroup.classList.remove("d-none");
+
+            discountValueLabel.textContent = "Mức giảm";
+            discountUnit.textContent = "%";
+
+            discountValue.placeholder = "20";
+            discountValue.min = "0";
+            discountValue.max = "99.99";
+            discountValue.step = "0.01";
+
+            discountPriceLabel.textContent = "Giá sau khuyến mãi";
+
+            calculateDiscountPrice();
+        }
+    }
+    // Tính giá sau khuyến mãi
+    function calculateDiscountPrice() {
+        const price = Number(priceInput.value);
+        const type = discountType.value;
+        const value = Number(discountValue.value);
+
+        if (!Number.isFinite(price) || price <= 0) {
+            discountPrice.value = "";
+            return;
+        }
+
+        if (type === "NONE") {
+            // Không giảm giá
+            discountPrice.value = price;
+            return;
+        }
+
+        if (type === "FIXED_PRICE") {
+            // Giá khuyến mãi do người dùng nhập
+            discountPrice.value = discountValue.value || "";
+            return;
+        }
+
+        if (type === "PERCENT") {
+            // Tính giá theo phần trăm
+            if (!Number.isFinite(value) || value <= 0 || value >= 100) {
+                discountPrice.value = "";
+                return;
+            }
+
+            const result = price * (100 - value) / 100;
+
+            discountPrice.value = Number(result.toFixed(2));
+        }
+    }
+
+    // Đổi hình thức giảm giá
+    discountType.addEventListener("change", function () {
+        discountValue.value = "";
+
+        if (discountType.value === "NONE") {
+            discountPrice.value = priceInput.value || "";
+        } else {
+            discountPrice.value = "";
+        }
+
+        updateDiscountUI();
+    });
+
+    // Thay đổi giá bán
+    priceInput.addEventListener("input", function () {
+        if (discountType.value === "NONE") {
+            discountPrice.value = priceInput.value;
+        }
+
+        if (discountType.value === "PERCENT") {
+            calculateDiscountPrice();
+        }
+    });
+
+    // Thay đổi mức giảm
+    discountValue.addEventListener("input", function () {
+        if (discountType.value === "FIXED_PRICE") {
+            // Giá sau khuyến mãi = giá người dùng nhập
+            discountPrice.value = discountValue.value;
+        }
+
+        if (discountType.value === "PERCENT") {
+            // Tự tính giá sau giảm
+            calculateDiscountPrice();
+        }
+    });
+
+    // Khởi tạo giao diện
+    updateDiscountUI();
+
+    // Submit form
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
 
-        const checkedCategories = document.querySelectorAll(
-            ".category-checkbox:checked"
-        );
+        const selectedCategories = categoryChoices
+            ? categoryChoices.getValue(true)
+            : [];
 
-        if (checkedCategories.length === 0) {
+        if (!selectedCategories || selectedCategories.length === 0) {
             window.showMerchantNotice?.({
                 variant: "danger",
                 title: "Thiếu thông tin",
-                message: "Vui lòng chọn ít nhất một danh mục."
+                message: "Vui lòng chọn ít nhất một danh mục món ăn."
             });
             return;
         }
 
-        const price = Number(document.getElementById("price").value);
-        const discountPriceVal = document.getElementById("discountPrice").value.trim();
-        const discountPrice = discountPriceVal !== "" ? Number(discountPriceVal) : null;
-        const serviceFee = Number(
-            document.getElementById("serviceFee").value || 0
-        );
+        const price = Number(priceInput.value);
+        const serviceFee = Number(serviceFeeInput.value || 0);
 
-        if (price <= 0) {
+        const type = discountType.value;
+        const value = discountValue.value.trim();
+        const finalPrice = discountPrice.value.trim();
+
+        // Kiểm tra giá bán
+        if (!Number.isFinite(price) || price <= 0) {
             window.showMerchantNotice?.({
                 variant: "danger",
                 title: "Giá tiền không hợp lệ",
-                message: "Giá tiền phải lớn hơn 0."
+                message: "Giá bán phải lớn hơn 0."
             });
+
+            priceInput.focus();
             return;
         }
 
-        if (discountPrice !== null && discountPrice <= 0) {
+        // Không giảm giá
+        if (type === "NONE") {
+            discountPrice.value = price;
+        }
+
+        // Giảm theo giá cố định
+        if (type === "FIXED_PRICE") {
+            const fixedPrice = Number(value);
+
+            if (!Number.isFinite(fixedPrice) || fixedPrice <= 0) {
+                window.showMerchantNotice?.({
+                    variant: "danger",
+                    title: "Giá KM không hợp lệ",
+                    message: "Giá khuyến mãi phải lớn hơn 0."
+                });
+
+                discountValue.focus();
+                return;
+            }
+
+            if (fixedPrice >= price) {
+                window.showMerchantNotice?.({
+                    variant: "danger",
+                    title: "Giá KM không hợp lệ",
+                    message: "Giá khuyến mãi phải nhỏ hơn giá bán gốc."
+                });
+
+                discountValue.focus();
+                return;
+            }
+
+            discountPrice.value = fixedPrice;
+        }
+
+        // Giảm theo phần trăm
+        if (type === "PERCENT") {
+            const percent = Number(value);
+
+            if (!Number.isFinite(percent) || percent <= 0 || percent >= 100) {
+                window.showMerchantNotice?.({
+                    variant: "danger",
+                    title: "Phần trăm giảm không hợp lệ",
+                    message: "Phần trăm giảm phải lớn hơn 0% và nhỏ hơn 100%."
+                });
+
+                discountValue.focus();
+                return;
+            }
+
+            calculateDiscountPrice();
+        }
+
+        const finalDiscountPrice = Number(discountPrice.value);
+
+        // Kiểm tra giá sau khuyến mãi
+        if (
+            !Number.isFinite(finalDiscountPrice) ||
+            finalDiscountPrice <= 0 ||
+            finalDiscountPrice > price
+        ) {
             window.showMerchantNotice?.({
                 variant: "danger",
-                title: "Giá KM không hợp lệ",
-                message: "Giá KM phải lớn hơn 0."
+                title: "Giá sau khuyến mãi không hợp lệ",
+                message: "Giá sau khuyến mãi phải lớn hơn 0 và không lớn hơn giá bán."
             });
+
+            discountPrice.focus();
             return;
         }
 
-        if (discountPrice !== null && discountPrice >= price) {
-            window.showMerchantNotice?.({
-                variant: "danger",
-                title: "Giá KM không hợp lệ",
-                message: "Giá khuyến mãi phải nhỏ hơn giá bán gốc."
-            });
-            return;
-        }
-
-        if (serviceFee < 0) {
+        // Kiểm tra phí dịch vụ
+        if (!Number.isFinite(serviceFee) || serviceFee < 0) {
             window.showMerchantNotice?.({
                 variant: "danger",
                 title: "Phí dịch vụ không hợp lệ",
                 message: "Phí dịch vụ không được nhỏ hơn 0."
             });
+
+            serviceFeeInput.focus();
             return;
         }
 
         const formData = new FormData(form);
+
+        // Gửi đúng giá sau khuyến mãi
+        formData.set(
+            "discountPrice",
+            discountPrice.value
+        );
 
         submitButton.disabled = true;
         submitButton.innerHTML =
@@ -348,6 +620,7 @@
                     title: "Phiên đăng nhập",
                     message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
                 });
+
                 window.location.href = "/login";
                 return;
             }
@@ -362,7 +635,7 @@
                         message = errorData.message;
                     }
                 } catch (error) {
-                    console.error(error);
+                    console.error("Không đọc được response lỗi:", error);
                 }
 
                 window.showMerchantNotice?.({
@@ -370,6 +643,7 @@
                     title: "Không thể thêm món ăn",
                     message
                 });
+
                 return;
             }
 
@@ -382,6 +656,7 @@
             setTimeout(() => {
                 window.location.href = "/merchant/foods";
             }, 900);
+
         } catch (error) {
             console.error("Lỗi khi thêm món ăn:", error);
 
@@ -390,6 +665,7 @@
                 title: "Có lỗi xảy ra",
                 message: "Không thể thêm món ăn. Vui lòng thử lại."
             });
+
         } finally {
             submitButton.disabled = false;
             submitButton.innerHTML =
