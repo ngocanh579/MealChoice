@@ -11,7 +11,9 @@ import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.RoleRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.service.AdminService;
-
+import vn.codegyme.meal_choice.entity.DeliveryPartner;
+import vn.codegyme.meal_choice.entity.DeliveryPartnerStatus;
+import vn.codegyme.meal_choice.repository.DeliveryPartnerRepository;
 import java.util.List;
 import java.util.UUID;
 import java.time.LocalDateTime;
@@ -24,6 +26,7 @@ public class AdminServiceImpl implements AdminService {
     private final MerchantRepository merchantRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final DeliveryPartnerRepository deliveryPartnerRepository;
     // Xem danh sách
     @Override
     @Transactional(readOnly = true)
@@ -170,5 +173,293 @@ public class AdminServiceImpl implements AdminService {
                                 "Không tìm thấy merchant có id = " + id
                         )
                 );
+    }
+    @Transactional
+    public void toggleLock(
+            UUID id,
+            String lockReason
+    ) {
+
+        DeliveryPartner partner =
+                deliveryPartnerRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Không tìm thấy đối tác vận chuyển."
+                                )
+                        );
+
+
+        // ĐANG KHÓA -> MỞ
+        if (partner.getStatus()
+                == DeliveryPartnerStatus.BLOCKED) {
+
+            partner.setStatus(
+                    DeliveryPartnerStatus.ACTIVE
+            );
+
+            partner.setLockReason(null);
+            partner.setLockedAt(null);
+        }
+
+
+        // ĐANG ACTIVE -> KHÓA
+        else {
+
+            if (lockReason == null
+                    || lockReason.trim().isEmpty()) {
+
+                throw new IllegalArgumentException(
+                        "Vui lòng nhập lý do khóa."
+                );
+            }
+
+            partner.setStatus(
+                    DeliveryPartnerStatus.BLOCKED
+            );
+
+            partner.setLockReason(
+                    lockReason.trim()
+            );
+
+            partner.setLockedAt(
+                    LocalDateTime.now()
+            );
+        }
+
+
+        deliveryPartnerRepository.save(partner);
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public List<DeliveryPartner> getAllDeliveryPartners() {
+
+        return deliveryPartnerRepository
+                .findAllByOrderByCreatedAtDesc();
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DeliveryPartner> getDeliveryPartnersByStatus(
+            DeliveryPartnerStatus status
+    ) {
+
+        return deliveryPartnerRepository
+                .findByStatusOrderByCreatedAtDesc(status);
+    }
+    @Override
+    @Transactional
+    public void createDeliveryPartner(
+            DeliveryPartner partner
+    ) {
+
+        // Kiểm tra mã đối tác đã tồn tại
+        if (deliveryPartnerRepository
+                .existsByPartnerCode(
+                        partner.getPartnerCode()
+                )) {
+
+            throw new IllegalArgumentException(
+                    "Mã đối tác vận chuyển đã tồn tại."
+            );
+        }
+
+
+        // Đối tác do Admin tạo nên mặc định hoạt động
+        partner.setStatus(
+                DeliveryPartnerStatus.ACTIVE
+        );
+
+
+        // Chưa bị khóa
+        partner.setLockReason(null);
+        partner.setLockedAt(null);
+
+
+        deliveryPartnerRepository.save(
+                partner
+        );
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public DeliveryPartner getDeliveryPartnerById(UUID id) {
+
+        return deliveryPartnerRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Không tìm thấy đối tác vận chuyển có id = " + id
+                        )
+                );
+    }
+    // =====================================================
+// CẬP NHẬT ĐỐI TÁC VẬN CHUYỂN
+// =====================================================
+    @Override
+    @Transactional
+    public void updateDeliveryPartner(
+            UUID id,
+            DeliveryPartner partner
+    ) {
+
+        DeliveryPartner existingPartner =
+                deliveryPartnerRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Không tìm thấy đối tác vận chuyển có id = " + id
+                                )
+                        );
+
+
+        // ==============================
+        // THÔNG TIN CƠ BẢN
+        // ==============================
+
+        existingPartner.setPartnerName(
+                partner.getPartnerName()
+        );
+
+        existingPartner.setEmail(
+                partner.getEmail()
+        );
+
+        existingPartner.setPhone(
+                partner.getPhone()
+        );
+
+        existingPartner.setAddress(
+                partner.getAddress()
+        );
+
+        existingPartner.setLogoUrl(
+                partner.getLogoUrl()
+        );
+
+
+        // ==============================
+        // CHÍNH SÁCH GIÁ
+        // ==============================
+
+        existingPartner.setBaseFee(
+                partner.getBaseFee()
+        );
+
+        existingPartner.setBaseDistanceKm(
+                partner.getBaseDistanceKm()
+        );
+
+        existingPartner.setFeePerKm(
+                partner.getFeePerKm()
+        );
+
+        existingPartner.setPeakMultiplier(
+                partner.getPeakMultiplier()
+        );
+
+
+        /*
+         * Không update:
+         *
+         * partnerCode
+         * status
+         * lockReason
+         * lockedAt
+         * createdAt
+         *
+         * Các field này không nên bị thay đổi
+         * từ form cập nhật thông tin thông thường.
+         */
+
+
+        deliveryPartnerRepository.save(
+                existingPartner
+        );
+    }
+
+
+    // =====================================================
+// KHÓA / MỞ KHÓA ĐỐI TÁC VẬN CHUYỂN
+// =====================================================
+    @Override
+    @Transactional
+    public void toggleDeliveryPartnerLock(
+            UUID id,
+            String lockReason
+    ) {
+
+        DeliveryPartner partner =
+                deliveryPartnerRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Không tìm thấy đối tác vận chuyển có id = " + id
+                                )
+                        );
+
+
+        // =================================================
+        // ĐANG BỊ KHÓA -> MỞ KHÓA
+        // =================================================
+
+        if (partner.getStatus()
+                == DeliveryPartnerStatus.BLOCKED) {
+
+            partner.setStatus(
+                    DeliveryPartnerStatus.ACTIVE
+            );
+
+            partner.setLockReason(null);
+
+            partner.setLockedAt(null);
+        }
+
+
+        // =================================================
+        // ĐANG HOẠT ĐỘNG -> KHÓA
+        // =================================================
+
+        else if (partner.getStatus()
+                == DeliveryPartnerStatus.ACTIVE) {
+
+            if (lockReason == null
+                    || lockReason.trim().isEmpty()) {
+
+                throw new IllegalArgumentException(
+                        "Vui lòng nhập lý do khóa đối tác vận chuyển."
+                );
+            }
+
+
+            partner.setStatus(
+                    DeliveryPartnerStatus.BLOCKED
+            );
+
+            partner.setLockReason(
+                    lockReason.trim()
+            );
+
+            partner.setLockedAt(
+                    LocalDateTime.now()
+            );
+        }
+
+
+        // =================================================
+        // TRẠNG THÁI KHÔNG HỢP LỆ
+        // =================================================
+
+        else {
+
+            throw new IllegalStateException(
+                    "Trạng thái đối tác vận chuyển không hợp lệ."
+            );
+        }
+
+
+        deliveryPartnerRepository.save(
+                partner
+        );
     }
 }

@@ -81,6 +81,12 @@ public class MerchantAddress {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    //Tọa độ để tính khoảng cach
+    @Column (name = "latitude")
+    private Double latitude;
+
+    @Column (name = "longitude")
+    private Double longitude;
 
     @PrePersist
     protected void onCreate() {
