@@ -32,6 +32,9 @@ public class OrderResponseDTO {
     private String deliveryAddress;
     private String note;
 
+    private UUID deliveryPartnerId;
+    private String deliveryPartnerName;
+
     private OrderStatus status;
     private String statusDisplayName;
     private String statusBadgeClass;

@@ -34,6 +34,10 @@ public class Order {
     @JoinColumn(name = "merchant_id", nullable = false)
     private Merchant merchant;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_partner_id")
+    private DeliveryPartner deliveryPartner;
+
     @Column(name = "contact_name", nullable = false, length = 100)
     private String contactName;
 

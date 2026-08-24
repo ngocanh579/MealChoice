@@ -96,7 +96,10 @@
         name: /*[[${food.foodName}]]*/ "",
         price: /*[[${food.price}]]*/ 0,
         discountPrice: /*[[${food.discountPrice}]]*/ null,
-        serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0
+        serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0,
+        merchantId: /*[[${food.merchant != null ? food.merchant.id : ''}]]*/ "",
+        merchantName: /*[[${food.merchant != null ? food.merchant.merchantRestaurantName : ''}]]*/ "",
+        image: /*[[${foodImagesList != null && !foodImagesList.isEmpty() ? foodImagesList[0] : ''}]]*/ ""
     };
 
     // Danh sách ảnh từ backend

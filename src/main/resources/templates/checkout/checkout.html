@@ -49,6 +49,22 @@
             border-color: #ef4444;
             background-color: #fef2f2;
         }
+        .delivery-partner-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #ffffff;
+        }
+        .delivery-partner-card:hover {
+            border-color: #cbd5e1;
+            background-color: #fcfdfe;
+        }
+        .delivery-partner-card.selected {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
         .payment-card.disabled-payment-method {
             background-color: #f1f5f9;
             opacity: 0.65;
@@ -151,11 +167,32 @@
                 </div>
             </div>
 
-            <!-- 2. PHƯƠNG THỨC THANH TOÁN -->
+            <!-- 2. ĐƠN VỊ VẬN CHUYỂN & CƯỚC PHÍ GIAO HÀNG -->
+            <div class="checkout-card">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+                    <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-truck text-danger fs-5"></i>
+                        2. Đơn vị vận chuyển
+                    </h5>
+                    <span id="deliveryDistanceBadge" class="badge bg-light text-dark border rounded-pill px-2.5 py-1 font-size-12">
+                        <i class="bi bi-geo-alt me-1 text-danger"></i><span id="deliveryDistanceText">Đang tính khoảng cách...</span>
+                    </span>
+                </div>
+
+                <!-- Danh sách đơn vị vận chuyển tải tự động từ API -->
+                <div id="deliveryPartnersContainer" class="d-flex flex-column gap-2.5">
+                    <div id="deliveryLoadingPlaceholder" class="text-center py-3 text-muted">
+                        <span class="spinner-border spinner-border-sm text-danger me-2"></span>
+                        Đang tải cước phí từ các đơn vị giao hàng...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. PHƯƠNG THỨC THANH TOÁN -->
             <div class="checkout-card">
                 <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
                     <i class="bi bi-wallet2 text-danger fs-5"></i>
-                    2. Phương thức thanh toán
+                    3. Phương thức thanh toán
                 </h5>
 
                 <div class="d-flex flex-column gap-2.5">
@@ -224,11 +261,11 @@
                 </div>
             </div>
 
-            <!-- 3. GHI CHÚ DÀNH CHO CỬA HÀNG -->
+            <!-- 4. GHI CHÚ DÀNH CHO CỬA HÀNG -->
             <div class="checkout-card">
                 <h5 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
                     <i class="bi bi-chat-left-text text-danger fs-5"></i>
-                    3. Ghi chú cho cửa hàng
+                    4. Ghi chú cho cửa hàng
                 </h5>
                 <p class="text-muted small mb-3">Ví dụ: không hành, ít cay, để riêng nước sốt...</p>
                 <textarea class="form-control" id="orderNoteInput" rows="2" placeholder="Nhập ghi chú cho quán nếu có..."></textarea>

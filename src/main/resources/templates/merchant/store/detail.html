@@ -321,6 +321,9 @@
                                         th:data-food-price="${f.price}"
                                         th:data-food-discount="${f.discountPrice}"
                                         th:data-food-service="${f.serviceFee}"
+                                        th:data-merchant-id="${merchant.id}"
+                                        th:data-merchant-name="${merchant.merchantRestaurantName}"
+                                        th:data-food-image="${f.images != null and !#lists.isEmpty(f.images) ? f.images[0].imageUrl : ''}"
                                         title="Thêm vào giỏ hàng">
                                     <i class="bi bi-cart-plus fs-6"></i>
                                 </button>
@@ -389,7 +392,10 @@
                     name: btn.dataset.foodName,
                     price: parseFloat(btn.dataset.foodPrice) || 0,
                     discountPrice: btn.dataset.foodDiscount ? parseFloat(btn.dataset.foodDiscount) : null,
-                    serviceFee: btn.dataset.foodService ? parseFloat(btn.dataset.foodService) : 0
+                    serviceFee: btn.dataset.foodService ? parseFloat(btn.dataset.foodService) : 0,
+                    merchantId: btn.dataset.merchantId || '',
+                    merchantName: btn.dataset.merchantName || '',
+                    image: btn.dataset.foodImage || ''
                 };
 
                 if (typeof addToCartGlobal === 'function') {

@@ -119,10 +119,12 @@ public class SecurityConfig {
                                 "ADMIN"
                         )
 
-                        // User
+                        // User / Checkout / Delivery APIs
                         .requestMatchers(
                                 "/user/**",
-                                "/api/user/**"
+                                "/api/user/**",
+                                "/api/checkout/**",
+                                "/api/delivery/**"
                         ).authenticated()
 
                         // Các request còn lại

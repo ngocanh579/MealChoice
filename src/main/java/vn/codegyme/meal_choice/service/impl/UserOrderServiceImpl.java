@@ -4,15 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.codegyme.meal_choice.dto.Delivery.GeoPoint;
 import vn.codegyme.meal_choice.dto.order.CheckoutItemDTO;
 import vn.codegyme.meal_choice.dto.order.CheckoutRequestDTO;
 import vn.codegyme.meal_choice.dto.order.OrderResponseDTO;
 import vn.codegyme.meal_choice.entity.*;
 import vn.codegyme.meal_choice.mapper.OrderMapper;
-import vn.codegyme.meal_choice.repository.FoodRepository;
-import vn.codegyme.meal_choice.repository.MerchantRepository;
-import vn.codegyme.meal_choice.repository.OrderRepository;
-import vn.codegyme.meal_choice.repository.UserRepository;
+import vn.codegyme.meal_choice.repository.*;
+import vn.codegyme.meal_choice.service.DistanceService;
+import vn.codegyme.meal_choice.service.GeocodingService;
+import vn.codegyme.meal_choice.service.ShippingFeeService;
 import vn.codegyme.meal_choice.service.UserOrderService;
 
 import java.math.BigDecimal;
@@ -32,8 +33,13 @@ public class UserOrderServiceImpl implements UserOrderService {
     private final MerchantRepository merchantRepository;
     private final FoodRepository foodRepository;
     private final OrderMapper orderMapper;
+    private final DeliveryPartnerRepository deliveryPartnerRepository;
+    private final MerchantAddressRepository merchantAddressRepository;
+    private final ShippingFeeService shippingFeeService;
+    private final DistanceService distanceService;
+    private final GeocodingService geocodingService;
 
-    // Phí giao hàng cố định mặc định: 15.000 đ
+    // Phí giao hàng cố định mặc định dự phòng: 15.000 đ
     private static final BigDecimal DEFAULT_SHIPPING_FEE = BigDecimal.valueOf(15000);
 
     /**
@@ -104,8 +110,46 @@ public class UserOrderServiceImpl implements UserOrderService {
             foodRepository.save(food);
         }
 
-        // BƯỚC 3: Tính toán các loại phí và giảm giá voucher (giảm theo số tiền hoặc %)
+        // BƯỚC 3: Tính toán các loại phí (Phí ship động theo đơn vị vận chuyển), phí dịch vụ & voucher
+        DeliveryPartner deliveryPartner = null;
         BigDecimal shippingFee = DEFAULT_SHIPPING_FEE;
+        double distanceKm = 3.0; // Mặc định 3km nếu không tính được
+
+        if (request.getDeliveryPartnerId() != null) {
+            deliveryPartner = deliveryPartnerRepository.findById(request.getDeliveryPartnerId()).orElse(null);
+        }
+        if (deliveryPartner == null) {
+            List<DeliveryPartner> activePartners = deliveryPartnerRepository.findByStatus(DeliveryPartnerStatus.ACTIVE);
+            if (!activePartners.isEmpty()) {
+                deliveryPartner = activePartners.get(0);
+            }
+        }
+
+        if (deliveryPartner != null) {
+            try {
+                List<MerchantAddress> merchantAddrs = merchantAddressRepository.findByMerchantId(merchant.getId());
+                if (!merchantAddrs.isEmpty() && request.getDeliveryAddress() != null) {
+                    MerchantAddress mAddr = merchantAddrs.get(0);
+                    GeoPoint mPoint = (mAddr.getLatitude() != null && mAddr.getLongitude() != null)
+                            ? new GeoPoint(mAddr.getLatitude(), mAddr.getLongitude())
+                            : geocodingService.geocode(mAddr.getMerchantAddress() + ", Việt Nam");
+                    GeoPoint uPoint = geocodingService.geocode(request.getDeliveryAddress() + ", Việt Nam");
+                    if (mPoint != null && uPoint != null) {
+                        distanceKm = distanceService.calculateDistanceKm(mPoint, uPoint);
+                        if (request.getDeliveryAddress().toLowerCase().contains("hà nội")
+                                && mAddr.getMerchantAddress().toLowerCase().contains("hà nội")
+                                && distanceKm > 35.0) {
+                            distanceKm = 3.0;
+                        }
+                    }
+                }
+                shippingFee = shippingFeeService.calculateShippingFee(deliveryPartner, distanceKm);
+            } catch (Exception e) {
+                log.warn("Không tính được phí ship chính xác qua API, dùng cước cơ bản: {}", e.getMessage());
+                shippingFee = (deliveryPartner.getBaseFee() != null) ? deliveryPartner.getBaseFee() : DEFAULT_SHIPPING_FEE;
+            }
+        }
+
         BigDecimal serviceFee = maxServiceFee;
         BigDecimal discountAmount = calculateVoucherDiscount(request.getVoucherCode(), subtotal);
 
@@ -116,12 +160,14 @@ public class UserOrderServiceImpl implements UserOrderService {
 
         // BƯỚC 4: Tạo thực thể Order và lưu vào cơ sở dữ liệu
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime estimatedDelivery = now.plusMinutes(1); // Thời gian giao dự kiến: 1 phút
+        int estimatedMinutes = (int) Math.max(15, Math.min(60, 20 + Math.round(distanceKm * 4)));
+        LocalDateTime estimatedDelivery = now.plusMinutes(estimatedMinutes);
 
         Order order = Order.builder()
                 .orderCode(generateOrderCode())
                 .user(user)
                 .merchant(merchant)
+                .deliveryPartner(deliveryPartner)
                 .contactName(request.getContactName())
                 .contactPhone(request.getContactPhone())
                 .deliveryAddress(request.getDeliveryAddress())

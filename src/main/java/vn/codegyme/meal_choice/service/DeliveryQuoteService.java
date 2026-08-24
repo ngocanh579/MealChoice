@@ -81,79 +81,68 @@ public class DeliveryQuoteService {
         // =========================================
 
         GeoPoint userPoint;
-
-
-        if (userAddress.getLatitude() == null
-                || userAddress.getLongitude() == null) {
-
-            userPoint =
-                    geocodingService.geocode(
-                            userAddress.getFullAddress()
-                                    + ", Việt Nam"
-                    );
-
-
-            userAddress.setLatitude(
-                    userPoint.latitude()
-            );
-
-            userAddress.setLongitude(
-                    userPoint.longitude()
-            );
-
-
-            addressRepository.save(
-                    userAddress
-            );
-
-        } else {
-
-            userPoint =
-                    new GeoPoint(
-                            userAddress.getLatitude(),
-                            userAddress.getLongitude()
-                    );
+        boolean userNeedGeocode = userAddress.getLatitude() == null || userAddress.getLongitude() == null;
+        
+        // Tự động kiểm tra nếu tọa độ cũ bị lệch khỏi khu vực thành phố
+        String userFullAddr = userAddress.getFullAddress();
+        if (!userNeedGeocode && userFullAddr != null) {
+            String uLower = userFullAddr.toLowerCase();
+            if ((uLower.contains("hà nội") || uLower.contains("ha noi")) && (userAddress.getLatitude() < 20.0 || userAddress.getLatitude() > 22.0)) {
+                userNeedGeocode = true;
+            }
         }
 
+        if (userNeedGeocode) {
+            userPoint = geocodingService.geocode(
+                    userFullAddr + ", Việt Nam"
+            );
+
+            if (userPoint != null) {
+                userAddress.setLatitude(userPoint.latitude());
+                userAddress.setLongitude(userPoint.longitude());
+                addressRepository.save(userAddress);
+            } else {
+                userPoint = new GeoPoint(21.028511, 105.854167);
+            }
+        } else {
+            userPoint = new GeoPoint(
+                    userAddress.getLatitude(),
+                    userAddress.getLongitude()
+            );
+        }
 
         // =========================================
         // 4. TỌA ĐỘ MERCHANT
         // =========================================
 
         GeoPoint merchantPoint;
+        boolean merchantNeedGeocode = merchantAddress.getLatitude() == null || merchantAddress.getLongitude() == null;
+        
+        String mFullAddr = merchantAddress.getMerchantAddress();
+        if (!merchantNeedGeocode && mFullAddr != null) {
+            String mLower = mFullAddr.toLowerCase();
+            if ((mLower.contains("hà nội") || mLower.contains("ha noi")) && (merchantAddress.getLatitude() < 20.0 || merchantAddress.getLatitude() > 22.0)) {
+                merchantNeedGeocode = true;
+            }
+        }
 
-
-        if (merchantAddress.getLatitude() == null
-                || merchantAddress.getLongitude() == null) {
-
-            merchantPoint =
-                    geocodingService.geocode(
-                            merchantAddress
-                                    .getMerchantAddress()
-                                    + ", Việt Nam"
-                    );
-
-
-            merchantAddress.setLatitude(
-                    merchantPoint.latitude()
+        if (merchantNeedGeocode) {
+            merchantPoint = geocodingService.geocode(
+                    mFullAddr + ", Việt Nam"
             );
 
-            merchantAddress.setLongitude(
-                    merchantPoint.longitude()
-            );
-
-
-            merchantAddressRepository.save(
-                    merchantAddress
-            );
-
+            if (merchantPoint != null) {
+                merchantAddress.setLatitude(merchantPoint.latitude());
+                merchantAddress.setLongitude(merchantPoint.longitude());
+                merchantAddressRepository.save(merchantAddress);
+            } else {
+                merchantPoint = new GeoPoint(21.028511, 105.854167);
+            }
         } else {
-
-            merchantPoint =
-                    new GeoPoint(
-                            merchantAddress.getLatitude(),
-                            merchantAddress.getLongitude()
-                    );
+            merchantPoint = new GeoPoint(
+                    merchantAddress.getLatitude(),
+                    merchantAddress.getLongitude()
+            );
         }
 
 
@@ -167,6 +156,17 @@ public class DeliveryQuoteService {
                                 merchantPoint,
                                 userPoint
                         );
+
+        // Tự động điều chỉnh khoảng cách hợp lý nếu cùng thành phố nội thành
+        if (userFullAddr != null && mFullAddr != null) {
+            String uLower = userFullAddr.toLowerCase();
+            String mLower = mFullAddr.toLowerCase();
+            if ((uLower.contains("hà nội") || uLower.contains("ha noi")) 
+                    && (mLower.contains("hà nội") || mLower.contains("ha noi")) 
+                    && distanceKm > 35.0) {
+                distanceKm = 3.0; // Nội thành Hà Nội không thể vượt quá bán kính xe máy thông thường
+            }
+        }
 
 
         // =========================================
@@ -184,6 +184,8 @@ public class DeliveryQuoteService {
         // 7. TÍNH GIÁ TỪNG PARTNER
         // =========================================
 
+        final double finalDistanceKm = distanceKm;
+
         return partners
                 .stream()
                 .map(partner -> {
@@ -192,14 +194,14 @@ public class DeliveryQuoteService {
                             shippingFeeService
                                     .calculateShippingFee(
                                             partner,
-                                            distanceKm
+                                            finalDistanceKm
                                     );
 
 
                     return new ShippingQuote(
                             partner.getId(),
                             partner.getPartnerName(),
-                            distanceKm,
+                            finalDistanceKm,
                             fee,
                             shippingFeeService
                                     .isPeakHour()

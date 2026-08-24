@@ -56,12 +56,14 @@ public class OrderMapper {
                 .merchantBankName(merchant != null ? merchant.getBankName() : "")
                 .merchantBankAccountNumber(merchant != null ? merchant.getBankAccountNumber() : "")
 
-                // 4. Thông tin Khách hàng (Customer)
+                // 4. Thông tin Khách hàng (Customer) & Đơn vị vận chuyển
                 .userId(user != null ? user.getId() : null)
                 .customerName(order.getContactName())
                 .customerPhone(order.getContactPhone())
                 .deliveryAddress(order.getDeliveryAddress())
                 .note(order.getNote())
+                .deliveryPartnerId(order.getDeliveryPartner() != null ? order.getDeliveryPartner().getId() : null)
+                .deliveryPartnerName(order.getDeliveryPartner() != null ? order.getDeliveryPartner().getPartnerName() : "Giao hàng tiêu chuẩn")
 
                 // 5. Chi tiết bảng giá thanh toán
                 .subtotalPrice(order.getSubtotalPrice())

@@ -167,12 +167,52 @@
                             <div class="col-12">
 
                                 <label class="form-label fw-semibold">
-                                    Địa chỉ
+                                    Địa chỉ <span class="text-danger">*</span>
                                 </label>
+
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="provinceSelect">
+                                            <option value="" selected disabled>Tỉnh / Thành phố</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="districtSelect" disabled>
+                                            <option value="" selected disabled>Quận / Huyện</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="wardSelect" disabled>
+                                            <option value="" selected disabled>Phường / Xã</option>
+                                        </select>
+                                    </div>
+                                </div>
 
                                 <input type="text"
                                        class="form-control"
-                                       th:field="*{address}">
+                                       id="streetInput"
+                                       placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)">
+
+                                <!-- Hidden input để bind dữ liệu vào partner.address -->
+                                <input type="hidden"
+                                       th:field="*{address}"
+                                       id="addressInput"
+                                       th:data-initial-address="${partner.address}">
+
+                                <div id="addressError"
+                                     class="text-danger mt-1 d-none"
+                                     style="font-size: .875em;">
+                                    Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện, Phường/Xã và nhập địa chỉ chi tiết.
+                                </div>
+
+                                <!-- Hiển thị địa chỉ hiện tại nếu đang chỉnh sửa -->
+                                <div th:if="${isEdit and partner.address != null and !partner.address.isEmpty()}"
+                                     class="form-text text-muted mt-2">
+                                    <i class="bi bi-geo-alt me-1"></i>
+                                    Địa chỉ hiện tại: <strong th:text="${partner.address}"></strong>
+                                </div>
 
                             </div>
 
@@ -382,6 +422,117 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const province = document.getElementById("provinceSelect");
+    const district = document.getElementById("districtSelect");
+    const ward = document.getElementById("wardSelect");
+    const street = document.getElementById("streetInput");
+    const addressInput = document.getElementById("addressInput");
+    const addressError = document.getElementById("addressError");
+    const form = document.querySelector("form");
+
+    const API_URL = "https://provinces.open-api.vn/api";
+
+    // 1. Tải danh sách Tỉnh/Thành phố
+    fetch(`${API_URL}/?depth=1`)
+        .then(res => {
+            if (!res.ok) throw new Error("Lỗi tải tỉnh/thành");
+            return res.json();
+        })
+        .then(data => {
+            province.innerHTML = '<option value="" selected disabled>Tỉnh / Thành phố</option>';
+            data.forEach(item => {
+                province.innerHTML += `<option value="${item.code}" data-name="${item.name}">${item.name}</option>`;
+            });
+        })
+        .catch(err => console.error("Lỗi nạp Tỉnh/Thành:", err));
+
+    // 2. Tải danh sách Quận/Huyện khi chọn Tỉnh/Thành
+    province.addEventListener("change", () => {
+        const provinceCode = province.value;
+        district.disabled = true;
+        ward.disabled = true;
+        district.innerHTML = '<option value="" selected disabled>Quận / Huyện</option>';
+        ward.innerHTML = '<option value="" selected disabled>Phường / Xã</option>';
+
+        if (!provinceCode) return;
+
+        fetch(`${API_URL}/p/${provinceCode}?depth=2`)
+            .then(res => {
+                if (!res.ok) throw new Error("Lỗi tải quận/huyện");
+                return res.json();
+            })
+            .then(data => {
+                if (data && data.districts) {
+                    district.innerHTML = '<option value="" selected disabled>Quận / Huyện</option>';
+                    data.districts.forEach(item => {
+                        district.innerHTML += `<option value="${item.code}" data-name="${item.name}">${item.name}</option>`;
+                    });
+                    district.disabled = false;
+                }
+            })
+            .catch(err => console.error("Lỗi nạp Quận/Huyện:", err));
+    });
+
+    // 3. Tải danh sách Phường/Xã khi chọn Quận/Huyện
+    district.addEventListener("change", () => {
+        const districtCode = district.value;
+        ward.disabled = true;
+        ward.innerHTML = '<option value="" selected disabled>Phường / Xã</option>';
+
+        if (!districtCode) return;
+
+        fetch(`${API_URL}/d/${districtCode}?depth=2`)
+            .then(res => {
+                if (!res.ok) throw new Error("Lỗi tải phường/xã");
+                return res.json();
+            })
+            .then(data => {
+                if (data && data.wards) {
+                    ward.innerHTML = '<option value="" selected disabled>Phường / Xã</option>';
+                    data.wards.forEach(item => {
+                        ward.innerHTML += `<option value="${item.code}" data-name="${item.name}">${item.name}</option>`;
+                    });
+                    ward.disabled = false;
+                }
+            })
+            .catch(err => console.error("Lỗi nạp Phường/Xã:", err));
+    });
+
+    // 4. Xử lý khi submit form
+    form.addEventListener("submit", (e) => {
+        const provSelected = province.options[province.selectedIndex];
+        const distSelected = district.options[district.selectedIndex];
+        const wardSelected = ward.options[ward.selectedIndex];
+        const streetVal = street ? street.value.trim() : "";
+
+        const hasNewSelection = province.value && district.value && ward.value && streetVal;
+
+        if (hasNewSelection) {
+            const provName = provSelected ? (provSelected.getAttribute("data-name") || provSelected.text.trim()) : "";
+            const distName = distSelected ? (distSelected.getAttribute("data-name") || distSelected.text.trim()) : "";
+            const wardName = wardSelected ? (wardSelected.getAttribute("data-name") || wardSelected.text.trim()) : "";
+            const fullAddress = `${streetVal}, ${wardName}, ${distName}, ${provName}`;
+            addressInput.value = fullAddress;
+            addressError.classList.add("d-none");
+        } else {
+            // Nếu đang trong chế độ edit và có địa chỉ ban đầu
+            const initialAddress = addressInput.getAttribute("data-initial-address");
+            if (initialAddress && initialAddress.trim() !== "") {
+                addressInput.value = initialAddress;
+                addressError.classList.add("d-none");
+            } else {
+                // Tạo mới bắt buộc phải chọn đầy đủ
+                e.preventDefault();
+                addressError.classList.remove("d-none");
+                return false;
+            }
+        }
+    });
+});
 </script>
 
 </body>

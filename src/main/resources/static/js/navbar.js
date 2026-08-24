@@ -424,7 +424,10 @@
         name,
         price,
         discountPrice,
-        serviceFee = 0
+        serviceFee = 0,
+        merchantId = null,
+        merchantName = null,
+        image = null
     ) {
         let itemToAdd;
         if (typeof idOrItem === "object" && idOrItem !== null) {
@@ -436,6 +439,9 @@
                     ? Number(idOrItem.discountPrice)
                     : Number(idOrItem.price || 0),
                 serviceFee: Number(idOrItem.serviceFee || 0),
+                merchantId: idOrItem.merchantId || null,
+                merchantName: idOrItem.merchantName || null,
+                image: idOrItem.image || null,
                 quantity: Number(idOrItem.quantity || 1)
             };
         } else {
@@ -447,15 +453,35 @@
                     ? Number(discountPrice)
                     : Number(price || 0),
                 serviceFee: Number(serviceFee || 0),
+                merchantId: merchantId || null,
+                merchantName: merchantName || null,
+                image: image || null,
                 quantity: 1
             };
         }
 
         const cart = getGlobalCart();
+
+        // Kiểm tra nếu giỏ hàng đã có món của quán khác
+        if (cart.length > 0 && itemToAdd.merchantId) {
+            const existingMerchantId = cart[0].merchantId;
+            if (existingMerchantId && existingMerchantId !== itemToAdd.merchantId) {
+                const confirmClear = confirm("Giỏ hàng của bạn đang có món của cửa hàng khác. Bạn có muốn xóa giỏ hàng cũ để thêm món của quán này không?");
+                if (confirmClear) {
+                    cart.length = 0;
+                } else {
+                    return;
+                }
+            }
+        }
+
         const existing = cart.find(item => item.id === itemToAdd.id);
 
         if (existing) {
             existing.quantity += itemToAdd.quantity;
+            if (itemToAdd.merchantId && !existing.merchantId) existing.merchantId = itemToAdd.merchantId;
+            if (itemToAdd.merchantName && !existing.merchantName) existing.merchantName = itemToAdd.merchantName;
+            if (itemToAdd.image && !existing.image) existing.image = itemToAdd.image;
         } else {
             cart.push(itemToAdd);
         }

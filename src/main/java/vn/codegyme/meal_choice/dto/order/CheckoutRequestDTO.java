@@ -36,6 +36,8 @@ public class CheckoutRequestDTO {
 
     private String voucherCode;
 
+    private UUID deliveryPartnerId;
+
     @NotEmpty(message = "Danh sách món ăn không được để trống")
     @Valid
     private List<CheckoutItemDTO> items;
