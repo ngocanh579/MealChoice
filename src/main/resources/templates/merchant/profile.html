@@ -702,50 +702,110 @@
         ).show();
     }
 
+    function toTimeInput(value, defaultVal = "08:00") {
+        if (!value || value === "--") return defaultVal;
+        return value.length >= 5 ? value.substring(0, 5) : defaultVal;
+    }
+
     async function openEditAddressModal(btn) {
         const merchantId = btn.getAttribute("data-merchant-id");
         const addressId = btn.getAttribute("data-address-id");
         const addressFull = btn.getAttribute("data-address") || "";
-        const provinceCode = btn.getAttribute("data-province-code");
-        const districtCode = btn.getAttribute("data-district-code");
-        const wardCode = btn.getAttribute("data-ward-code");
+        let provinceCode = btn.getAttribute("data-province-code") || "";
+        let districtCode = btn.getAttribute("data-district-code") || "";
+        let wardCode = btn.getAttribute("data-ward-code") || "";
         const openTime = btn.getAttribute("data-open-time");
         const closeTime = btn.getAttribute("data-close-time");
 
         document.getElementById("editAddressMerchantId").value = merchantId;
         document.getElementById("editAddressId").value = addressId;
-        document.getElementById("editAddressOpenTime").value = formatTime(openTime);
-        document.getElementById("editAddressCloseTime").value = formatTime(closeTime);
+        document.getElementById("editAddressOpenTime").value = toTimeInput(openTime, "08:00");
+        document.getElementById("editAddressCloseTime").value = toTimeInput(closeTime, "22:00");
 
-        const addressParts = addressFull.split(",");
-        document.getElementById("editStreetInput").value =
-            addressParts[0]?.trim() || "";
+        const addressParts = addressFull.split(",").map(p => p.trim()).filter(Boolean);
+        if (addressParts.length >= 4) {
+            document.getElementById("editStreetInput").value = addressParts.slice(0, addressParts.length - 3).join(", ");
+        } else {
+            document.getElementById("editStreetInput").value = addressParts[0] || addressFull;
+        }
 
         try {
             await loadProvinces("edit");
+            const provSelect = document.getElementById("editProvinceSelect");
 
+            // 1. Tìm Tỉnh theo Code hoặc Tên
+            let selectedProvOption = null;
             if (provinceCode) {
-                document.getElementById("editProvinceSelect").value = provinceCode;
+                selectedProvOption = Array.from(provSelect.options).find(opt => opt.value == provinceCode);
+            }
+            if (!selectedProvOption && addressFull) {
+                selectedProvOption = Array.from(provSelect.options).find(opt => {
+                    const txt = opt.text.toLowerCase();
+                    return addressFull.toLowerCase().includes(txt) || (addressParts.length > 0 && txt.includes(addressParts[addressParts.length - 1]?.toLowerCase() || ""));
+                });
+            }
+
+            if (selectedProvOption) {
+                provSelect.value = selectedProvOption.value;
+                provinceCode = selectedProvOption.value;
                 await loadDistricts("edit", provinceCode);
-            }
 
-            if (districtCode) {
-                document.getElementById("editDistrictSelect").value = districtCode;
-                await loadWards("edit", districtCode);
-            }
+                const distSelect = document.getElementById("editDistrictSelect");
+                // 2. Tìm Quận/Huyện
+                let selectedDistOption = null;
+                if (districtCode) {
+                    selectedDistOption = Array.from(distSelect.options).find(opt => opt.value == districtCode);
+                }
+                if (!selectedDistOption && addressFull) {
+                    selectedDistOption = Array.from(distSelect.options).find(opt => {
+                        const txt = opt.text.toLowerCase();
+                        return addressFull.toLowerCase().includes(txt) || (addressParts.length >= 2 && txt.includes(addressParts[addressParts.length - 2]?.toLowerCase() || ""));
+                    });
+                }
 
-            if (wardCode) {
-                document.getElementById("editWardSelect").value = wardCode;
+                if (selectedDistOption) {
+                    distSelect.value = selectedDistOption.value;
+                    districtCode = selectedDistOption.value;
+                    await loadWards("edit", districtCode);
+
+                    const wardSelect = document.getElementById("editWardSelect");
+                    // 3. Tìm Phường/Xã
+                    let selectedWardOption = null;
+                    if (wardCode) {
+                        selectedWardOption = Array.from(wardSelect.options).find(opt => opt.value == wardCode);
+                    }
+                    if (!selectedWardOption && addressFull) {
+                        selectedWardOption = Array.from(wardSelect.options).find(opt => {
+                            const txt = opt.text.toLowerCase();
+                            return addressFull.toLowerCase().includes(txt) || (addressParts.length >= 3 && txt.includes(addressParts[addressParts.length - 3]?.toLowerCase() || ""));
+                        });
+                    }
+
+                    if (selectedWardOption) {
+                        wardSelect.value = selectedWardOption.value;
+                    }
+                }
+            } else if (addressParts.length >= 3) {
+                // Fallback nếu không khớp API tỉnh
+                const pName = addressParts[addressParts.length - 1];
+                const dName = addressParts[addressParts.length - 2];
+                const wName = addressParts[addressParts.length - 3];
+                provSelect.innerHTML = `<option value="${pName}" selected>${pName}</option>`;
+                document.getElementById("editDistrictSelect").innerHTML = `<option value="${dName}" selected>${dName}</option>`;
+                document.getElementById("editDistrictSelect").disabled = false;
+                document.getElementById("editWardSelect").innerHTML = `<option value="${wName}" selected>${wName}</option>`;
+                document.getElementById("editWardSelect").disabled = false;
             }
 
             new bootstrap.Modal(
                 document.getElementById("editAddressModal")
             ).show();
         } catch (error) {
+            console.error("Lỗi khi nạp địa chỉ sửa:", error);
             showNotice(
                 "danger",
                 "Không thể tải địa chỉ",
-                error.message
+                error.message || "Lỗi nạp dữ liệu"
             );
         }
     }
