@@ -90,4 +90,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) AND status = 'COMPLETED'
         """, nativeQuery = true)
     List<Object[]> findCouponStatsByMerchant(@Param("merchantId") String merchantId);
+
+    // 4. THỐNG KÊ MÓN ĂN (BÁN CHẠY) - Đã gộp theo tên món
+    @Query(value = """
+        SELECT 
+            oi.food_name AS foodName,
+            COALESCE(SUM(oi.quantity), 0) AS totalQuantity,
+            COALESCE(SUM(oi.subtotal), 0) AS totalRevenue
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE CAST(o.merchant_id AS CHAR) = CAST(:merchantId AS CHAR) 
+          AND o.status = 'COMPLETED'
+        GROUP BY oi.food_name
+        ORDER BY totalQuantity DESC
+        """, nativeQuery = true)
+    List<Object[]> findFoodStatsByMerchant(@Param("merchantId") String merchantId);
 }
