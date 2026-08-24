@@ -1,0 +1,78 @@
+<aside th:fragment="sidebar(activeMenu)" class="merchant-sidebar">
+    <div class="merchant-sidebar-inner d-flex flex-column h-100">
+
+        <!-- Logo / Thương hiệu -->
+        <div class="merchant-sidebar-brand d-flex align-items-center gap-2.5 mb-3">
+            <div class="merchant-sidebar-brand-badge rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                <i class="bi bi-shop fs-5"></i>
+            </div>
+
+            <div class="merchant-sidebar-brand-copy overflow-hidden">
+                <div class="merchant-sidebar-brand-title fw-bold text-dark text-truncate">Merchant Hub</div>
+                <small class="text-muted font-size-12 d-block text-truncate">Quản lý cửa hàng</small>
+            </div>
+        </div>
+
+        <div class="merchant-sidebar-group-title text-uppercase font-size-12 fw-bold text-muted mb-2 px-2">
+            Điều hướng
+        </div>
+
+        <!-- Danh sách menu chính -->
+        <nav class="nav flex-column gap-1 flex-grow-1">
+
+            <!-- Tổng quan -->
+            <a href="/merchant/dashboard#overview"
+               class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center gap-3"
+               th:classappend="${activeMenu == 'overview'} ? ' active bg-danger text-white fw-bold' : ' hover-bg-light'">
+                <i class="bi bi-speedometer2 merchant-sidebar-icon fs-5"></i>
+                <span class="merchant-sidebar-label">Tổng quan</span>
+            </a>
+            <!-- Thống kê & Báo cáo -->
+            <a href="/merchant/stats"
+               class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center gap-3"
+               th:classappend="${activeMenu == 'stats'} ? ' active bg-danger text-white fw-bold' : ' hover-bg-light'">
+                <i class="bi bi-graph-up-arrow merchant-sidebar-icon fs-5"></i>
+                <span class="merchant-sidebar-label">Thống kê & Báo cáo</span>
+            </a>
+
+            <!-- Danh sách món ăn -->
+            <a href="/merchant/foods"
+               class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center gap-3"
+               th:classappend="${activeMenu == 'foods'} ? ' active bg-danger text-white fw-bold' : ' hover-bg-light'">
+                <i class="bi bi-egg-fried merchant-sidebar-icon fs-5"></i>
+                <span class="merchant-sidebar-label">Danh sách món ăn</span>
+            </a>
+
+            <!-- Quản lý đơn hàng -->
+            <a href="/merchant/orders"
+               class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center justify-content-between gap-2"
+               th:classappend="${activeMenu == 'orders'} ? ' active bg-danger text-white fw-bold' : ' hover-bg-light'">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-receipt merchant-sidebar-icon fs-5"></i>
+                    <span class="merchant-sidebar-label">Quản lý đơn hàng</span>
+                </div>
+            </a>
+
+            <!-- Thông tin Merchant -->
+            <a href="/merchant/profile"
+               class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center gap-3"
+               th:classappend="${activeMenu == 'profile'} ? ' active bg-danger text-white fw-bold' : ' hover-bg-light'">
+                <i class="bi bi-shop-window merchant-sidebar-icon fs-5"></i>
+                <span class="merchant-sidebar-label">
+                    Thông tin Merchant và địa chỉ
+                </span>
+            </a>
+
+        </nav>
+
+        <!-- Đăng xuất đặt ở cuối Sidebar -->
+        <div class="mt-auto pt-3 border-top">
+            <button type="button"
+                    class="merchant-sidebar-button btn btn-link text-decoration-none w-100 text-start text-danger d-flex align-items-center gap-3 px-3 py-2 rounded-3 hover-bg-danger-subtle"
+                    onclick="handleLogout(event)">
+                <i class="bi bi-box-arrow-right merchant-sidebar-icon fs-5"></i>
+                <span class="merchant-sidebar-label fw-bold">Đăng xuất</span>
+            </button>
+        </div>
+    </div>
+</aside>
