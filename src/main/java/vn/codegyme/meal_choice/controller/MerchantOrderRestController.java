@@ -14,7 +14,6 @@ import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.security.CustomUserDetails;
 import vn.codegyme.meal_choice.service.MerchantOrderService;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -41,18 +40,26 @@ public class MerchantOrderRestController {
     }
 
     /**
-     * REST API: Lấy danh sách đơn hàng của Merchant (có thể lọc theo trạng thái)
+     * REST API: Lấy danh sách đơn hàng của Merchant (có thể lọc theo trạng thái, phân trang 50 đơn/trang)
      */
     @GetMapping
-    public ResponseEntity<?> getOrders(@RequestParam(name = "status", required = false) OrderStatus status) {
+    public ResponseEntity<?> getOrders(
+            @RequestParam(name = "status", required = false) OrderStatus status,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "50") int size) {
         try {
             Merchant merchant = getCurrentMerchant();
-            List<OrderResponseDTO> orders = merchantOrderService.getMerchantOrders(merchant.getId(), status);
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                    Math.max(0, page), size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+            org.springframework.data.domain.Page<OrderResponseDTO> orderPage = merchantOrderService.getMerchantOrders(merchant.getId(), status, pageable);
             long pendingCount = merchantOrderService.countPendingOrders(merchant.getId());
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "orders", orders,
+                    "orders", orderPage.getContent(),
+                    "totalElements", orderPage.getTotalElements(),
+                    "totalPages", orderPage.getTotalPages(),
+                    "currentPage", orderPage.getNumber(),
                     "pendingCount", pendingCount
             ));
         } catch (Exception e) {
@@ -100,6 +107,28 @@ public class MerchantOrderRestController {
             ));
         } catch (Exception e) {
             log.error("Lỗi khi nhận đơn hàng API: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * REST API: Bắt đầu giao hàng (Chuyển trạng thái sang DELIVERING)
+     */
+    @PostMapping("/{id}/start-delivery")
+    public ResponseEntity<?> startDelivery(@PathVariable("id") Long id) {
+        try {
+            Merchant merchant = getCurrentMerchant();
+            OrderResponseDTO updatedOrder = merchantOrderService.startDelivery(merchant.getId(), id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Đã bắt đầu giao đơn hàng!",
+                    "data", updatedOrder
+            ));
+        } catch (Exception e) {
+            log.error("Lỗi khi bắt đầu giao hàng API: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", e.getMessage()

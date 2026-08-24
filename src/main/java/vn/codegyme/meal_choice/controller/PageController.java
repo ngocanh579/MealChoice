@@ -720,7 +720,10 @@ public class PageController {
 
     // Trang lịch sử đơn hàng của User
     @GetMapping("/user/orders")
-    public String userOrdersPage(Authentication authentication, Model model) {
+    public String userOrdersPage(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            Authentication authentication,
+            Model model) {
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
             return "redirect:/login";
@@ -731,9 +734,14 @@ public class PageController {
             return "redirect:/login";
         }
 
-        List<OrderResponseDTO> orders = userOrderService.getUserOrders(user.getId());
+        int pageSize = 50;
+        Pageable pageable = PageRequest.of(Math.max(0, page), pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+        Page<OrderResponseDTO> orderPage = userOrderService.getUserOrders(user.getId(), pageable);
+
         model.addAttribute("user", user);
-        model.addAttribute("orders", orders);
+        model.addAttribute("orders", orderPage.getContent());
+        model.addAttribute("orderPage", orderPage);
+        model.addAttribute("currentPage", page);
 
         return "user/orders";
     }
@@ -744,6 +752,7 @@ public class PageController {
     @GetMapping("/merchant/orders")
     public String merchantOrdersPage(
             @RequestParam(name = "status", required = false) OrderStatus status,
+            @RequestParam(name = "page", defaultValue = "0") int page,
             Authentication authentication,
             Model model) {
 
@@ -757,11 +766,15 @@ public class PageController {
             return "redirect:/merchant/register";
         }
 
-        List<OrderResponseDTO> orders = merchantOrderService.getMerchantOrders(merchant.getId(), status);
+        int pageSize = 50;
+        Pageable pageable = PageRequest.of(Math.max(0, page), pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+        Page<OrderResponseDTO> orderPage = merchantOrderService.getMerchantOrders(merchant.getId(), status, pageable);
         long pendingCount = merchantOrderService.countPendingOrders(merchant.getId());
 
         model.addAttribute("merchant", merchant);
-        model.addAttribute("orders", orders);
+        model.addAttribute("orders", orderPage.getContent());
+        model.addAttribute("orderPage", orderPage);
+        model.addAttribute("currentPage", page);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("pendingCount", pendingCount);
         model.addAttribute("orderStatuses", OrderStatus.values());

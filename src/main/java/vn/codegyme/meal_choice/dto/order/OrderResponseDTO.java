@@ -51,8 +51,18 @@ public class OrderResponseDTO {
 
     private String cancelReason;
 
+    private LocalDateTime acceptedAt;
+    private String formattedAcceptedAt;
+
+    private LocalDateTime preparingUntil;
+    private String formattedPreparingUntil;
+
     private LocalDateTime estimatedDeliveryTime;
     private String formattedEstimatedDeliveryTime;
+
+    private Long remainingPrepSeconds;
+    private Long remainingDeliverySeconds;
+    private Boolean canComplete;
 
     private LocalDateTime createdAt;
     private String formattedCreatedAt;

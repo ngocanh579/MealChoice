@@ -1,10 +1,12 @@
 package vn.codegyme.meal_choice.mapper;
 
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import vn.codegyme.meal_choice.dto.order.OrderItemResponseDTO;
 import vn.codegyme.meal_choice.dto.order.OrderResponseDTO;
 import vn.codegyme.meal_choice.entity.*;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -30,6 +32,24 @@ public class OrderMapper {
 
         Merchant merchant = order.getMerchant();
         User user = order.getUser();
+        LocalDateTime now = LocalDateTime.now();
+
+        Long remainingPrepSeconds = null;
+        if (order.getPreparingUntil() != null) {
+            remainingPrepSeconds = Math.max(0L, Duration.between(now, order.getPreparingUntil()).getSeconds());
+        }
+
+        Long remainingDeliverySeconds = null;
+        if (order.getEstimatedDeliveryTime() != null) {
+            remainingDeliverySeconds = Math.max(0L, Duration.between(now, order.getEstimatedDeliveryTime()).getSeconds());
+        }
+
+        boolean canComplete = false;
+        if (order.getStatus() == OrderStatus.DELIVERING) {
+            canComplete = (remainingDeliverySeconds != null && remainingDeliverySeconds == 0L)
+                    || order.getEstimatedDeliveryTime() == null
+                    || now.isAfter(order.getEstimatedDeliveryTime());
+        }
 
         return OrderResponseDTO.builder()
                 // 1. Thông tin chung đơn hàng
@@ -37,8 +57,15 @@ public class OrderMapper {
                 .orderCode(order.getOrderCode())
                 .createdAt(order.getCreatedAt())
                 .formattedCreatedAt(formatDateTime(order.getCreatedAt()))
+                .acceptedAt(order.getAcceptedAt())
+                .formattedAcceptedAt(formatDateTime(order.getAcceptedAt()))
+                .preparingUntil(order.getPreparingUntil())
+                .formattedPreparingUntil(formatDateTime(order.getPreparingUntil()))
                 .estimatedDeliveryTime(order.getEstimatedDeliveryTime())
                 .formattedEstimatedDeliveryTime(formatDateTime(order.getEstimatedDeliveryTime()))
+                .remainingPrepSeconds(remainingPrepSeconds)
+                .remainingDeliverySeconds(remainingDeliverySeconds)
+                .canComplete(canComplete)
                 .cancelReason(order.getCancelReason())
 
                 // 2. Trạng thái & Phương thức thanh toán
@@ -122,6 +149,16 @@ public class OrderMapper {
         return orders.stream()
                 .map(this::toOrderResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Chuyển đổi Page<Order> sang Page<OrderResponseDTO>
+     */
+    public Page<OrderResponseDTO> toOrderResponseDTOPage(Page<Order> orderPage) {
+        if (orderPage == null) {
+            return Page.empty();
+        }
+        return orderPage.map(this::toOrderResponseDTO);
     }
 
     // =========================================================================

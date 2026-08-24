@@ -168,7 +168,7 @@ function renderShippingQuotes(quotes) {
                         ${peakBadge}
                     </div>
                     <small class="text-muted d-block mt-0.5 font-size-12">
-                        <i class="bi bi-clock me-1"></i>Giao trong 20 - 35 phút &bull; ~${q.distanceKm} km
+                        <i class="bi bi-clock me-1"></i>Giao dự kiến ~${Math.max(4, Math.round(q.distanceKm * 4))} phút di chuyển (4 phút/km) &bull; ~${q.distanceKm} km
                     </small>
                 </div>
             </div>
@@ -202,7 +202,7 @@ function renderFallbackDeliveryPartner() {
                 <div>
                     <strong class="text-dark fs-6">Giao hàng Tiêu chuẩn MealChoice</strong>
                     <small class="text-muted d-block mt-0.5 font-size-12">
-                        <i class="bi bi-clock me-1"></i>Giao nhanh trong 25 - 35 phút
+                        <i class="bi bi-clock me-1"></i>Giao nhanh dự kiến ~12 phút di chuyển (4 phút/km)
                     </small>
                 </div>
             </div>

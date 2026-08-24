@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi"
-      xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 
 <head>
 
@@ -8,404 +7,364 @@
 
     <title>Đối tác vận chuyển</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
-          rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
 </head>
 
 <body class="bg-light">
 
 
-<div th:replace="~{layout/navbar :: navbar}"></div>
+    <div th:replace="~{layout/navbar :: navbar}"></div>
 
 
-<div class="container py-4">
+    <div class="container py-4">
 
-    <div class="row justify-content-center">
+        <div class="row justify-content-center">
 
-        <div class="col-lg-9">
-
-
-            <div class="mb-4">
-
-                <a th:href="@{/admin/delivery-partners}"
-                   class="text-decoration-none text-secondary">
-
-                    <i class="bi bi-arrow-left me-1"></i>
-
-                    Quay lại danh sách
-
-                </a>
-
-            </div>
+            <div class="col-lg-9">
 
 
-            <div class="card border-0 shadow-sm rounded-4">
+                <div class="mb-4">
 
-                <div class="card-header bg-white
-                            border-0 p-4">
+                    <a th:href="@{/admin/delivery-partners}" class="text-decoration-none text-secondary">
 
-                    <h3 class="fw-bold mb-1">
+                        <i class="bi bi-arrow-left me-1"></i>
 
-                        <i class="bi bi-truck text-danger me-2"></i>
+                        Quay lại danh sách
 
-                        <span th:text="${isEdit}
-                                ? 'Cập nhật đối tác vận chuyển'
-                                : 'Thêm đối tác vận chuyển'">
-
-                            Thêm đối tác vận chuyển
-
-                        </span>
-
-                    </h3>
-
-
-                    <p class="text-muted mb-0">
-
-                        Cấu hình thông tin và chính sách
-                        tính phí vận chuyển.
-
-                    </p>
+                    </a>
 
                 </div>
 
 
-                <div class="card-body p-4">
+                <div class="card border-0 shadow-sm rounded-4">
+
+                    <div class="card-header bg-white
+                            border-0 p-4">
+
+                        <h3 class="fw-bold mb-1">
+
+                            <i class="bi bi-truck text-danger me-2"></i>
+
+                            <span th:text="${isEdit}
+                                ? 'Cập nhật đối tác vận chuyển'
+                                : 'Thêm đối tác vận chuyển'">
+
+                                Thêm đối tác vận chuyển
+
+                            </span>
+
+                        </h3>
 
 
-                    <form th:object="${partner}"
-                          method="post"
+                        <p class="text-muted mb-0">
 
-                          th:action="${isEdit}
+                            Cấu hình thông tin và chính sách
+                            tính phí vận chuyển.
+
+                        </p>
+
+                    </div>
+
+
+                    <div class="card-body p-4">
+
+
+                        <form th:object="${partner}" method="post" th:action="${isEdit}
                           ? @{/admin/delivery-partners/{id}/edit(id=${partner.id})}
                           : @{/admin/delivery-partners/create}">
 
 
-                        <!-- ======================================= -->
-                        <!-- THÔNG TIN CHUNG -->
-                        <!-- ======================================= -->
+                            <!-- ======================================= -->
+                            <!-- THÔNG TIN CHUNG -->
+                            <!-- ======================================= -->
 
-                        <h5 class="fw-bold mb-3">
+                            <h5 class="fw-bold mb-3">
 
-                            <i class="bi bi-info-circle
+                                <i class="bi bi-info-circle
                                       text-danger me-2"></i>
 
-                            Thông tin đối tác
+                                Thông tin đối tác
 
-                        </h5>
-
-
-                        <div class="row g-3">
+                            </h5>
 
 
-                            <div class="col-md-4">
-
-                                <label class="form-label fw-semibold">
-
-                                    Mã đối tác
-                                    <span class="text-danger">*</span>
-
-                                </label>
-
-                                <input type="text"
-                                       class="form-control"
-                                       th:field="*{partnerCode}"
-                                       th:readonly="${isEdit}"
-                                       placeholder="VD: GHN"
-                                       required>
-
-                            </div>
+                            <div class="row g-3">
 
 
-                            <div class="col-md-8">
+                                <div class="col-md-4">
 
-                                <label class="form-label fw-semibold">
+                                    <label class="form-label fw-semibold">
 
-                                    Tên đối tác
-                                    <span class="text-danger">*</span>
+                                        Mã đối tác
+                                        <span class="text-danger">*</span>
 
-                                </label>
+                                    </label>
 
-                                <input type="text"
-                                       class="form-control"
-                                       th:field="*{partnerName}"
-                                       placeholder="Giao Hàng Nhanh"
-                                       required>
+                                    <input type="text" class="form-control" th:field="*{partnerCode}"
+                                        th:readonly="${isEdit}" placeholder="VD: GHN" required>
 
-                            </div>
-
-
-                            <div class="col-md-6">
-
-                                <label class="form-label fw-semibold">
-                                    Email
-                                </label>
-
-                                <input type="email"
-                                       class="form-control"
-                                       th:field="*{email}">
-
-                            </div>
-
-
-                            <div class="col-md-6">
-
-                                <label class="form-label fw-semibold">
-                                    Số điện thoại
-                                </label>
-
-                                <input type="text"
-                                       class="form-control"
-                                       th:field="*{phone}">
-
-                            </div>
-
-
-                            <div class="col-12">
-
-                                <label class="form-label fw-semibold">
-                                    Địa chỉ <span class="text-danger">*</span>
-                                </label>
-
-                                <div class="row g-2 mb-2">
-                                    <div class="col-md-4">
-                                        <select class="form-select" id="provinceSelect">
-                                            <option value="" selected disabled>Tỉnh / Thành phố</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <select class="form-select" id="districtSelect" disabled>
-                                            <option value="" selected disabled>Quận / Huyện</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <select class="form-select" id="wardSelect" disabled>
-                                            <option value="" selected disabled>Phường / Xã</option>
-                                        </select>
-                                    </div>
                                 </div>
 
-                                <input type="text"
-                                       class="form-control"
-                                       id="streetInput"
-                                       placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)">
 
-                                <!-- Hidden input để bind dữ liệu vào partner.address -->
-                                <input type="hidden"
-                                       th:field="*{address}"
-                                       id="addressInput"
-                                       th:data-initial-address="${partner.address}">
+                                <div class="col-md-8">
 
-                                <div id="addressError"
-                                     class="text-danger mt-1 d-none"
-                                     style="font-size: .875em;">
-                                    Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện, Phường/Xã và nhập địa chỉ chi tiết.
+                                    <label class="form-label fw-semibold">
+
+                                        Tên đối tác
+                                        <span class="text-danger">*</span>
+
+                                    </label>
+
+                                    <input type="text" class="form-control" th:field="*{partnerName}"
+                                        placeholder="Giao Hàng Nhanh" required>
+
                                 </div>
 
-                                <!-- Hiển thị địa chỉ hiện tại nếu đang chỉnh sửa -->
-                                <div th:if="${isEdit and partner.address != null and !partner.address.isEmpty()}"
-                                     class="form-text text-muted mt-2">
-                                    <i class="bi bi-geo-alt me-1"></i>
-                                    Địa chỉ hiện tại: <strong th:text="${partner.address}"></strong>
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label fw-semibold">
+                                        Email
+                                    </label>
+
+                                    <input type="email" class="form-control" th:field="*{email}">
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label fw-semibold">
+                                        Số điện thoại
+                                    </label>
+
+                                    <input type="text" class="form-control" th:field="*{phone}">
+
+                                </div>
+
+
+                                <div class="col-12">
+
+                                    <label class="form-label fw-semibold">
+                                        Địa chỉ <span class="text-danger">*</span>
+                                    </label>
+
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <select class="form-select" id="provinceSelect">
+                                                <option value="" selected disabled>Tỉnh / Thành phố</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <select class="form-select" id="districtSelect" disabled>
+                                                <option value="" selected disabled>Quận / Huyện</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <select class="form-select" id="wardSelect" disabled>
+                                                <option value="" selected disabled>Phường / Xã</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <input type="text" class="form-control" id="streetInput"
+                                        placeholder="Số nhà, Tên đường (Ví dụ: 123 Đường ABC)">
+
+                                    <!-- Hidden input để bind dữ liệu vào partner.address -->
+                                    <input type="hidden" th:field="*{address}" id="addressInput"
+                                        th:data-initial-address="${partner.address}">
+
+                                    <div id="addressError" class="text-danger mt-1 d-none" style="font-size: .875em;">
+                                        Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện, Phường/Xã và nhập địa chỉ chi tiết.
+                                    </div>
+
+                                    <!-- Hiển thị địa chỉ hiện tại nếu đang chỉnh sửa -->
+                                    <div th:if="${isEdit and partner.address != null and !partner.address.isEmpty()}"
+                                        class="form-text text-muted mt-2">
+                                        <i class="bi bi-geo-alt me-1"></i>
+                                        Địa chỉ hiện tại: <strong th:text="${partner.address}"></strong>
+                                    </div>
+
                                 </div>
 
                             </div>
 
-                        </div>
+
+                            <hr class="my-4">
 
 
-                        <hr class="my-4">
+                            <!-- ======================================= -->
+                            <!-- BẢNG GIÁ -->
+                            <!-- ======================================= -->
 
+                            <h5 class="fw-bold mb-3">
 
-                        <!-- ======================================= -->
-                        <!-- BẢNG GIÁ -->
-                        <!-- ======================================= -->
-
-                        <h5 class="fw-bold mb-3">
-
-                            <i class="bi bi-cash-coin
+                                <i class="bi bi-cash-coin
                                       text-success me-2"></i>
 
-                            Chính sách phí vận chuyển
+                                Chính sách phí vận chuyển
 
-                        </h5>
-
-
-                        <div class="row g-3">
+                            </h5>
 
 
-                            <div class="col-md-6">
-
-                                <label class="form-label fw-semibold">
-
-                                    Phí cơ bản
-
-                                </label>
+                            <div class="row g-3">
 
 
-                                <div class="input-group">
+                                <div class="col-md-6">
 
-                                    <input type="number"
-                                           min="0"
-                                           step="1000"
-                                           class="form-control"
-                                           th:field="*{baseFee}"
-                                           required>
+                                    <label class="form-label fw-semibold">
 
-                                    <span class="input-group-text">
-                                        VNĐ
-                                    </span>
+                                        Phí cơ bản
+
+                                    </label>
+
+
+                                    <div class="input-group">
+
+                                        <input type="number" min="0" step="1000" class="form-control"
+                                            th:field="*{baseFee}" required>
+
+                                        <span class="input-group-text">
+                                            VNĐ
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label fw-semibold">
+
+                                        Số km áp dụng phí cơ bản
+
+                                    </label>
+
+
+                                    <div class="input-group">
+
+                                        <input type="number" min="0" step="0.1" class="form-control"
+                                            th:field="*{baseDistanceKm}" required>
+
+                                        <span class="input-group-text">
+                                            km
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label fw-semibold">
+
+                                        Phí mỗi km tiếp theo
+
+                                    </label>
+
+
+                                    <div class="input-group">
+
+                                        <input type="number" min="0" step="50" class="form-control"
+                                            th:field="*{feePerKm}" required>
+
+                                        <span class="input-group-text">
+                                            VNĐ/km
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label fw-semibold">
+
+                                        Hệ số giờ cao điểm
+
+                                    </label>
+
+
+                                    <div class="input-group">
+
+                                        <input type="number" min="1" step="0.05" class="form-control"
+                                            th:field="*{peakMultiplier}" placeholder="1.2" required>
+
+                                        <span class="input-group-text">
+                                            lần
+                                        </span>
+
+                                    </div>
 
                                 </div>
 
                             </div>
 
 
-                            <div class="col-md-6">
+                            <!-- PEAK INFO -->
 
-                                <label class="form-label fw-semibold">
+                            <div class="alert alert-warning mt-4 mb-0">
 
-                                    Số km áp dụng phí cơ bản
+                                <div class="fw-semibold mb-1">
 
-                                </label>
+                                    <i class="bi bi-clock-fill me-1"></i>
 
-
-                                <div class="input-group">
-
-                                    <input type="number"
-                                           min="0"
-                                           step="0.1"
-                                           class="form-control"
-                                           th:field="*{baseDistanceKm}"
-                                           required>
-
-                                    <span class="input-group-text">
-                                        km
-                                    </span>
+                                    Giờ cao điểm
 
                                 </div>
 
-                            </div>
+                                Hệ thống sử dụng giờ Việt Nam
+                                <strong>GMT+7</strong>.
 
-
-                            <div class="col-md-6">
-
-                                <label class="form-label fw-semibold">
-
-                                    Phí mỗi km tiếp theo
-
-                                </label>
-
-
-                                <div class="input-group">
-
-                                    <input type="number"
-                                           min="0"
-                                           step="500"
-                                           class="form-control"
-                                           th:field="*{feePerKm}"
-                                           required>
-
-                                    <span class="input-group-text">
-                                        VNĐ/km
-                                    </span>
-
-                                </div>
+                                Phí vận chuyển sẽ được nhân với
+                                hệ số cao điểm khi đơn hàng nằm
+                                trong khung giờ đã cấu hình.
 
                             </div>
 
 
-                            <div class="col-md-6">
-
-                                <label class="form-label fw-semibold">
-
-                                    Hệ số giờ cao điểm
-
-                                </label>
+                            <hr class="my-4">
 
 
-                                <div class="input-group">
+                            <!-- BUTTON -->
 
-                                    <input type="number"
-                                           min="1"
-                                           step="0.05"
-                                           class="form-control"
-                                           th:field="*{peakMultiplier}"
-                                           placeholder="1.2"
-                                           required>
+                            <div class="d-flex justify-content-end gap-2">
 
-                                    <span class="input-group-text">
-                                        lần
-                                    </span>
+                                <a th:href="@{/admin/delivery-partners}" class="btn btn-light rounded-pill px-4">
 
-                                </div>
+                                    Hủy
 
-                            </div>
-
-                        </div>
+                                </a>
 
 
-                        <!-- PEAK INFO -->
-
-                        <div class="alert alert-warning mt-4 mb-0">
-
-                            <div class="fw-semibold mb-1">
-
-                                <i class="bi bi-clock-fill me-1"></i>
-
-                                Giờ cao điểm
-
-                            </div>
-
-                            Hệ thống sử dụng giờ Việt Nam
-                            <strong>GMT+7</strong>.
-
-                            Phí vận chuyển sẽ được nhân với
-                            hệ số cao điểm khi đơn hàng nằm
-                            trong khung giờ đã cấu hình.
-
-                        </div>
-
-
-                        <hr class="my-4">
-
-
-                        <!-- BUTTON -->
-
-                        <div class="d-flex justify-content-end gap-2">
-
-                            <a th:href="@{/admin/delivery-partners}"
-                               class="btn btn-light rounded-pill px-4">
-
-                                Hủy
-
-                            </a>
-
-
-                            <button type="submit"
-                                    class="btn btn-danger
+                                <button type="submit" class="btn btn-danger
                                            rounded-pill px-4">
 
-                                <i class="bi bi-check-circle me-1"></i>
+                                    <i class="bi bi-check-circle me-1"></i>
 
-                                <span th:text="${isEdit}
+                                    <span th:text="${isEdit}
                                         ? 'Lưu thay đổi'
                                         : 'Tạo đối tác'">
 
-                                    Tạo đối tác
+                                        Tạo đối tác
 
-                                </span>
+                                    </span>
 
-                            </button>
+                                </button>
 
-                        </div>
+                            </div>
 
-                    </form>
+                        </form>
+
+                    </div>
 
                 </div>
 
@@ -415,125 +374,124 @@
 
     </div>
 
-</div>
+
+    <div th:replace="~{layout/footer :: footer}"></div>
 
 
-<div th:replace="~{layout/footer :: footer}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+    </script>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const province = document.getElementById("provinceSelect");
+            const district = document.getElementById("districtSelect");
+            const ward = document.getElementById("wardSelect");
+            const street = document.getElementById("streetInput");
+            const addressInput = document.getElementById("addressInput");
+            const addressError = document.getElementById("addressError");
+            const form = document.querySelector("form");
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
-</script>
+            const API_URL = "https://provinces.open-api.vn/api";
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const province = document.getElementById("provinceSelect");
-    const district = document.getElementById("districtSelect");
-    const ward = document.getElementById("wardSelect");
-    const street = document.getElementById("streetInput");
-    const addressInput = document.getElementById("addressInput");
-    const addressError = document.getElementById("addressError");
-    const form = document.querySelector("form");
+            // 1. Tải danh sách Tỉnh/Thành phố
+            fetch(`${API_URL}/?depth=1`)
+                .then(res => {
+                    if (!res.ok) throw new Error("Lỗi tải tỉnh/thành");
+                    return res.json();
+                })
+                .then(data => {
+                    province.innerHTML = '<option value="" selected disabled>Tỉnh / Thành phố</option>';
+                    data.forEach(item => {
+                        province.innerHTML += `<option value="${item.code}" data-name="${item.name}">${item.name}</option>`;
+                    });
+                })
+                .catch(err => console.error("Lỗi nạp Tỉnh/Thành:", err));
 
-    const API_URL = "https://provinces.open-api.vn/api";
+            // 2. Tải danh sách Quận/Huyện khi chọn Tỉnh/Thành
+            province.addEventListener("change", () => {
+                const provinceCode = province.value;
+                district.disabled = true;
+                ward.disabled = true;
+                district.innerHTML = '<option value="" selected disabled>Quận / Huyện</option>';
+                ward.innerHTML = '<option value="" selected disabled>Phường / Xã</option>';
 
-    // 1. Tải danh sách Tỉnh/Thành phố
-    fetch(`${API_URL}/?depth=1`)
-        .then(res => {
-            if (!res.ok) throw new Error("Lỗi tải tỉnh/thành");
-            return res.json();
-        })
-        .then(data => {
-            province.innerHTML = '<option value="" selected disabled>Tỉnh / Thành phố</option>';
-            data.forEach(item => {
-                province.innerHTML += `<option value="${item.code}" data-name="${item.name}">${item.name}</option>`;
+                if (!provinceCode) return;
+
+                fetch(`${API_URL}/p/${provinceCode}?depth=2`)
+                    .then(res => {
+                        if (!res.ok) throw new Error("Lỗi tải quận/huyện");
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data && data.districts) {
+                            district.innerHTML = '<option value="" selected disabled>Quận / Huyện</option>';
+                            data.districts.forEach(item => {
+                                district.innerHTML += `<option value="${item.code}" data-name="${item.name}">${item.name}</option>`;
+                            });
+                            district.disabled = false;
+                        }
+                    })
+                    .catch(err => console.error("Lỗi nạp Quận/Huyện:", err));
             });
-        })
-        .catch(err => console.error("Lỗi nạp Tỉnh/Thành:", err));
 
-    // 2. Tải danh sách Quận/Huyện khi chọn Tỉnh/Thành
-    province.addEventListener("change", () => {
-        const provinceCode = province.value;
-        district.disabled = true;
-        ward.disabled = true;
-        district.innerHTML = '<option value="" selected disabled>Quận / Huyện</option>';
-        ward.innerHTML = '<option value="" selected disabled>Phường / Xã</option>';
+            // 3. Tải danh sách Phường/Xã khi chọn Quận/Huyện
+            district.addEventListener("change", () => {
+                const districtCode = district.value;
+                ward.disabled = true;
+                ward.innerHTML = '<option value="" selected disabled>Phường / Xã</option>';
 
-        if (!provinceCode) return;
+                if (!districtCode) return;
 
-        fetch(`${API_URL}/p/${provinceCode}?depth=2`)
-            .then(res => {
-                if (!res.ok) throw new Error("Lỗi tải quận/huyện");
-                return res.json();
-            })
-            .then(data => {
-                if (data && data.districts) {
-                    district.innerHTML = '<option value="" selected disabled>Quận / Huyện</option>';
-                    data.districts.forEach(item => {
-                        district.innerHTML += `<option value="${item.code}" data-name="${item.name}">${item.name}</option>`;
-                    });
-                    district.disabled = false;
+                fetch(`${API_URL}/d/${districtCode}?depth=2`)
+                    .then(res => {
+                        if (!res.ok) throw new Error("Lỗi tải phường/xã");
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data && data.wards) {
+                            ward.innerHTML = '<option value="" selected disabled>Phường / Xã</option>';
+                            data.wards.forEach(item => {
+                                ward.innerHTML += `<option value="${item.code}" data-name="${item.name}">${item.name}</option>`;
+                            });
+                            ward.disabled = false;
+                        }
+                    })
+                    .catch(err => console.error("Lỗi nạp Phường/Xã:", err));
+            });
+
+            // 4. Xử lý khi submit form
+            form.addEventListener("submit", (e) => {
+                const provSelected = province.options[province.selectedIndex];
+                const distSelected = district.options[district.selectedIndex];
+                const wardSelected = ward.options[ward.selectedIndex];
+                const streetVal = street ? street.value.trim() : "";
+
+                const hasNewSelection = province.value && district.value && ward.value && streetVal;
+
+                if (hasNewSelection) {
+                    const provName = provSelected ? (provSelected.getAttribute("data-name") || provSelected.text.trim()) : "";
+                    const distName = distSelected ? (distSelected.getAttribute("data-name") || distSelected.text.trim()) : "";
+                    const wardName = wardSelected ? (wardSelected.getAttribute("data-name") || wardSelected.text.trim()) : "";
+                    const fullAddress = `${streetVal}, ${wardName}, ${distName}, ${provName}`;
+                    addressInput.value = fullAddress;
+                    addressError.classList.add("d-none");
+                } else {
+                    // Nếu đang trong chế độ edit và có địa chỉ ban đầu
+                    const initialAddress = addressInput.getAttribute("data-initial-address");
+                    if (initialAddress && initialAddress.trim() !== "") {
+                        addressInput.value = initialAddress;
+                        addressError.classList.add("d-none");
+                    } else {
+                        // Tạo mới bắt buộc phải chọn đầy đủ
+                        e.preventDefault();
+                        addressError.classList.remove("d-none");
+                        return false;
+                    }
                 }
-            })
-            .catch(err => console.error("Lỗi nạp Quận/Huyện:", err));
-    });
-
-    // 3. Tải danh sách Phường/Xã khi chọn Quận/Huyện
-    district.addEventListener("change", () => {
-        const districtCode = district.value;
-        ward.disabled = true;
-        ward.innerHTML = '<option value="" selected disabled>Phường / Xã</option>';
-
-        if (!districtCode) return;
-
-        fetch(`${API_URL}/d/${districtCode}?depth=2`)
-            .then(res => {
-                if (!res.ok) throw new Error("Lỗi tải phường/xã");
-                return res.json();
-            })
-            .then(data => {
-                if (data && data.wards) {
-                    ward.innerHTML = '<option value="" selected disabled>Phường / Xã</option>';
-                    data.wards.forEach(item => {
-                        ward.innerHTML += `<option value="${item.code}" data-name="${item.name}">${item.name}</option>`;
-                    });
-                    ward.disabled = false;
-                }
-            })
-            .catch(err => console.error("Lỗi nạp Phường/Xã:", err));
-    });
-
-    // 4. Xử lý khi submit form
-    form.addEventListener("submit", (e) => {
-        const provSelected = province.options[province.selectedIndex];
-        const distSelected = district.options[district.selectedIndex];
-        const wardSelected = ward.options[ward.selectedIndex];
-        const streetVal = street ? street.value.trim() : "";
-
-        const hasNewSelection = province.value && district.value && ward.value && streetVal;
-
-        if (hasNewSelection) {
-            const provName = provSelected ? (provSelected.getAttribute("data-name") || provSelected.text.trim()) : "";
-            const distName = distSelected ? (distSelected.getAttribute("data-name") || distSelected.text.trim()) : "";
-            const wardName = wardSelected ? (wardSelected.getAttribute("data-name") || wardSelected.text.trim()) : "";
-            const fullAddress = `${streetVal}, ${wardName}, ${distName}, ${provName}`;
-            addressInput.value = fullAddress;
-            addressError.classList.add("d-none");
-        } else {
-            // Nếu đang trong chế độ edit và có địa chỉ ban đầu
-            const initialAddress = addressInput.getAttribute("data-initial-address");
-            if (initialAddress && initialAddress.trim() !== "") {
-                addressInput.value = initialAddress;
-                addressError.classList.add("d-none");
-            } else {
-                // Tạo mới bắt buộc phải chọn đầy đủ
-                e.preventDefault();
-                addressError.classList.remove("d-none");
-                return false;
-            }
-        }
-    });
-});
-</script>
+            });
+        });
+    </script>
 
 </body>
+
 </html>

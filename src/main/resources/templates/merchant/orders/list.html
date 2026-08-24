@@ -196,6 +196,23 @@
                                         th:text="${order.statusDisplayName}">
                                         Chờ nhận hàng
                                     </span>
+                                    <!-- Đồng hồ đếm ngược chuẩn bị -->
+                                    <div th:if="${order.status != null && order.status.name() == 'PREPARING' && order.remainingPrepSeconds != null && order.remainingPrepSeconds > 0}"
+                                        class="font-size-11 text-primary fw-medium mt-1 prep-timer-badge"
+                                        th:id="'prep-timer-' + ${order.id}"
+                                        th:data-remaining="${order.remainingPrepSeconds}"
+                                        th:data-order-id="${order.id}">
+                                        <i class="bi bi-stopwatch me-1"></i><span class="timer-text">Chuẩn bị món...</span>
+                                    </div>
+                                    <!-- Đồng hồ đếm ngược giao hàng -->
+                                    <div th:if="${order.status != null && order.status.name() == 'DELIVERING' && order.remainingDeliverySeconds != null && order.remainingDeliverySeconds > 0}"
+                                        class="font-size-11 text-info fw-medium mt-1 delivery-timer-badge"
+                                        th:id="'delivery-timer-' + ${order.id}"
+                                        th:data-remaining="${order.remainingDeliverySeconds}"
+                                        th:data-order-id="${order.id}">
+                                        <i class="bi bi-truck me-1"></i><span class="timer-text">Đang giao...</span>
+                                    </div>
+                                    <!-- Lý do hủy -->
                                     <div th:if="${order.status != null && order.status.name() == 'CANCELLED' && order.cancelReason != null}"
                                         class="font-size-11 text-danger mt-1"
                                         th:text="'Lý do: ' + ${order.cancelReason}">
@@ -225,22 +242,55 @@
                                             <i class="bi bi-x-circle"></i>
                                             <span>Hủy đơn</span>
                                         </button>
+
+                                        <a th:href="@{'/merchant/orders/' + ${order.id}}"
+                                            class="btn btn-sm btn-light border rounded-pill px-2 py-1 font-size-12 text-secondary"
+                                            title="Xem chi tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
                                     </div>
 
-                                    <!-- Khi đơn PREPARING / DELIVERING: Đã nhận tiền & Hoàn thành / Khách không nhận hàng -->
+                                    <!-- Khi đơn PREPARING: Bắt đầu giao ngay -->
                                     <div class="d-flex align-items-center justify-content-center gap-1.5"
-                                        th:if="${order.status != null && (order.status.name() == 'PREPARING' || order.status.name() == 'DELIVERING')}"
+                                        th:if="${order.status != null && order.status.name() == 'PREPARING'}"
                                         th:id="'order-preparing-group-' + ${order.id}">
                                         <button type="button"
-                                            class="btn btn-sm btn-success rounded-pill px-2.5 py-1 font-size-12 fw-semibold d-inline-flex align-items-center gap-1"
-                                            title="Xác nhận đã nhận tiền và giao xong" th:data-order-id="${order.id}"
+                                            class="btn btn-sm btn-primary rounded-pill px-2.5 py-1 font-size-12 fw-semibold d-inline-flex align-items-center gap-1"
+                                            title="Món đã chuẩn bị xong, bắt đầu giao ngay"
+                                            th:data-order-id="${order.id}"
+                                            onclick="handleStartDelivery(this.dataset.orderId)">
+                                            <i class="bi bi-send-fill"></i>
+                                            <span>Giao hàng ngay</span>
+                                        </button>
+
+                                        <a th:href="@{'/merchant/orders/' + ${order.id}}"
+                                            class="btn btn-sm btn-light border rounded-pill px-2 py-1 font-size-12 text-secondary"
+                                            title="Xem chi tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+
+                                    <!-- Khi đơn DELIVERING: Hoàn thành (sáng khi hết giờ) / Không nhận -->
+                                    <div class="d-flex align-items-center justify-content-center gap-1.5"
+                                        th:if="${order.status != null && order.status.name() == 'DELIVERING'}"
+                                        th:id="'order-delivering-group-' + ${order.id}">
+                                        <!-- Nút Hoàn thành: Có thể bấm nếu canComplete, nếu chưa thì disabled và có đếm ngược -->
+                                        <button type="button"
+                                            class="btn btn-sm rounded-pill px-2.5 py-1 font-size-12 fw-semibold d-inline-flex align-items-center gap-1 complete-btn"
+                                            th:classappend="${order.canComplete} ? 'btn-success' : 'btn-outline-success opacity-75'"
+                                            th:disabled="${!order.canComplete}"
+                                            th:id="'btn-complete-' + ${order.id}"
+                                            th:title="${order.canComplete} ? 'Xác nhận hoàn thành đơn hàng' : 'Đang giao hàng, vui lòng chờ...'"
+                                            th:data-order-id="${order.id}"
                                             onclick="handleCompleteOrder(this.dataset.orderId)">
                                             <i class="bi bi-check-circle-fill"></i>
-                                            <span>Hoàn thành</span>
+                                            <span class="btn-complete-text" th:text="${order.canComplete} ? 'Hoàn thành' : 'Đang giao...'">Hoàn thành</span>
                                         </button>
 
                                         <button type="button"
-                                            class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 font-size-12 fw-semibold d-inline-flex align-items-center gap-1"
+                                            class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 font-size-12 fw-semibold d-inline-flex align-items-center gap-1 reject-btn"
+                                            th:classappend="${!order.canComplete} ? 'd-none' : ''"
+                                            th:id="'btn-reject-' + ${order.id}"
                                             title="Khách từ chối nhận hàng" th:data-order-id="${order.id}"
                                             th:data-order-code="${order.orderCode}"
                                             onclick="openRejectDeliveryModal(this.dataset.orderId, this.dataset.orderCode)">
@@ -267,6 +317,33 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Phân trang -->
+                <div th:if="${orderPage != null && orderPage.totalPages > 1}"
+                    class="d-flex flex-column flex-md-row justify-content-between align-items-center p-3 border-top gap-2">
+                    <small class="text-muted">
+                        Hiển thị <span th:text="${orderPage.numberOfElements}">0</span> / <span th:text="${orderPage.totalElements}">0</span> đơn hàng (Trang <span th:text="${orderPage.number + 1}">1</span>/<span th:text="${orderPage.totalPages}">1</span>)
+                    </small>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0 shadow-sm rounded-pill overflow-hidden">
+                            <li class="page-item" th:classappend="${orderPage.first} ? 'disabled'">
+                                <a class="page-link px-3" th:href="@{/merchant/orders(page=${orderPage.number - 1}, status=${selectedStatus})}">
+                                    <i class="bi bi-chevron-left me-1"></i>Trước
+                                </a>
+                            </li>
+                            <li th:each="i : ${#numbers.sequence(0, orderPage.totalPages - 1)}"
+                                class="page-item"
+                                th:classappend="${i == orderPage.number} ? 'active'">
+                                <a class="page-link px-3" th:href="@{/merchant/orders(page=${i}, status=${selectedStatus})}" th:text="${i + 1}">1</a>
+                            </li>
+                            <li class="page-item" th:classappend="${orderPage.last} ? 'disabled'">
+                                <a class="page-link px-3" th:href="@{/merchant/orders(page=${orderPage.number + 1}, status=${selectedStatus})}">
+                                    Sau<i class="bi bi-chevron-right ms-1"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
 
             </div>

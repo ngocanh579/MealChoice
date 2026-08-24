@@ -2,6 +2,8 @@ package vn.codegyme.meal_choice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.codegyme.meal_choice.dto.Delivery.GeoPoint;
@@ -160,8 +162,23 @@ public class UserOrderServiceImpl implements UserOrderService {
 
         // BƯỚC 4: Tạo thực thể Order và lưu vào cơ sở dữ liệu
         LocalDateTime now = LocalDateTime.now();
-        int estimatedMinutes = (int) Math.max(15, Math.min(60, 20 + Math.round(distanceKm * 4)));
-        LocalDateTime estimatedDelivery = now.plusMinutes(estimatedMinutes);
+
+        // 1. Thời gian chuẩn bị món (lấy thời gian chuẩn bị của món lâu nhất, mặc định 10 phút, tối thiểu 5 phút)
+        int prepMinutes = 10;
+        if (!orderItems.isEmpty()) {
+            int maxPrep = orderItems.stream()
+                    .mapToInt(item -> (item.getFood() != null && item.getFood().getPreparationTime() != null && item.getFood().getPreparationTime() > 0)
+                            ? item.getFood().getPreparationTime()
+                            : 10)
+                    .max()
+                    .orElse(10);
+            prepMinutes = Math.max(5, maxPrep);
+        }
+
+        // 2. Thời gian giao hàng vận chuyển: 4 phút / 1km (tối thiểu 4 phút)
+        int deliveryTransitMinutes = (int) Math.max(4, Math.round(distanceKm * 4));
+        int totalEstimatedMinutes = prepMinutes + deliveryTransitMinutes;
+        LocalDateTime estimatedDelivery = now.plusMinutes(totalEstimatedMinutes);
 
         Order order = Order.builder()
                 .orderCode(generateOrderCode())
@@ -199,24 +216,53 @@ public class UserOrderServiceImpl implements UserOrderService {
      * Lấy danh sách lịch sử đơn hàng của User
      */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<OrderResponseDTO> getUserOrders(UUID userId) {
-        List<Order> orders = orderRepository.findByUser_IdOrderByCreatedAtDesc(userId);
+        List<Order> orders = orderRepository.findByUser_IdOrderByIdDesc(userId);
+        for (Order o : orders) {
+            autoSyncOrderStatus(o);
+        }
         return orderMapper.toOrderResponseDTOList(orders);
+    }
+
+    /**
+     * Lấy danh sách lịch sử đơn hàng của User có phân trang (mặc định mới nhất đến cũ nhất theo ID)
+     */
+    @Override
+    @Transactional
+    public Page<OrderResponseDTO> getUserOrders(UUID userId, Pageable pageable) {
+        Page<Order> orderPage = orderRepository.findByUser_IdOrderByIdDesc(userId, pageable);
+        for (Order o : orderPage.getContent()) {
+            autoSyncOrderStatus(o);
+        }
+        return orderMapper.toOrderResponseDTOPage(orderPage);
     }
 
     /**
      * Xem chi tiết đơn hàng theo mã đơn (Dùng cho trang Đặt hàng thành công)
      */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public OrderResponseDTO getOrderDetailByCode(String orderCode) {
         Order order = orderRepository.findByOrderCodeWithItems(orderCode)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã: " + orderCode));
+        autoSyncOrderStatus(order);
         return orderMapper.toOrderResponseDTO(order);
     }
 
     // ==================== HELPER METHODS ====================
+
+    private void autoSyncOrderStatus(Order order) {
+        if (order == null) return;
+        if (order.getStatus() == OrderStatus.PREPARING && order.getPreparingUntil() != null) {
+            if (LocalDateTime.now().isAfter(order.getPreparingUntil())) {
+                order.setStatus(OrderStatus.DELIVERING);
+                order.setUpdatedAt(LocalDateTime.now());
+                orderRepository.save(order);
+                log.info("User query: Tự động chuyển đơn hàng ID {} sang DELIVERING do hết thời gian chuẩn bị", order.getId());
+            }
+        }
+    }
 
     /**
      * Tính toán số tiền giảm giá dựa theo mã Voucher (hỗ trợ 2 loại: giảm số tiền và giảm theo %)

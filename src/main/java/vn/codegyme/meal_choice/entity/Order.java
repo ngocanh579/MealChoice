@@ -81,6 +81,12 @@ public class Order {
     @Column(name = "cancel_reason", length = 500)
     private String cancelReason;
 
+    @Column(name = "accepted_at")
+    private LocalDateTime acceptedAt;
+
+    @Column(name = "preparing_until")
+    private LocalDateTime preparingUntil;
+
     @Column(name = "estimated_delivery_time")
     private LocalDateTime estimatedDeliveryTime;
 
