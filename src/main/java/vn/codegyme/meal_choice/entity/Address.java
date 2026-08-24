@@ -44,6 +44,12 @@ public class Address {
 
     @Column(length = 500)
     private String note; // Ghi chú thêm
+    //Tọa độ để tính khoảng cách
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
 
     @Builder.Default
     @Column(nullable = false)

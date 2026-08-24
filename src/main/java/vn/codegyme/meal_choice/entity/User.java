@@ -49,6 +49,11 @@ public class User {
 
     @Column()
     private LocalDate dob;
+    @Column()
+    private Double latitude;
+
+    @Column()
+    private Double longitude;
 
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

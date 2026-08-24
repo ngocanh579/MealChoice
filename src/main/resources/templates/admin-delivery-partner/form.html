@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Đối tác vận chuyển</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+          rel="stylesheet">
+
+</head>
+
+<body class="bg-light">
+
+
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-9">
+
+
+            <div class="mb-4">
+
+                <a th:href="@{/admin/delivery-partners}"
+                   class="text-decoration-none text-secondary">
+
+                    <i class="bi bi-arrow-left me-1"></i>
+
+                    Quay lại danh sách
+
+                </a>
+
+            </div>
+
+
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-header bg-white
+                            border-0 p-4">
+
+                    <h3 class="fw-bold mb-1">
+
+                        <i class="bi bi-truck text-danger me-2"></i>
+
+                        <span th:text="${isEdit}
+                                ? 'Cập nhật đối tác vận chuyển'
+                                : 'Thêm đối tác vận chuyển'">
+
+                            Thêm đối tác vận chuyển
+
+                        </span>
+
+                    </h3>
+
+
+                    <p class="text-muted mb-0">
+
+                        Cấu hình thông tin và chính sách
+                        tính phí vận chuyển.
+
+                    </p>
+
+                </div>
+
+
+                <div class="card-body p-4">
+
+
+                    <form th:object="${partner}"
+                          method="post"
+
+                          th:action="${isEdit}
+                          ? @{/admin/delivery-partners/{id}/edit(id=${partner.id})}
+                          : @{/admin/delivery-partners/create}">
+
+
+                        <!-- ======================================= -->
+                        <!-- THÔNG TIN CHUNG -->
+                        <!-- ======================================= -->
+
+                        <h5 class="fw-bold mb-3">
+
+                            <i class="bi bi-info-circle
+                                      text-danger me-2"></i>
+
+                            Thông tin đối tác
+
+                        </h5>
+
+
+                        <div class="row g-3">
+
+
+                            <div class="col-md-4">
+
+                                <label class="form-label fw-semibold">
+
+                                    Mã đối tác
+                                    <span class="text-danger">*</span>
+
+                                </label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       th:field="*{partnerCode}"
+                                       th:readonly="${isEdit}"
+                                       placeholder="VD: GHN"
+                                       required>
+
+                            </div>
+
+
+                            <div class="col-md-8">
+
+                                <label class="form-label fw-semibold">
+
+                                    Tên đối tác
+                                    <span class="text-danger">*</span>
+
+                                </label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       th:field="*{partnerName}"
+                                       placeholder="Giao Hàng Nhanh"
+                                       required>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+                                    Email
+                                </label>
+
+                                <input type="email"
+                                       class="form-control"
+                                       th:field="*{email}">
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+                                    Số điện thoại
+                                </label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       th:field="*{phone}">
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <label class="form-label fw-semibold">
+                                    Địa chỉ
+                                </label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       th:field="*{address}">
+
+                            </div>
+
+                        </div>
+
+
+                        <hr class="my-4">
+
+
+                        <!-- ======================================= -->
+                        <!-- BẢNG GIÁ -->
+                        <!-- ======================================= -->
+
+                        <h5 class="fw-bold mb-3">
+
+                            <i class="bi bi-cash-coin
+                                      text-success me-2"></i>
+
+                            Chính sách phí vận chuyển
+
+                        </h5>
+
+
+                        <div class="row g-3">
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+
+                                    Phí cơ bản
+
+                                </label>
+
+
+                                <div class="input-group">
+
+                                    <input type="number"
+                                           min="0"
+                                           step="1000"
+                                           class="form-control"
+                                           th:field="*{baseFee}"
+                                           required>
+
+                                    <span class="input-group-text">
+                                        VNĐ
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+
+                                    Số km áp dụng phí cơ bản
+
+                                </label>
+
+
+                                <div class="input-group">
+
+                                    <input type="number"
+                                           min="0"
+                                           step="0.1"
+                                           class="form-control"
+                                           th:field="*{baseDistanceKm}"
+                                           required>
+
+                                    <span class="input-group-text">
+                                        km
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+
+                                    Phí mỗi km tiếp theo
+
+                                </label>
+
+
+                                <div class="input-group">
+
+                                    <input type="number"
+                                           min="0"
+                                           step="500"
+                                           class="form-control"
+                                           th:field="*{feePerKm}"
+                                           required>
+
+                                    <span class="input-group-text">
+                                        VNĐ/km
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+
+                                    Hệ số giờ cao điểm
+
+                                </label>
+
+
+                                <div class="input-group">
+
+                                    <input type="number"
+                                           min="1"
+                                           step="0.05"
+                                           class="form-control"
+                                           th:field="*{peakMultiplier}"
+                                           placeholder="1.2"
+                                           required>
+
+                                    <span class="input-group-text">
+                                        lần
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- PEAK INFO -->
+
+                        <div class="alert alert-warning mt-4 mb-0">
+
+                            <div class="fw-semibold mb-1">
+
+                                <i class="bi bi-clock-fill me-1"></i>
+
+                                Giờ cao điểm
+
+                            </div>
+
+                            Hệ thống sử dụng giờ Việt Nam
+                            <strong>GMT+7</strong>.
+
+                            Phí vận chuyển sẽ được nhân với
+                            hệ số cao điểm khi đơn hàng nằm
+                            trong khung giờ đã cấu hình.
+
+                        </div>
+
+
+                        <hr class="my-4">
+
+
+                        <!-- BUTTON -->
+
+                        <div class="d-flex justify-content-end gap-2">
+
+                            <a th:href="@{/admin/delivery-partners}"
+                               class="btn btn-light rounded-pill px-4">
+
+                                Hủy
+
+                            </a>
+
+
+                            <button type="submit"
+                                    class="btn btn-danger
+                                           rounded-pill px-4">
+
+                                <i class="bi bi-check-circle me-1"></i>
+
+                                <span th:text="${isEdit}
+                                        ? 'Lưu thay đổi'
+                                        : 'Tạo đối tác'">
+
+                                    Tạo đối tác
+
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div th:replace="~{layout/footer :: footer}"></div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+</script>
+
+</body>
+</html>

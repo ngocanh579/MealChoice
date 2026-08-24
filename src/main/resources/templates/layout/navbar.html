@@ -162,6 +162,7 @@
 
                     <a class="btn btn-danger rounded-pill px-3 py-1 text-sm
                               d-flex align-items-center gap-1 fw-semibold"
+                       style="font-size: 0.85rem;"
                        href="/admin/merchants">
 
                         <i class="bi bi-shield-lock-fill"></i>
@@ -170,6 +171,21 @@
 
                     </a>
                 </li>
+                <li class="nav-item"
+                    th:classappend="${isAdmin} ? '' : 'd-none'">
+
+                    <a class="btn btn-danger rounded-pill px-3 py-1 text-sm
+                              d-flex align-items-center gap-1 fw-semibold"
+                       style="font-size: 0.85rem;"
+                       href="/admin/delivery-partners">
+
+                        <i class="bi bi-truck"></i>
+
+                        <span>Đối tác vận chuyển</span>
+
+                    </a>
+                </li>
+
 
                 <!-- User chưa đăng ký Merchant -->
                 <li class="nav-item d-none"
