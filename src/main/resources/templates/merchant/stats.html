@@ -84,14 +84,22 @@
 
 <div class="container-lg">
     <!-- Header -->
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3 class="fw-bold mb-1" style="color: var(--text-title);">Thống Kê Doanh Thu & Báo Cáo</h3>
             <p class="text-muted small mb-0">Cập nhật dữ liệu gian hàng trực tuyến theo thời gian thực</p>
         </div>
-        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="loadAllStats()">
-            <i class="fa-solid fa-rotate-right me-1"></i> Làm mới
-        </button>
+        <div class="d-flex gap-2">
+            <!-- Nút về trang chủ -->
+            <a href="/" class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center">
+                <i class="fa-solid fa-house me-1"></i> Trang chủ
+            </a>
+            <!-- Nút làm mới -->
+            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="loadAllStats()">
+                <i class="fa-solid fa-rotate-right me-1"></i> Làm mới
+            </button>
+        </div>
     </div>
 
     <!-- 1. CARDS TỔNG QUAN -->
