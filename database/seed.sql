@@ -175,6 +175,3 @@ INSERT INTO order_items (order_id, food_id, food_name, price, quantity, subtotal
 (107, 5, 'Trà Đào Cam Sả Tươi', 25000, 2, 50000),
 (108, 4, 'Phở Bò Tái Nạm', 60000, 4, 240000),
 (108, 5, 'Trà Đào Cam Sả Tươi', 25000, 4, 100000);
-UPDATE order_items
-SET food_id = 5
-WHERE order_id = (SELECT id FROM orders WHERE order_code = 'MC-6879277-267');
