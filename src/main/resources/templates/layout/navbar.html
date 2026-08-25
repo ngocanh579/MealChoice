@@ -1,6 +1,7 @@
 <nav th:fragment="navbar"
      xmlns:th="http://www.thymeleaf.org"
-     class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm sticky-top">
+     class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm sticky-top"
+     xmlns:sec="http://www.w3.org/1999/xhtml">
 
     <div class="container">
 
@@ -171,11 +172,7 @@
                     </a>
 
                 </li>
-                <li>
-                    <a class="dropdown-item text-warning-emphasis fw-semibold" href="/merchant/stats">
-                        <i class="bi bi-shop me-2"></i> Thống Kê
-                    </a>
-                </li>
+
                 <li><hr class="dropdown-divider"></li>
 
                 <!-- User chưa đăng ký Merchant -->
@@ -287,6 +284,15 @@
                                 Đơn hàng của tôi
 
                             </a>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2"
+                               href="/merchant/stats"
+                               sec:authorize="hasAnyRole('MERCHANT', 'ADMIN')">
+                            <i class="bi bi-bar-chart-line fs-5 text-secondary"></i>
+                            <span>Thống kê</span>
+                        </a>
                         </li>
 
                         <li>

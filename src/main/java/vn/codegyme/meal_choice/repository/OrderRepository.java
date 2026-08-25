@@ -39,7 +39,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             COUNT(id) AS totalOrders,
             COALESCE(SUM(total_amount), 0) AS totalRevenue
         FROM orders
-        WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) AND status = 'COMPLETED'
+        WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) 
+          AND status IN ('PREPARING', 'DELIVERING', 'COMPLETED')
         GROUP BY period
         """, nativeQuery = true)
     List<Object[]> findRevenueStatsByMonth(@Param("merchantId") String merchantId);
@@ -50,7 +51,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             COUNT(id) AS totalOrders,
             COALESCE(SUM(total_amount), 0) AS totalRevenue
         FROM orders
-        WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) AND status = 'COMPLETED'
+        WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) 
+          AND status IN ('PREPARING', 'DELIVERING', 'COMPLETED')
         GROUP BY period
         """, nativeQuery = true)
     List<Object[]> findRevenueStatsByWeek(@Param("merchantId") String merchantId);
@@ -61,12 +63,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             COUNT(id) AS totalOrders,
             COALESCE(SUM(total_amount), 0) AS totalRevenue
         FROM orders
-        WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) AND status = 'COMPLETED'
+        WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) 
+          AND status IN ('PREPARING', 'DELIVERING', 'COMPLETED')
         GROUP BY period
         """, nativeQuery = true)
     List<Object[]> findRevenueStatsByQuarter(@Param("merchantId") String merchantId);
 
-    // 2. THỐNG KÊ KHÁCH HÀNG
+    // 2. THỐNG KÊ KHÁCH HÀNG (Khách hàng thân thiết)
     @Query(value = """
         SELECT 
             contact_name AS customerName,
@@ -74,9 +77,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             COUNT(id) AS totalOrders,
             COALESCE(SUM(total_amount), 0) AS totalSpent
         FROM orders
-        WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) AND status = 'COMPLETED'
+        WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) 
+          AND status IN ('PREPARING', 'DELIVERING', 'COMPLETED')
         GROUP BY contact_name, contact_phone
-        ORDER BY totalSpent DESC
+        ORDER BY totalOrders DESC, totalSpent DESC
         """, nativeQuery = true)
     List<Object[]> findCustomerStatsByMerchant(@Param("merchantId") String merchantId);
 
@@ -87,21 +91,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             COALESCE(SUM(discount_amount), 0) AS totalDiscountAmount,
             COALESCE(SUM(total_amount), 0) AS totalRevenue
         FROM orders
-        WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) AND status = 'COMPLETED'
+        WHERE CAST(merchant_id AS CHAR) = CAST(:merchantId AS CHAR) 
+          AND status IN ('PREPARING', 'DELIVERING', 'COMPLETED')
         """, nativeQuery = true)
     List<Object[]> findCouponStatsByMerchant(@Param("merchantId") String merchantId);
 
-    // 4. THỐNG KÊ MÓN ĂN (BÁN CHẠY) - Đã gộp theo tên món
+    // 4. THỐNG KÊ MÓN ĂN (Top món bán chạy)
     @Query(value = """
         SELECT 
-            oi.food_name AS foodName,
+            TRIM(oi.food_name) AS foodName,
             COALESCE(SUM(oi.quantity), 0) AS totalQuantity,
             COALESCE(SUM(oi.subtotal), 0) AS totalRevenue
         FROM order_items oi
         JOIN orders o ON oi.order_id = o.id
         WHERE CAST(o.merchant_id AS CHAR) = CAST(:merchantId AS CHAR) 
-          AND o.status = 'COMPLETED'
-        GROUP BY oi.food_name
+          AND o.status IN ('PREPARING', 'DELIVERING', 'COMPLETED')
+        GROUP BY TRIM(oi.food_name)
         ORDER BY totalQuantity DESC
         """, nativeQuery = true)
     List<Object[]> findFoodStatsByMerchant(@Param("merchantId") String merchantId);

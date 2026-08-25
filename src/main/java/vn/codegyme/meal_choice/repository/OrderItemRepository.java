@@ -13,14 +13,20 @@ import java.util.UUID;
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     List<OrderItem> findByOrder_Id(Long orderId);
-    // 15. Thống kê đơn hàng theo món ăn
+
+    // 15. Thống kê đơn hàng theo món ăn (Đã mở rộng tính cả đơn PREPARING, DELIVERING, COMPLETED)
     @Query("""
     SELECT new vn.codegyme.meal_choice.dto.stat.FoodStatDTO(
-        f.id, oi.foodName, SUM(oi.quantity), SUM(oi.subtotal)
+        MIN(f.id), TRIM(oi.foodName), SUM(oi.quantity), SUM(oi.subtotal)
     )
     FROM OrderItem oi JOIN oi.food f JOIN oi.order o
-    WHERE o.merchant.id = :merchantId AND o.status = vn.codegyme.meal_choice.entity.OrderStatus.COMPLETED
-    GROUP BY f.id, oi.foodName
+    WHERE o.merchant.id = :merchantId 
+      AND o.status IN (
+          vn.codegyme.meal_choice.entity.OrderStatus.PREPARING,
+          vn.codegyme.meal_choice.entity.OrderStatus.DELIVERING,
+          vn.codegyme.meal_choice.entity.OrderStatus.COMPLETED
+      )
+    GROUP BY TRIM(oi.foodName)
     ORDER BY SUM(oi.quantity) DESC
     """)
     List<FoodStatDTO> findFoodStatsByMerchant(@Param("merchantId") UUID merchantId);
