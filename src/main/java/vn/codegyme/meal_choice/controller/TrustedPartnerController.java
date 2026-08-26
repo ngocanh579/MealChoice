@@ -10,14 +10,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.OrderStatus;
+import vn.codegyme.meal_choice.entity.TrustedPartnerRequest;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.OrderRepository;
+import vn.codegyme.meal_choice.repository.TrustedPartnerRequestRepository;
 import vn.codegyme.meal_choice.security.CustomUserDetails;
 import vn.codegyme.meal_choice.service.TrustedPartnerService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/merchant/trusted-partner")
@@ -30,6 +33,7 @@ public class TrustedPartnerController {
     private final MerchantRepository merchantRepository;
     private final OrderRepository orderRepository;
     private final TrustedPartnerService trustedPartnerService;
+    private final TrustedPartnerRequestRepository trustedPartnerRequestRepository;
 
     @GetMapping
     public String showPage(Model model) {
@@ -53,11 +57,21 @@ public class TrustedPartnerController {
                 endDate
         );
 
+        Optional<TrustedPartnerRequest> request =
+                trustedPartnerRequestRepository
+                        .findFirstByMerchant_IdOrderByCreatedAtDesc(
+                                merchant.getId()
+                        );
+
         model.addAttribute("merchant", merchant);
         model.addAttribute("monthlyRevenue", monthlyRevenue);
         model.addAttribute(
                 "eligible",
                 monthlyRevenue.compareTo(MIN_REVENUE) >= 0
+        );
+        model.addAttribute(
+                "trustedPartnerRequest",
+                request.orElse(null)
         );
         model.addAttribute("activeMenu", "trusted-partner");
 
@@ -68,7 +82,9 @@ public class TrustedPartnerController {
     public String register() {
         Merchant merchant = getCurrentMerchant();
 
-        trustedPartnerService.registerTrustedPartner(merchant.getId());
+        trustedPartnerService.registerTrustedPartner(
+                merchant.getId()
+        );
 
         return "redirect:/merchant/trusted-partner";
     }

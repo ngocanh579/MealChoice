@@ -5,8 +5,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.OrderStatus;
+import vn.codegyme.meal_choice.entity.TrustedPartnerRequest;
+import vn.codegyme.meal_choice.entity.TrustedPartnerRequestStatus;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.OrderRepository;
+import vn.codegyme.meal_choice.repository.TrustedPartnerRequestRepository;
+import vn.codegyme.meal_choice.service.EmailService;
 import vn.codegyme.meal_choice.service.TrustedPartnerService;
 
 import java.math.BigDecimal;
@@ -23,19 +27,27 @@ public class TrustedPartnerServiceImpl implements TrustedPartnerService {
 
     private final MerchantRepository merchantRepository;
     private final OrderRepository orderRepository;
+    private final TrustedPartnerRequestRepository trustedPartnerRequestRepository;
+    private final EmailService emailService;
 
     @Override
     @Transactional
     public void registerTrustedPartner(UUID merchantId) {
-
         Merchant merchant = merchantRepository.findById(merchantId)
                 .orElseThrow(() ->
                         new RuntimeException("Không tìm thấy Merchant"));
 
         if (merchant.isTrustedPartner()) {
             throw new RuntimeException(
-                    "Merchant đã là đối tác thân thiết"
-            );
+                    "Merchant đã là đối tác thân thiết");
+        }
+
+        if (trustedPartnerRequestRepository.existsByMerchant_IdAndStatus(
+                merchantId,
+                TrustedPartnerRequestStatus.PENDING)) {
+
+            throw new RuntimeException(
+                    "Merchant đã đăng ký và đang chờ Admin duyệt");
         }
 
         YearMonth currentMonth = YearMonth.now();
@@ -58,12 +70,20 @@ public class TrustedPartnerServiceImpl implements TrustedPartnerService {
 
         if (revenue.compareTo(MIN_REVENUE) < 0) {
             throw new RuntimeException(
-                    "Doanh thu tháng chưa đạt 100.000.000 VNĐ"
-            );
+                    "Doanh thu tháng chưa đạt 100.000.000 VNĐ");
         }
 
-        merchant.setTrustedPartner(true);
+        TrustedPartnerRequest request = new TrustedPartnerRequest();
+        request.setMerchant(merchant);
+        request.setStatus(TrustedPartnerRequestStatus.PENDING);
+        request.setCreatedAt(LocalDateTime.now());
+        request.setRevenue(revenue);
 
-        merchantRepository.save(merchant);
+        trustedPartnerRequestRepository.save(request);
+
+        emailService.sendTrustedPartnerRegistrationEmail(
+                merchant.getMerchantEmail(),
+                merchant.getMerchantRestaurantName()
+        );
     }
 }
