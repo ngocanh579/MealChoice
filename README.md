@@ -1,185 +1,115 @@
-# 🍱 MealChoice - Nền Tảng Đặt & Giao Đồ Ăn Trực Tuyến
+# 🍱 Nhóm A - Trưa Nay Ăn Gì (MealChoice Platform)
 
-> **Dự án thực hành chuyên sâu môn Java & Spring Framework - CodeGym**  
-> Ứng dụng web thương mại điện tử giao đồ ăn trực tuyến (Food Ordering & Delivery Platform) xây dựng với mô hình Monolith hiện đại, kết hợp giữa **Server-Side Rendering (Thymeleaf)** và **RESTful API (Spring Boot + JWT)**.
+> **Đồ Án Tốt Nghiệp Chuyên Sâu Java & Spring Framework - CodeGym**  
+> Nền tảng kết nối ẩm thực trực tuyến (Online Food Ordering & Delivery Platform) áp dụng mô hình kiến trúc Monolith kết hợp giữa **Server-Side Rendering (Thymeleaf)** và **RESTful API (Spring Boot + JWT)**.
 
 ---
 
-## 🌟 Giới Thiệu Tổng Quan
+## 🌟 Giới Thiệu Tổng Quan & Đối Tượng Sử Dụng
 
-**MealChoice** kết nối 3 đối tượng người dùng chính trong hệ sinh thái F&B:
-1. **Khách hàng (Customer / User):** Khám phá món ngon, tìm kiếm theo khoảng cách/địa chỉ, đặt hàng với phí ship tính toán tự động qua API bản đồ thực tế.
-2. **Chủ quán / Nhà hàng (Merchant):** Đăng ký mở quán, quản lý thực đơn nhiều hình ảnh, phân loại món, quản lý và xử lý đơn hàng theo thời gian thực.
-3. **Quản trị viên (Admin):** Phê duyệt hoặc khóa quán ăn vi phạm, quản lý các đối tác vận chuyển (Delivery Partners).
+Dự án **"Trưa nay ăn gì" (MealChoice)** giải quyết bài toán đặt món và giao thức ăn trưa công sở/học đường, kết nối 3 đối tượng người dùng:
+
+1. **Khách hàng (Customer / User):** Khám phá món ngon, lọc món theo bữa ăn (`Breakfast`, `Lunch`, `Dinner`, `Café`), tìm kiếm món gần khu vực hoặc giảm giá sâu, giỏ hàng & đặt món với phí vận chuyển tính động theo số km thực tế.
+2. **Nhà hàng / Đối tác quán ăn (Merchant):** Đăng ký mở quán, quản lý danh sách món ăn (ảnh đại diện, giá, thời gian chế biến, phí dịch vụ), quản lý đơn hàng theo vòng đời thời gian thực, xem báo cáo doanh thu & thực hiện đối soát tài chính định kỳ.
+3. **Quản trị viên (Admin):** Phê duyệt / từ chối hồ sơ quán mới kèm gửi email thông báo, khóa/mở khóa Merchant vi phạm, quản lý danh sách đối tác vận chuyển và giám sát luồng tiền chiết khấu sàn.
 
 ---
 
 ## 🛠️ Công Nghệ Sử Dụng (Tech Stack)
 
 ### Backend
-- **Ngôn ngữ:** Java 17 (LTS)
+- **Ngôn ngữ:** Java 17 LTS
 - **Framework nền tảng:** Spring Boot 3.x / 4.x
-  - **Spring Web / Spring MVC:** Xử lý HTTP Request & điều hướng View.
-  - **Spring Data JPA & Hibernate:** Quản lý ánh xạ ORM & cơ sở dữ liệu quan hệ.
-  - **Spring Security 6 & JJWT (0.12.6):** Xác thực phân quyền Role-based, JWT Filter kết hợp Cookie & Header.
-  - **Spring Validation:** Jakarta Bean Validation dữ liệu đầu vào.
-  - **Spring Mail:** Gửi email kích hoạt tài khoản bằng mã Token bảo mật.
+  - **Spring Web / Spring MVC:** Xử lý HTTP Request & điều hướng View SSR.
+  - **Spring Data JPA & Hibernate:** Ánh xạ thực thể ORM & tối ưu truy vấn dữ liệu.
+  - **Spring Security 6 & JJWT (0.12.6):** Xác thực Role-based, JWT Filter kết hợp Cookie & Header.
+  - **Spring Validation:** Jakarta Bean Validation dữ liệu DTO đầu vào.
+  - **Spring Mail:** Gửi email kích hoạt tài khoản & thông báo trạng thái.
 - **Build Tool:** Gradle 8.x+
 - **Cơ sở dữ liệu:** MySQL 8.0+ / InnoDB / Charset `utf8mb4`
 
 ### Frontend & Giao Diện
 - **Template Engine:** Thymeleaf + Thymeleaf Extras Spring Security 6.
-- **UI Framework & Styling:** Bootstrap 5, Custom CSS, Icons (FontAwesome / Bootstrap Icons).
+- **UI Framework & Styling:** Bootstrap 5, Custom CSS, FontAwesome Icons.
 - **Client Scripting:** Vanilla JavaScript (ES6+), Fetch API (AJAX), GeoLocation API.
 
-### Dịch Vụ Tích Hợp Bên Ngoài
-- **OpenRouteService / HeiGIT API:** Định vị tọa độ địa chỉ (Geocoding) và tính cước vận chuyển theo khoảng cách thực tế (Driving-car distance).
+### Tích Hợp Dịch Vụ Ngoài
+- **HeiGIT / OpenRouteService API:** Định vị tọa độ địa chỉ (Geocoding) và tính cước vận chuyển theo cự ly kilômét thực tế (Driving-car distance).
 - **Gmail SMTP Server:** Gửi email kích hoạt tài khoản.
 
 ---
 
-## 📂 Cấu Trúc Thư Mục Dự Án (Project Architecture)
+## 📋 Danh Mục Tính Năng Theo Sprint (Trello Roadmap)
 
-Dự án áp dụng mô hình phân lớp tiêu chuẩn **Layered Architecture (MVC)**:
+### 📌 Sprint 1: Khởi tạo, Định danh & Quản lý Hồ sơ
+- **User:** Đăng ký tài khoản (gửi email xác nhận kèm token), đăng nhập hệ thống, kích hoạt tài khoản qua liên kết email, cập nhật thông tin cá nhân (họ tên, ngày sinh, giới tính), quản lý danh sách địa chỉ giao hàng (Thêm/Sửa/Xóa).
+- **Merchant:** Đăng ký mở cửa hàng, cập nhật thông tin nhà hàng (tên, số điện thoại, ngân hàng, STK).
+- **Admin:** Xem danh sách Merchant, xem chi tiết hồ sơ, duyệt/từ chối đăng ký kèm email lý do, khóa/mở khóa tài khoản Merchant vi phạm (kèm popup xác nhận & chặn đăng nhập).
+- **Layout:** Menu top hiển thị động theo trạng thái đăng nhập, giỏ hàng, Footer hệ thống.
 
-```
-MealChoice/
-├── src/main/java/vn/codegyme/meal_choice/
-│   ├── config/             # Cấu hình Spring (Security, Mail, RestTemplate, Web, DataSeeder)
-│   ├── controller/         # Web Controller (Thymeleaf) & REST Controllers (API)
-│   ├── dto/                # Data Transfer Objects (Request/Response DTOs & Validation)
-│   ├── entity/             # Các JPA Entities ánh xạ bảng cơ sở dữ liệu
-│   ├── event/              # Các sự kiện ứng dụng (UserRegisteredEvent, v.v.)
-│   ├── exception/          # Xử lý ngoại lệ tập trung (GlobalExceptionHandler, ErrorResponse)
-│   ├── mapper/             # Ánh xạ Entity <-> DTO (OrderMapper, v.v.)
-│   ├── repository/         # Spring Data JPA Repositories (Derived queries, JPQL, EntityGraph)
-│   ├── security/           # JWT Filter, CustomUserDetails, MerchantBlockedFilter
-│   ├── service/            # Interface & Class nghiệp vụ chính
-│   │   └── impl/           # Các lớp cài đặt (Service Implementations)
-│   ├── util/               # Tiện ích bổ trợ (AddressNormalizer, v.v.)
-│   └── MealChoiceApplication.java  # Main Application Entry Point
-├── src/main/resources/
-│   ├── static/             # Tài nguyên tĩnh (css, js, images, uploads)
-│   ├── templates/          # Giao diện Thymeleaf (auth, user, merchant, admin, checkout, food)
-│   └── application.properties # Cấu hình môi trường, DB, Mail, JWT
-├── database/               # Kịch bản cơ sở dữ liệu (schema.sql, seed.sql)
-├── build.gradle            # Khai báo thư viện & dependencies Gradle
-├── GEMINI.md               # Quy tắc và chuẩn phát triển dành cho AI / Developer
-└── README.md               # Tài liệu hướng dẫn sử dụng dự án
-```
+### 📌 Sprint 2: Quản lý Thực đơn, Trang Chủ & Chi Tiết Món
+- **Merchant:** Thêm món ăn mới (bắt buộc $\ge 2$ ảnh, chọn địa chỉ chi nhánh, thời gian chế biến, phí dịch vụ, tag), cập nhật món ăn, xóa mềm món ăn (popup xác nhận), xem danh sách món ăn kèm lượt xem/lượt đặt, tìm kiếm món ăn theo tên.
+- **Khách hàng / Trang chủ:** Banner slide danh mục, Quick search theo 4 nhóm bữa ăn (`Breakfast`, `Lunch`, `Dinner`, `Café`), hiển thị 8 món gợi ý gần bạn, hiển thị 8 món giảm giá nhiều nhất, trang xem chi tiết món ăn (thông tin cơ bản, danh sách ảnh, đặt hàng nhanh).
+
+### 📌 Sprint 3: Giỏ hàng, Đặt hàng, Đối tác Vận chuyển, Thống kê & Đối soát
+- **Khách hàng:** Quản lý giỏ hàng (tạo, sửa số lượng, xem giỏ), đặt hàng (tính phí ship động theo km, phí dịch vụ, áp mã giảm giá, ước tính thời gian giao hàng), xem danh sách và chi tiết đơn hàng, hủy đơn hàng (chỉ khi đơn chưa ở trạng thái Đang giao).
+- **Merchant:** Quản lý đơn hàng (xem danh sách theo trạng thái, xem chi tiết đơn, hủy đơn khi ở trạng thái "Chờ nhận hàng", tiếp nhận đơn chuyển "Đang chuẩn bị" kèm hẹn giờ chế biến), thống kê doanh số (theo tuần/tháng/quý, theo món ăn, theo khách hàng, theo coupon), CRUD coupon giảm giá, đối soát doanh thu (tính chiết khấu sàn $0.001\%$/đơn hoặc $0.0005\%$/đơn với DT $\ge 200$tr), xác nhận hoặc khiếu nại đối soát, đăng ký đối tác thân thiết (DT $> 100$tr), yêu cầu rút tiền/thanh lý hợp đồng.
+- **Admin:** Quản lý đối tác vận chuyển (tạo mới, xem chi tiết, cập nhật, danh sách, khóa/mở khóa), tính toán chiết khấu sàn cho các đơn hàng.
 
 ---
 
-## 🚀 Hướng Dẫn Cài Đặt & Chạy Ứng Dụng
+## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy
 
-### 1. Yêu Cầu Môi Trường
-- **JDK:** Java 17 hoặc mới hơn.
-- **MySQL Server:** Phiên bản 8.0+.
-- **IDE Khuyên dùng:** IntelliJ IDEA, Eclipse hoặc VS Code (kèm Extension Java).
+### 1. Yêu Cầu Cài Đặt
+- Java Development Kit (JDK) 17 trở lên.
+- MySQL Server 8.0+.
+- Gradle 8.x (hoặc sử dụng wrapper `gradlew` có sẵn trong dự án).
 
-### 2. Cài Đặt Cơ Sở Dữ Liệu MySQL
-1. Khởi động MySQL Server.
-2. Tạo cơ sở dữ liệu `meal_choice`:
+### 2. Cài Đặt Cơ Sở Dữ Liệu
+1. Mở MySQL Workbench hoặc CLI và tạo Database:
    ```sql
    CREATE DATABASE meal_choice CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
-3. Chạy file khởi tạo cấu trúc và dữ liệu mẫu (nằm trong thư mục `database/`):
-   - Chạy file `database/schema.sql` (Tạo bảng & khóa ngoại).
-   - Chạy file `database/seed.sql` (Thêm dữ liệu mẫu danh mục, món ăn, tài khoản test).
+2. Thực thi kịch bản tạo bảng và dữ liệu mẫu trong thư mục `database/`:
+   - Chạy `database/schema.sql` (Tạo bảng, khóa chính, khóa ngoại).
+   - Chạy `database/seed.sql` (Chèn dữ liệu mẫu danh mục, món ăn, tài khoản thử nghiệm).
 
-### 3. Cấu Hình `application.properties`
-Mở file `src/main/resources/application.properties` và điều chỉnh các thông số phù hợp với máy của bạn:
-
+### 3. Cấu Hình Ứng Dụng
+Mở file `src/main/resources/application.properties` và chỉnh sửa các thông số:
 ```properties
-# Cấu hình kết nối MySQL
 spring.datasource.url=jdbc:mysql://localhost:3306/meal_choice?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
 spring.datasource.username=root
-spring.datasource.password=YOUR_MYSQL_PASSWORD
+spring.datasource.password=YOUR_PASSWORD
 
-# Cấu hình Hibernate
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-
-# Cấu hình Gửi Mail (Gmail App Password)
 spring.mail.username=your_email@gmail.com
 spring.mail.password=your_gmail_app_password
-
-# Cấu hình JWT & API bản đồ (nếu cần đổi)
-jwt.secret=6afb00b4e213a2559d33b640c84e6c027595b9e36faea41f9dc458be9eebd467
 ```
 
-### 4. Biên Dịch & Chạy Ứng Dụng
-Sử dụng terminal tại thư mục gốc của dự án:
-
-- **Trên macOS / Linux:**
+### 4. Chạy Ứng Dụng
+- **macOS / Linux:**
   ```bash
   ./gradlew bootRun
   ```
-- **Trên Windows:**
+- **Windows:**
   ```cmd
   gradlew.bat bootRun
   ```
-
-Sau khi ứng dụng khởi động thành công, mở trình duyệt truy cập: **`http://localhost:8080`**
+Truy cập website tại: **`http://localhost:8080`**
 
 ---
 
-## 👥 Danh Sách Tài Khoản Thử Nghiệm (Seed Accounts)
+## 👥 Danh Sách Tài Khoản Mẫu (Test Accounts)
 
-| Vai trò (Role) | Email đăng nhập | Mật khẩu mặc định | Quyền hạn chính |
+| Role | Email đăng nhập | Mật khẩu | Chức năng chính |
 | :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin@mealchoice.vn` | `123456` | Quản lý Merchant, Quản lý đơn vị giao hàng |
-| **Chủ cửa hàng (MERCHANT)** | `merchant1@gmail.com` | `123456` | Quản lý quán ăn, món ăn, xử lý đơn hàng |
+| **Quản trị viên (ADMIN)** | `admin@mealchoice.vn` | `123456` | Quản lý đối tác vận chuyển, duyệt/khóa Merchant |
+| **Chủ cửa hàng (MERCHANT)** | `merchant1@gmail.com` | `123456` | Quản lý menu món ăn, xử lý đơn hàng, đối soát |
 | **Chủ cửa hàng (MERCHANT)** | `merchant2@gmail.com` | `123456` | Quản lý quán trà sữa / ăn vặt |
-| **Khách hàng (USER)** | `user1@gmail.com` | `123456` | Xem món, đặt hàng, quản lý đơn hàng |
-| **Khách hàng (USER)** | `user2@gmail.com` | `123456` | Xem món, đặt hàng, quản lý hồ sơ |
-
----
-
-## 🎯 Các Luồng Tính Năng Nổi Bật
-
-### 1. Khách Hàng (Customer)
-- **Trang chủ & Lọc món:** Phân trang món ăn, lọc theo danh mục, tìm kiếm theo từ khóa, xem món siêu giảm giá, món ăn gần khu vực hiện tại.
-- **Yêu thích (Like / Wishlist):** Thích món ăn và thích cửa hàng với cơ chế cập nhật realtime.
-- **Giỏ hàng & Đặt hàng (Checkout):**
-  - Đặt nhiều món từ cùng một nhà hàng.
-  - Chọn địa chỉ nhận hàng và đơn vị giao hàng.
-  - Tính phí ship động theo cự ly kilômét thực tế qua API HeiGIT/OpenRouteService.
-  - Áp dụng mã giảm giá (Voucher code).
-  - Tự động ước tính thời gian chuẩn bị món và thời gian giao hàng.
-- **Lịch sử đơn hàng:** Theo dõi tiến độ đơn hàng (Chờ xác nhận -> Đang chuẩn bị -> Đang giao -> Hoàn thành / Đã hủy).
-
-### 2. Nhà Hàng / Cửa Hàng (Merchant)
-- **Đăng ký mở quán:** Gửi yêu cầu trở thành đối tác kinh doanh đến Admin.
-- **Quản lý thực đơn (Menu Management):**
-  - Thêm món ăn mới với nhiều hình ảnh và chọn ảnh đại diện chính.
-  - Cập nhật giá bán, giá khuyến mãi, phí dịch vụ, thời gian chế biến.
-  - Xóa mềm món ăn (Soft Delete) để bảo toàn dữ liệu lịch sử đơn hàng.
-  - Bật/tắt trạng thái hiển thị hoặc gắn nhãn Đề xuất (Recommended).
-- **Quản lý đơn hàng:**
-  - Nhận đơn hàng mới từ khách hàng.
-  - Cập nhật trạng thái chế biến (Xác nhận đơn, hẹn giờ chuẩn bị xong).
-
-### 3. Quản Trị Viên (Admin)
-- **Phê duyệt đối tác:** Duyệt đơn đăng ký Merchant mới hoặc khóa các cửa hàng vi phạm.
-- **Đối tác vận chuyển:** Thêm mới, chỉnh sửa biểu phí cơ bản và đơn giá theo km cho các đơn vị vận chuyển (GrabFood, ShopeeFood, BeFood, Gojek, v.v.).
-
----
-
-## 📚 Sơ Đồ Cơ Sở Dữ Liệu Tóm Tắt
-
-- `users` 1 ── * `addresses` (Một người dùng có nhiều địa chỉ nhận hàng)
-- `users` 1 ── 1 `merchants` (Một tài khoản đăng ký mở một cửa hàng)
-- `merchants` 1 ── * `merchant_addresses` (Cửa hàng có các chi nhánh/địa chỉ)
-- `merchants` 1 ── * `foods` (Cửa hàng sở hữu nhiều món ăn)
-- `foods` * ── * `food_categories` (Món ăn thuộc nhiều danh mục)
-- `foods` 1 ── * `food_images` (Một món ăn có nhiều hình ảnh)
-- `users` 1 ── * `orders` (Khách hàng đặt nhiều đơn hàng)
-- `orders` 1 ── * `order_items` (Đơn hàng chứa nhiều chi tiết món ăn)
-- `delivery_partners` 1 ── * `orders` (Đơn vị vận chuyển xử lý đơn hàng)
+| **Khách hàng (USER)** | `user1@gmail.com` | `123456` | Đặt hàng, theo dõi đơn, thích món |
+| **Khách hàng (USER)** | `user2@gmail.com` | `123456` | Đặt hàng, quản lý địa chỉ giao hàng |
 
 ---
 
 ## 💡 Đóng Góp & Quy Chuẩn Phát Triển
 
-Khi thêm mới tính năng hoặc sửa lỗi, vui lòng tham khảo tài liệu [GEMINI.md](file:///Users/wanbi/Code/student-projects/MealChoice/GEMINI.md) để đảm bảo tuân thủ đúng quy chuẩn kiến trúc và ranh giới công nghệ của dự án.
+Mọi đóng góp mã nguồn hoặc tính năng mới cần tuân thủ nghiêm ngặt các quy tắc trong [GEMINI.md](file:///Users/wanbi/Code/student-projects/MealChoice/GEMINI.md).

@@ -2,36 +2,33 @@
 # GEMINI.md - HƯỚNG DẪN & QUY TẮC PHÁT TRIỂN DỰ ÁN MEALCHOICE (CODEGYM)
 # ==============================================================================
 
-> **Mục đích tài liệu:** Thiết lập tiêu chuẩn phát triển, ranh giới công nghệ và phong cách lập trình cho AI Assistants / Developers khi làm việc trên dự án **MealChoice**. Đảm bảo code sinh ra chuẩn mực, sạch sẽ, bám sát khung chương trình học của học viên (Java & Spring Framework).
+> **Bối cảnh dự án:** Dự án **"Nhóm A - Trưa nay ăn gì" (MealChoice)** là đồ án web đặt & giao đồ ăn trực tuyến (Food Ordering & Delivery Platform) dành cho học viên CodeGym thực hành chuyên sâu môn Java & Spring Framework.
 
 ---
 
-## 1. BỐI CẢNH DỰ ÁN & RANH GIỚI CÔNG NGHỆ (TECH STACK BOUNDARY)
+## 1. RANH GIỚI CÔNG NGHỆ BẮT BUỘC (STRICT TECH STACK)
 
-Dự án **MealChoice** là ứng dụng web đặt đồ ăn trực tuyến (Online Food Ordering & Delivery Platform) được xây dựng phục vụ học tập và đánh giá năng lực học viên tại CodeGym.
+Để bám sát khung chương trình học và tránh làm quá tải hoặc lệch kiến thức học viên:
 
-### 📌 Công nghệ bắt buộc (Strict Tech Stack):
-- **Ngôn ngữ:** Java 17 LTS (sử dụng cú pháp chuẩn Java 17: Record, Text blocks, Pattern matching instanceof, Stream API, etc.).
+- **Ngôn ngữ:** Java 17 LTS (sử dụng cú pháp chuẩn: Record, Text blocks, Pattern matching instanceof, Stream API).
 - **Build Tool:** Gradle (Groovy DSL - `build.gradle`).
 - **Framework nền tảng:** Spring Boot 3.x / 4.x
-  - **Spring MVC**: Xử lý request, điều hướng View SSR.
+  - **Spring MVC**: Xử lý HTTP Request, điều hướng View SSR.
   - **Spring Data JPA & Hibernate**: Tương tác cơ sở dữ liệu ORM.
   - **Spring Security 6 & JJWT**: Xác thực người dùng, phân quyền Role-based, JWT Filter kết hợp Cookie/Header.
-  - **Spring Validation**: Jakarta Bean Validation (`@Valid`, `@NotBlank`, `@Size`, v.v.).
-  - **Spring Mail**: Gửi email kích hoạt tài khoản / thông báo.
+  - **Spring Validation**: Jakarta Bean Validation (`@Valid`, `@NotBlank`, `@Size`, `@Min`, v.v.).
+  - **Spring Mail**: Gửi email kích hoạt tài khoản / thông báo trạng thái.
 - **Template Engine:** Thymeleaf + Thymeleaf Extras Spring Security.
 - **Cơ sở dữ liệu:** MySQL 8.0+ / InnoDB / Charset `utf8mb4`.
-- **Frontend:** HTML5, CSS3 (Custom CSS), Bootstrap 5, Vanilla JavaScript (ES6+ Fetch API, DOM manipulation).
+- **Frontend:** HTML5, CSS3, Bootstrap 5, Vanilla JavaScript (ES6+ Fetch API, DOM manipulation).
 - **Thư viện bổ trợ:** Project Lombok (`@Getter`, `@Setter`, `@Builder`, `@RequiredArgsConstructor`, `@Slf4j`).
 
 ---
 
 ## 2. NHỮNG ĐIỀU TUYỆT ĐỐI KHÔNG LÀM (PROHIBITED & ANTI-PATTERNS)
 
-Để tránh **lệch kiến thức** hoặc làm dự án trở nên quá tải đối với học viên:
-
 1. ❌ **KHÔNG** tự ý đưa các framework Frontend phức tạp (React, Angular, Vue, Next.js) vào dự án nếu không có yêu cầu cụ thể. Luôn sử dụng **Thymeleaf + Vanilla JS/Bootstrap**.
-2. ❌ **KHÔNG** sử dụng kiến trúc Microservices, Event-Driven Broker phức tạp (Kafka, RabbitMQ), Reactive Programming (Spring WebFlux) hay NoSQL/Redis trừ khi được hướng dẫn.
+2. ❌ **KHÔNG** sử dụng kiến trúc Microservices, Event-Driven Broker phức tạp (Kafka, RabbitMQ), Reactive Programming (Spring WebFlux) hay NoSQL/Redis.
 3. ❌ **KHÔNG** viết code quá trừu tượng (Over-engineering) như Dynamic Proxies, Custom Bytecode, Reflection phức tạp.
 4. ❌ **KHÔNG** hardcode thông tin nhạy cảm (mật khẩu database, email app password, jwt secret, api key) trực tiếp trong file mã nguồn.
 5. ❌ **KHÔNG** query lặp trong vòng for gây ra lỗi **N+1 Query** trong JPA/Hibernate.
@@ -39,9 +36,34 @@ Dự án **MealChoice** là ứng dụng web đặt đồ ăn trực tuyến (On
 
 ---
 
-## 3. QUY CHUẨN THIẾT KẾ MÃ NGUỒN (CLEAN ARCHITECTURE)
+## 3. QUY TẮC NGHIỆP VỤ ĐẶC THÙ (BUSINESS RULES TỪ SPEC TRELLO)
 
-Dự án áp dụng mô hình phân lớp chuẩn (Layered Architecture):
+Tất cả các tính năng phát triển phải tuân thủ đúng các quy tắc nghiệp vụ trong tài liệu đặc tả của nhóm:
+
+### 3.1. Quản lý Đơn hàng & Trạng thái (Order Lifecycle)
+- **Luồng trạng thái:** `PENDING` (Chờ nhận hàng) $\rightarrow$ `PREPARING` (Đang chuẩn bị) $\rightarrow$ `DELIVERING` (Đang giao) $\rightarrow$ `COMPLETED` (Hoàn thành) / `CANCELLED` (Đã hủy).
+- **Ràng buộc hủy đơn:**
+  - **Khách hàng (User):** Chỉ được hủy đơn khi cửa hàng chưa giao (trạng thái khác `DELIVERING` và `COMPLETED`).
+  - **Cửa hàng (Merchant):** Chỉ được hủy đơn khi đang ở trạng thái `PENDING` ("Chờ nhận hàng").
+- **Hẹn giờ chuẩn bị:** Khi Merchant nhận đơn chuyển sang `PREPARING`, cho phép nhập thời gian chuẩn bị (phút) để tính toán `preparingUntil` và tự động chuyển trạng thái.
+
+### 3.2. Đối soát Doanh thu Merchant (Settlement & Payout)
+- **Công thức tính dòng tiền:**
+  $$\text{Doanh thu thực nhận} = \text{Giá sản phẩm} - \text{Khuyến mãi} - \text{Chiết khấu sàn (Phí sàn)}$$
+- **Biểu phí chiết khấu sàn:**
+  - $0.001\% / \text{đơn}$ (Nếu tổng doanh thu tháng $< 200 \text{ triệu VNĐ}$).
+  - $0.0005\% / \text{đơn}$ (Nếu tổng doanh thu tháng $\ge 200 \text{ triệu VNĐ}$).
+- **Trạng thái kỳ đối soát:** `Chờ xác nhận` $\rightarrow$ `Đã xác nhận` (Chuyển Admin làm lệnh Payout) hoặc `Đang khiếu nại` (Tạm khóa chuyển tiền, gửi ticket sang Admin).
+- **Đối tác thân thiết / Thanh lý hợp đồng:** Merchant phải thỏa mãn điều kiện **Doanh thu tháng $> 100 \text{ triệu VNĐ}$** mới được đăng ký Đối tác thân thiết hoặc yêu cầu thanh lý rút hết tiền.
+
+### 3.3. Món ăn & Tìm kiếm (Food & Catalog)
+- **Thêm món mới:** Bắt buộc có ít nhất 2 hình ảnh, gắn địa chỉ chi nhánh, chọn Tag, cài đặt thời gian chuẩn bị (phút) và phí dịch vụ.
+- **Quick search trên trang chủ:** Hỗ trợ lọc nhanh theo 4 nhóm bữa ăn: `Breakfast`, `Lunch`, `Dinner`, `Café`.
+- **Gợi ý trang chủ:** Hiển thị 8 món ăn giảm giá nhiều nhất và 8 món ăn gần vị trí người dùng nhất.
+
+---
+
+## 4. QUY CHUẨN THIẾT KẾ MÃ NGUỒN (CLEAN ARCHITECTURE)
 
 ```
 Controller / RestController (Giao tiếp HTTP, nhận request, trả View hoặc DTO)
@@ -53,64 +75,25 @@ Repository Layer (Spring Data JPA, JPQL, EntityGraph)
 Database Layer (MySQL Entities)
 ```
 
-### 3.1. Entity Layer (`vn.codegyme.meal_choice.entity`)
-- Định nghĩa đúng quan hệ: `@ManyToOne(fetch = FetchType.LAZY)`, `@OneToMany(mappedBy = "...", cascade = CascadeType.ALL, orphanRemoval = true)`, `@ManyToMany`.
-- Sử dụng UUID hoặc Long ID nhất quán theo từng bảng:
-  - `users`, `merchants`, `delivery_partners`, `activation_tokens`, `refresh_tokens`: UUID (chuỗi 36 ký tự).
-  - `foods`, `food_categories`, `tags`, `orders`, `order_items`, `roles`: Long (AUTO_INCREMENT).
-- Bổ sung `@EqualsAndHashCode(onlyExplicitlyIncluded = true)` trên các Entity có ID để tránh vòng lặp hashCode trong Hibernate collection.
-- Áp dụng `@CreationTimestamp`, `@UpdateTimestamp` hoặc `@PrePersist`, `@PreUpdate` để tự động quản lý thời gian.
+### 4.1. Entity Layer (`vn.codegyme.meal_choice.entity`)
+- Quan hệ `@ManyToOne(fetch = FetchType.LAZY)`, `@OneToMany(mappedBy = "...", cascade = CascadeType.ALL, orphanRemoval = true)`.
+- Sử dụng UUID (chuỗi 36 ký tự) cho `User`, `Merchant`, `DeliveryPartner`, `ActivationToken`, `RefreshToken`.
+- Sử dụng Long (AUTO_INCREMENT) cho `Food`, `FoodCategory`, `Tag`, `Order`, `OrderItem`, `Role`, `Voucher`.
+- Bổ sung `@EqualsAndHashCode(onlyExplicitlyIncluded = true)` trên các Entity có ID.
 
-### 3.2. Repository Layer (`vn.codegyme.meal_choice.repository`)
+### 4.2. Repository Layer (`vn.codegyme.meal_choice.repository`)
 - Kế thừa `JpaRepository<Entity, ID>`.
-- Ưu tiên sử dụng Derived Query Methods của Spring Data JPA.
-- Với các truy vấn phức tạp hoặc cần JOIN nạp dữ liệu:
-  - Dùng `@EntityGraph(attributePaths = {"orderItems", "merchant", "user"})` để tránh N+1.
-  - Dùng JPQL `@Query("SELECT DISTINCT f FROM Food f JOIN FETCH f.foodCategories c WHERE ...")`.
-  - Luôn hỗ trợ `Pageable` và trả về `Page<T>` hoặc `Slice<T>` khi truy vấn danh sách lớn.
+- Tránh N+1 bằng `@EntityGraph(attributePaths = {"orderItems", "merchant", "user"})` hoặc JPQL `JOIN FETCH`.
+- Luôn hỗ trợ `Pageable` khi truy vấn danh sách lớn.
 
-### 3.3. Service Layer (`vn.codegyme.meal_choice.service`)
-- Tuân thủ nguyên tắc: **Giao diện (Interface)** đặt trong `vn.codegyme.meal_choice.service`, **Lớp triển khai (Impl)** đặt trong `vn.codegyme.meal_choice.service.impl`.
-- Đánh dấu `@Transactional` cho các phương thức có ghi/cập nhật dữ liệu (CREATE, UPDATE, DELETE).
-- Đánh dấu `@Transactional(readOnly = true)` cho các phương thức chỉ đọc (GET / SELECT) để tối ưu hiệu năng Hibernate dirty-checking.
-- Ném ra các Exception tường minh (`IllegalArgumentException`, `ResourceNotFoundException`, hoặc Exception nghiệp vụ rõ ràng).
+### 4.3. Service Layer (`vn.codegyme.meal_choice.service`)
+- Tuân thủ nguyên tắc: **Giao diện (Interface)** đặt trong `service`, **Lớp triển khai (Impl)** đặt trong `service.impl`.
+- Đánh dấu `@Transactional` cho các thao tác ghi/sửa và `@Transactional(readOnly = true)` cho các thao tác đọc.
+- Tận dụng cơ chế **Dirty Checking** của Hibernate để cập nhật Entity, tránh gọi `save()` lặp trong vòng for.
 
-### 3.4. DTO & Validation Layer (`vn.codegyme.meal_choice.dto`)
-- Tạo DTO riêng biệt cho Request (`CreateRequest`, `UpdateRequest`, `LoginRequest`) và Response (`ResponseDTO`).
-- Sử dụng các annotation của Jakarta Validation:
-  - `@NotBlank(message = "Tên không được để trống")`
-  - `@NotNull(message = "Giá tiền không được để trống")`
-  - `@Min(value = 0, message = "Giá trị tối thiểu là 0")`
-  - `@Email(message = "Email không đúng định dạng")`
-  - `@Pattern(regexp = "^[0-9]{10,11}$", message = "Số điện thoại không hợp lệ")`
-
-### 3.5. Controller Layer (`vn.codegyme.meal_choice.controller`)
-- **SSR Page Controller (`@Controller`)**:
-  - Dành cho trả về giao diện Thymeleaf (ví dụ `/`, `/login`, `/food/{id}`, `/merchant/dashboard`).
-  - Gán dữ liệu vào `org.springframework.ui.Model`.
-- **REST API Controller (`@RestController`)**:
-  - Định tuyến URL bắt đầu bằng `/api/...` (ví dụ `/api/auth/login`, `/api/foods`, `/api/orders`).
-  - Sử dụng `@Valid @RequestBody` để validate DTO.
-  - Trả về `ResponseEntity<T>` với đúng HTTP Status code (`200 OK`, `201 CREATED`, `204 NO_CONTENT`, `400 BAD_REQUEST`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`).
-
-### 3.6. Xử lý lỗi tập trung (`GlobalExceptionHandler`)
-- Định dạng phản hồi lỗi API nhất quán bằng `ErrorResponse` (chứa `status`, `message`, `timestamp`).
-- Bắt và chuyển đổi các lỗi `MethodArgumentNotValidException` thành thông báo lỗi dễ hiểu cho người dùng/học viên.
-
----
-
-## 4. QUY ƯỚC PHÂN QUYỀN & BẢO MẬT (SECURITY CONVENTIONS)
-
-1. **Role Convention:** Hệ thống có 3 vai trò chính:
-   - `ROLE_USER` (Khách hàng): Đăng nhập, quản lý địa chỉ, xem menu, đặt hàng, theo dõi đơn hàng, thích món ăn/quán ăn, đăng ký mở quán.
-   - `ROLE_MERCHANT` (Chủ nhà hàng): Sau khi được Admin duyệt, có quyền quản lý cửa hàng, món ăn, menu, cập nhật trạng thái đơn hàng.
-   - `ROLE_ADMIN` (Quản trị viên): Quản lý người dùng, duyệt/khóa Merchant, quản lý đơn vị vận chuyển (Delivery Partner).
-2. **Security Config:**
-   - Stateless session với JWT cho API.
-   - Cookie `accessToken` cho phép Thymeleaf page gọi AJAX API một cách mượt mà.
-   - Luôn cấu hình `AuthenticationEntryPoint` để phân biệt:
-     - Request bắt đầu bằng `/api/...` trả về `401 Unauthorized (JSON)`.
-     - Request trình duyệt (HTML) chuyển hướng sang `/login`.
+### 4.4. DTO & Controller Layer (`vn.codegyme.meal_choice.dto` & `controller`)
+- DTO tách biệt Request/Response và có validation Jakarta đầy đủ (`@NotBlank`, `@NotNull`, `@Min`, `@Email`).
+- Tách bạch `@Controller` (trả về View Thymeleaf) và `@RestController` (tiền tố `/api/...` trả về JSON `ResponseEntity<T>`).
 
 ---
 
