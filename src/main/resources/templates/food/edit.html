@@ -64,6 +64,18 @@
                             </select>
                             <div class="form-text font-size-12 mt-1">Có thể chọn nhiều tag cho món ăn. Không bắt buộc.</div>
                         </div>
+
+                        <div class="mb-3">
+                            <label for="couponIds" class="form-label fw-semibold">Coupon áp dụng cho món ăn</label>
+                            <select id="couponIds" name="couponIds" class="form-select" multiple>
+                                <option th:each="coupon : ${coupons}"
+                                        th:value="${coupon.id}"
+                                        th:text="${coupon.couponCode}"
+                                        th:selected="${food.couponIds != null and food.couponIds.contains(coupon.id)}">
+                                </option>
+                            </select>
+                        </div>
+
                         <div class="mb-3">
                             <label for="preparationTime" class="form-label fw-semibold">
                                 Thời gian chuẩn bị <span class="text-danger">*</span>

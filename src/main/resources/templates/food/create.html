@@ -108,6 +108,26 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="couponIds" class="form-label fw-semibold">
+                                Coupon áp dụng cho món ăn
+                            </label>
+
+                            <select id="couponIds"
+                                    name="couponIds"
+                                    class="form-select"
+                                    multiple>
+                                <option th:each="coupon : ${coupons}"
+                                        th:value="${coupon.id}"
+                                        th:text="${coupon.couponCode}">
+                                </option>
+                            </select>
+
+                            <div class="form-text font-size-12 mt-1">
+                                Có thể chọn nhiều coupon áp dụng cho món ăn. Không bắt buộc.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
                             <label for="preparationTime" class="form-label fw-semibold">
                                 Thời gian chuẩn bị <span class="text-danger">*</span>
                             </label>
@@ -165,7 +185,6 @@
                             </div>
                         </div>
 
-                        <!-- Hình thức giảm giá -->
                         <div class="mb-3">
                             <label for="discountType" class="form-label fw-semibold">
                                 Hình thức giảm giá <span class="text-danger">*</span>
@@ -175,7 +194,6 @@
                                     name="discountType"
                                     class="form-select bg-light border-0"
                                     required>
-
                                 <option value="NONE" selected>
                                     Không giảm giá
                                 </option>
@@ -190,9 +208,7 @@
                             </select>
                         </div>
 
-                        <!-- Mức giảm / Giá khuyến mãi -->
                         <div class="mb-3 d-none" id="discountValueGroup">
-
                             <label for="discountValue"
                                    id="discountValueLabel"
                                    class="form-label fw-semibold">
@@ -200,7 +216,6 @@
                             </label>
 
                             <div class="input-group">
-
                                 <input type="number"
                                        id="discountValue"
                                        name="discountValue"
@@ -212,19 +227,17 @@
                                       class="input-group-text bg-light border-0 text-muted fw-semibold">
                                     %
                                 </span>
-
                             </div>
                         </div>
 
-                        <!-- Giá sau khuyến mãi -->
                         <div class="mb-3">
                             <label for="discountPrice"
+                                   id="discountPriceLabel"
                                    class="form-label fw-semibold">
                                 Giá sau khuyến mãi
                             </label>
 
                             <div class="input-group">
-
                                 <input type="number"
                                        id="discountPrice"
                                        name="discountPrice"
@@ -235,7 +248,6 @@
                                 <span class="input-group-text bg-light border-0 text-muted fw-semibold">
                                     vnđ
                                 </span>
-
                             </div>
                         </div>
 
@@ -273,7 +285,7 @@
 
                             <div class="border border-2 border-dashed rounded-3 p-4 text-center bg-light bg-opacity-50">
                                 <i class="bi bi-cloud-arrow-up fs-1 text-danger d-block mb-2"></i>
-                                <p class="fw-semibold mb-1">Chọn hoặc kéo thả ảnh vào đây</p>
+                                <p class="fw-semibold mb-1">Chọn ảnh vào đây</p>
                                 <p class="text-muted small mb-3">
                                     Hỗ trợ định dạng JPG, JPEG, PNG hoặc WEBP
                                 </p>
@@ -307,13 +319,16 @@
         </form>
     </section>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
 <script>
     const form = document.getElementById("foodCreateForm");
     const submitButton = document.getElementById("submitButton");
 
     const categorySelect = document.getElementById("categoryIds");
     const tagSelect = document.getElementById("tagIds");
+    const couponSelect = document.getElementById("couponIds");
 
     const priceInput = document.getElementById("price");
     const discountType = document.getElementById("discountType");
@@ -322,12 +337,13 @@
     const discountValueLabel = document.getElementById("discountValueLabel");
     const discountUnit = document.getElementById("discountUnit");
     const discountPrice = document.getElementById("discountPrice");
+    const discountPriceLabel = document.getElementById("discountPriceLabel");
     const serviceFeeInput = document.getElementById("serviceFee");
 
     let categoryChoices = null;
     let tagChoices = null;
+    let couponChoices = null;
 
-    // Khởi tạo danh mục
     if (categorySelect) {
         categoryChoices = new Choices(categorySelect, {
             removeItemButton: true,
@@ -343,7 +359,6 @@
         });
     }
 
-    // Khởi tạo tag
     if (tagSelect) {
         tagChoices = new Choices(tagSelect, {
             removeItemButton: true,
@@ -359,13 +374,26 @@
         });
     }
 
-    // Lấy token đăng nhập
+    if (couponSelect) {
+        couponChoices = new Choices(couponSelect, {
+            removeItemButton: true,
+            searchEnabled: true,
+            searchPlaceholderValue: "Tìm coupon...",
+            placeholder: true,
+            placeholderValue: "Chọn coupon áp dụng",
+            noResultsText: "Không tìm thấy coupon",
+            noChoicesText: "Merchant chưa có coupon",
+            itemSelectText: "Chọn",
+            shouldSort: false,
+            allowHTML: false
+        });
+    }
+
     function buildAuthHeaders() {
         const token = localStorage.getItem("accessToken");
         return token ? {Authorization: `Bearer ${token}`} : {};
     }
 
-    // Cập nhật giao diện giảm giá
     function updateDiscountUI() {
         const type = discountType.value;
 
@@ -379,8 +407,14 @@
         }
 
         if (type === "FIXED_PRICE") {
-            discountPriceLabel.textContent = "Giá khuyến mãi";
-            discountPrice.placeholder = "40000";
+            discountValueGroup.classList.remove("d-none");
+            discountValueLabel.textContent = "Giá khuyến mãi";
+            discountUnit.textContent = "vnđ";
+            discountPriceLabel.textContent = "Giá sau khuyến mãi";
+            discountValue.placeholder = "40000";
+            discountValue.min = "0";
+            discountValue.max = "";
+            discountValue.step = "0.01";
             return;
         }
 
@@ -400,7 +434,7 @@
             calculateDiscountPrice();
         }
     }
-    // Tính giá sau khuyến mãi
+
     function calculateDiscountPrice() {
         const price = Number(priceInput.value);
         const type = discountType.value;
@@ -412,31 +446,26 @@
         }
 
         if (type === "NONE") {
-            // Không giảm giá
             discountPrice.value = price;
             return;
         }
 
         if (type === "FIXED_PRICE") {
-            // Giá khuyến mãi do người dùng nhập
             discountPrice.value = discountValue.value || "";
             return;
         }
 
         if (type === "PERCENT") {
-            // Tính giá theo phần trăm
             if (!Number.isFinite(value) || value <= 0 || value >= 100) {
                 discountPrice.value = "";
                 return;
             }
 
             const result = price * (100 - value) / 100;
-
             discountPrice.value = Number(result.toFixed(2));
         }
     }
 
-    // Đổi hình thức giảm giá
     discountType.addEventListener("change", function () {
         discountValue.value = "";
 
@@ -449,7 +478,6 @@
         updateDiscountUI();
     });
 
-    // Thay đổi giá bán
     priceInput.addEventListener("input", function () {
         if (discountType.value === "NONE") {
             discountPrice.value = priceInput.value;
@@ -460,23 +488,18 @@
         }
     });
 
-    // Thay đổi mức giảm
     discountValue.addEventListener("input", function () {
         if (discountType.value === "FIXED_PRICE") {
-            // Giá sau khuyến mãi = giá người dùng nhập
             discountPrice.value = discountValue.value;
         }
 
         if (discountType.value === "PERCENT") {
-            // Tự tính giá sau giảm
             calculateDiscountPrice();
         }
     });
 
-    // Khởi tạo giao diện
     updateDiscountUI();
 
-    // Submit form
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
 
@@ -498,9 +521,7 @@
 
         const type = discountType.value;
         const value = discountValue.value.trim();
-        const finalPrice = discountPrice.value.trim();
 
-        // Kiểm tra giá bán
         if (!Number.isFinite(price) || price <= 0) {
             window.showMerchantNotice?.({
                 variant: "danger",
@@ -512,12 +533,10 @@
             return;
         }
 
-        // Không giảm giá
         if (type === "NONE") {
             discountPrice.value = price;
         }
 
-        // Giảm theo giá cố định
         if (type === "FIXED_PRICE") {
             const fixedPrice = Number(value);
 
@@ -546,7 +565,6 @@
             discountPrice.value = fixedPrice;
         }
 
-        // Giảm theo phần trăm
         if (type === "PERCENT") {
             const percent = Number(value);
 
@@ -566,7 +584,6 @@
 
         const finalDiscountPrice = Number(discountPrice.value);
 
-        // Kiểm tra giá sau khuyến mãi
         if (
             !Number.isFinite(finalDiscountPrice) ||
             finalDiscountPrice <= 0 ||
@@ -582,7 +599,6 @@
             return;
         }
 
-        // Kiểm tra phí dịch vụ
         if (!Number.isFinite(serviceFee) || serviceFee < 0) {
             window.showMerchantNotice?.({
                 variant: "danger",
@@ -596,7 +612,16 @@
 
         const formData = new FormData(form);
 
-        // Gửi đúng giá sau khuyến mãi
+        formData.delete("couponIds");
+
+        if (couponChoices) {
+            const selectedCoupons = couponChoices.getValue(true);
+
+            selectedCoupons.forEach(couponId => {
+                formData.append("couponIds", couponId);
+            });
+        }
+
         formData.set(
             "discountPrice",
             discountPrice.value
