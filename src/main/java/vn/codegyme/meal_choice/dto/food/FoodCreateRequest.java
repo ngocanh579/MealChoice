@@ -25,6 +25,8 @@ public class FoodCreateRequest {
 
     private List<Long> tagIds = new ArrayList<>();
 
+    private List<Long> couponIds = new ArrayList<>();
+
     @NotNull(message = "Thời gian chuẩn bị không được để trống")
     private Integer preparationTime;
 

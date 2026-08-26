@@ -48,16 +48,17 @@ public class FoodResponse {
     private Boolean isRecommended;
 
     private List<Long> categoryIds;
-
     private List<String> categoryNames;
 
     private List<Long> tagIds;
-
     private List<String> tagNames;
+
+    private List<Long> couponIds;
+    private List<String> couponCodes;
+
 
     private List<String> imageUrls;
 
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 }
