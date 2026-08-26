@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.codegyme.meal_choice.dto.food.FoodCreateRequest;
 import vn.codegyme.meal_choice.dto.food.FoodResponse;
 import vn.codegyme.meal_choice.dto.food.FoodUpdateRequest;
+import vn.codegyme.meal_choice.entity.Coupon;
 import vn.codegyme.meal_choice.entity.Food;
 import vn.codegyme.meal_choice.entity.FoodCategory;
 import vn.codegyme.meal_choice.entity.FoodImage;
@@ -16,6 +17,7 @@ import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.MerchantAddress;
 import vn.codegyme.meal_choice.entity.MerchantStatus;
 import vn.codegyme.meal_choice.entity.Tag;
+import vn.codegyme.meal_choice.repository.CouponRepository;
 import vn.codegyme.meal_choice.repository.FoodCategoryRepository;
 import vn.codegyme.meal_choice.repository.FoodRepository;
 import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
@@ -23,9 +25,9 @@ import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.TagRepository;
 import vn.codegyme.meal_choice.service.FileStorageService;
 import vn.codegyme.meal_choice.service.FoodService;
-import java.math.RoundingMode;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +41,7 @@ public class FoodServiceImpl implements FoodService {
     private final FoodRepository foodRepository;
     private final FoodCategoryRepository foodCategoryRepository;
     private final TagRepository tagRepository;
+    private final CouponRepository couponRepository;
     private final MerchantRepository merchantRepository;
     private final MerchantAddressRepository merchantAddressRepository;
     private final FileStorageService fileStorageService;
@@ -82,6 +85,21 @@ public class FoodServiceImpl implements FoodService {
             }
         }
 
+        List<Coupon> coupons = Collections.emptyList();
+
+        if (request.getCouponIds() != null && !request.getCouponIds().isEmpty()) {
+            coupons = couponRepository.findAllByIdInAndMerchant_Id(
+                    request.getCouponIds(),
+                    merchantId
+            );
+
+            if (coupons.size() != request.getCouponIds().size()) {
+                throw new RuntimeException(
+                        "Một hoặc nhiều Coupon không tồn tại hoặc không thuộc Merchant này"
+                );
+            }
+        }
+
         BigDecimal discountPrice = calculateDiscountPrice(
                 request.getPrice(),
                 request.getDiscountType(),
@@ -93,6 +111,7 @@ public class FoodServiceImpl implements FoodService {
                 .merchantAddress(address)
                 .foodCategories(new ArrayList<>(categories))
                 .tags(new ArrayList<>(tags))
+                .coupons(new ArrayList<>(coupons))
                 .foodName(request.getFoodName())
                 .preparationTime(request.getPreparationTime())
                 .foodNote(request.getFoodNote())
@@ -175,9 +194,8 @@ public class FoodServiceImpl implements FoodService {
         return mapToResponse(food);
     }
 
-    // Cập nhật món
-    @Transactional
     @Override
+    @Transactional
     public FoodResponse updateFood(
             UUID merchantId,
             Long foodId,
@@ -221,6 +239,21 @@ public class FoodServiceImpl implements FoodService {
             }
         }
 
+        List<Coupon> coupons = Collections.emptyList();
+
+        if (request.getCouponIds() != null && !request.getCouponIds().isEmpty()) {
+            coupons = couponRepository.findAllByIdInAndMerchant_Id(
+                    request.getCouponIds(),
+                    merchantId
+            );
+
+            if (coupons.size() != request.getCouponIds().size()) {
+                throw new RuntimeException(
+                        "Một hoặc nhiều Coupon không tồn tại hoặc không thuộc Merchant này"
+                );
+            }
+        }
+
         BigDecimal discountPrice = null;
 
         if ("NONE".equals(request.getDiscountType())) {
@@ -228,7 +261,8 @@ public class FoodServiceImpl implements FoodService {
         } else if ("FIXED_PRICE".equals(request.getDiscountType())) {
             discountPrice = request.getDiscountPrice();
 
-            if (discountPrice == null || discountPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            if (discountPrice == null
+                    || discountPrice.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new RuntimeException("Giá sau khuyến mãi phải lớn hơn 0");
             }
 
@@ -264,6 +298,7 @@ public class FoodServiceImpl implements FoodService {
         food.setMerchantAddress(address);
         food.setFoodCategories(new ArrayList<>(categories));
         food.setTags(new ArrayList<>(tags));
+        food.setCoupons(new ArrayList<>(coupons));
         food.setFoodName(request.getFoodName());
         food.setPreparationTime(request.getPreparationTime());
         food.setFoodNote(request.getFoodNote());
@@ -275,7 +310,6 @@ public class FoodServiceImpl implements FoodService {
                         : BigDecimal.ZERO
         );
 
-        // Xóa ảnh cũ
         if (deletedImages != null && !deletedImages.isEmpty()
                 && food.getImages() != null) {
             List<FoodImage> imagesToDelete = food.getImages().stream()
@@ -288,7 +322,6 @@ public class FoodServiceImpl implements FoodService {
             }
         }
 
-        // Thêm ảnh mới
         if (images != null && !images.isEmpty()) {
             if (food.getImages() == null) {
                 food.setImages(new ArrayList<>());
@@ -409,6 +442,21 @@ public class FoodServiceImpl implements FoodService {
                     food.getTags()
                             .stream()
                             .map(Tag::getTagName)
+                            .toList()
+            );
+        }
+
+        if (food.getCoupons() != null) {
+            response.setCouponIds(
+                    food.getCoupons()
+                            .stream()
+                            .map(Coupon::getId)
+                            .toList()
+            );
+            response.setCouponCodes(
+                    food.getCoupons()
+                            .stream()
+                            .map(Coupon::getCouponCode)
                             .toList()
             );
         }
