@@ -47,6 +47,15 @@ public class Food {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
+            name = "food_vouchers",
+            joinColumns = @JoinColumn(name = "food_id"),
+            inverseJoinColumns = @JoinColumn(name = "voucher_id")
+    )
+    @Builder.Default
+    private List<Coupon> coupons = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
             name = "food_likes",
             joinColumns = @JoinColumn(name = "food_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
