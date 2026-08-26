@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<aside th:fragment="sidebar(activeMenu)"
+       class="admin-sidebar">
+
+    <div class="admin-sidebar-inner d-flex flex-column h-100">
+
+        <!-- Brand -->
+        <div class="admin-sidebar-brand
+                    d-flex
+                    align-items-center
+                    gap-3
+                    mb-4">
+
+            <div class="admin-sidebar-brand-badge">
+
+                <i class="bi bi-shield-lock-fill"></i>
+
+            </div>
+
+            <div class="admin-sidebar-brand-copy overflow-hidden">
+
+                <div class="admin-sidebar-brand-title">
+                    Admin Control
+                </div>
+
+                <small class="text-muted">
+                    Hệ thống quản trị
+                </small>
+
+            </div>
+
+        </div>
+
+        <!-- Nhóm chức năng -->
+        <div class="admin-sidebar-group-title">
+            Quản trị hệ thống
+        </div>
+
+        <nav class="nav flex-column gap-1">
+
+            <!-- Dashboard -->
+            <a th:href="@{/admin/dashboard}"
+               class="nav-link"
+               th:classappend="${activeMenu == 'dashboard'} ? ' active' : ''">
+
+                <i class="bi bi-grid-fill"></i>
+
+                <span class="admin-sidebar-label">
+                    Tổng quan
+                </span>
+
+            </a>
+
+            <!-- Quản lý Merchant -->
+            <a th:href="@{/admin/merchants}"
+               class="nav-link"
+               th:classappend="${activeMenu == 'merchants'} ? ' active' : ''">
+
+                <i class="bi bi-shop"></i>
+
+                <span class="admin-sidebar-label">
+                    Quản lý Merchant
+                </span>
+
+            </a>
+        </nav>
+
+        <!-- Đăng xuất -->
+        <div class="mt-auto pt-3 border-top">
+
+            <button type="button"
+                    class="admin-sidebar-button"
+                    onclick="handleLogout(event)">
+
+                <i class="bi bi-box-arrow-right"></i>
+
+                <span class="admin-sidebar-label">
+                    Đăng xuất
+                </span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</aside>
+
+</body>
+</html>
