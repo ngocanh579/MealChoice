@@ -10,10 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import vn.codegyme.meal_choice.dto.food.FoodResponse;
 import vn.codegyme.meal_choice.entity.Merchant;
-import vn.codegyme.meal_choice.repository.FoodCategoryRepository;
-import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
-import vn.codegyme.meal_choice.repository.MerchantRepository;
-import vn.codegyme.meal_choice.repository.TagRepository;
+import vn.codegyme.meal_choice.repository.*;
 import vn.codegyme.meal_choice.security.CustomUserDetails;
 import vn.codegyme.meal_choice.service.FoodService;
 
@@ -30,6 +27,7 @@ public class FoodViewController {
     private final MerchantAddressRepository merchantAddressRepository;
     private final FoodCategoryRepository foodCategoryRepository;
     private final TagRepository tagRepository;
+    private final CouponRepository couponRepository;
 
     private Merchant getCurrentMerchant() {
         Authentication authentication =
@@ -66,6 +64,7 @@ public class FoodViewController {
     // ==================== FORM THÊM MÓN ====================
 
     // GET /merchant/foods/create
+    // GET /merchant/foods/create
     @GetMapping("/create")
     public String create(Model model) {
 
@@ -86,6 +85,20 @@ public class FoodViewController {
         model.addAttribute(
                 "tags",
                 tagRepository.findAll()
+        );
+
+        model.addAttribute(
+                "coupons",
+                couponRepository.findAllByMerchant_IdOrderByCreatedAtDesc(
+                        merchant.getId()
+                )
+        );
+
+        model.addAttribute(
+                "coupons",
+                couponRepository.findAllByMerchant_IdAndIsActiveTrueOrderByCreatedAtDesc(
+                        merchant.getId()
+                )
         );
 
         return "food/create";
@@ -147,6 +160,15 @@ public class FoodViewController {
                 tagRepository.findAll()
         );
 
+        model.addAttribute(
+                "coupons",
+                couponRepository.findAllByMerchant_IdOrderByCreatedAtDesc(
+                        merchant.getId()
+                )
+        );
+
         return "food/edit";
     }
+
+
 }
