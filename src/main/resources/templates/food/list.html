@@ -225,12 +225,12 @@
                                       th:if="${food.merchantAddress != null && !#strings.isEmpty(food.merchantAddress)}"
                                       th:title="${food.merchantAddress}"
                                       th:text="${#strings.length(food.merchantAddress) > 25 ? #strings.substring(food.merchantAddress, 0, 25) + '...' : food.merchantAddress}">
-                    123 Nguyễn Trãi...
-                </span>
+                                    123 Nguyễn Trãi...
+                                </span>
                                 <span class="text-muted small"
                                       th:unless="${food.merchantAddress != null && !#strings.isEmpty(food.merchantAddress)}">
-                    Chưa có
-                </span>
+                                    Chưa có
+                                </span>
                             </div>
                         </td>
 
@@ -238,46 +238,66 @@
                         <td class="text-center">
                             <div th:if="${food.merchantOpenTime != null && food.merchantCloseTime != null}"
                                  class="d-inline-flex flex-column align-items-center">
-                <span class="small fw-semibold text-dark">
-                    <i class="bi bi-clock text-danger me-1"></i>
-                    <span th:text="${#temporals.format(food.merchantOpenTime, 'HH:mm')}">08:00</span>
-                </span>
+                            <span class="small fw-semibold text-dark">
+                                <i class="bi bi-clock text-danger me-1"></i>
+                                <span th:text="${#temporals.format(food.merchantOpenTime, 'HH:mm')}">08:00</span>
+                            </span>
                                 <span class="small text-muted">
-                    - <span th:text="${#temporals.format(food.merchantCloseTime, 'HH:mm')}">22:00</span>
-                </span>
+                         - <span th:text="${#temporals.format(food.merchantCloseTime, 'HH:mm')}">22:00</span>
+                            </span>
                             </div>
                             <span th:unless="${food.merchantOpenTime != null && food.merchantCloseTime != null}"
                                   class="text-muted small">
-                Chưa cập nhật
-            </span>
+                                Chưa cập nhật
+                            </span>
                         </td>
 
                         <!-- GIÁ BÁN -->
                         <td>
-            <span class="fw-bold text-dark"
-                  th:text="${#numbers.formatDecimal(food.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">50,000 đ</span>
+                            <span class="fw-bold text-dark"
+                                  th:text="${#numbers.formatDecimal(food.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">50,000 đ</span>
                         </td>
 
-                        <!-- DISCOUNT PRICE -->
+                        <!-- CỘT GIÁ KM-->
                         <td>
-            <span th:if="${food.discountPrice != null}" class="text-danger fw-bold"
-                  th:text="${#numbers.formatDecimal(food.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">45,000 đ</span>
-                            <span th:unless="${food.discountPrice != null}" class="text-muted small">-</span>
+                            <!-- Trường hợp có giảm giá (discountPrice có giá trị và nhỏ hơn giá gốc) -->
+                            <span th:if="${food.discountPrice != null and food.discountPrice < food.price}"
+                                  class="text-danger fw-bold"
+                                  th:text="${#numbers.formatDecimal(food.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                45,000 đ
+                            </span>
+                            <!-- Trường hợp không giảm giá -->
+                            <span th:unless="${food.discountPrice != null and food.discountPrice < food.price}"
+                                  class="text-muted small fst-italic">
+                                Không giảm giá
+                            </span>
                         </td>
 
                         <!-- PREPARATION TIME -->
                         <td>
-            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 font-size-12 rounded-pill fw-medium">
-                <i class="bi bi-clock me-1"></i>
-                <span th:text="${food.preparationTime != null ? food.preparationTime + ' phút' : '-'}">20 phút</span>
-            </span>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 font-size-12 rounded-pill fw-medium">
+                            <i class="bi bi-clock me-1"></i>
+                            <span th:text="${food.preparationTime != null ? food.preparationTime + ' phút' : '-'}">20 phút</span>
+                        </span>
                         </td>
 
                         <!-- MÃ GIẢM GIÁ -->
                         <td class="text-center">
-            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 font-size-12 fw-medium">
-                <i class="bi bi-ticket-perforated me-1"></i> GIAM10
-            </span>
+                            <!-- Nếu món ăn có gắn coupon -->
+                            <div th:if="${food.couponCodes != null and !#lists.isEmpty(food.couponCodes)}"
+                             class="d-flex flex-wrap justify-content-center gap-1">
+                            <span th:each="code : ${food.couponCodes}"
+                                  class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 font-size-12 fw-medium">
+                                <i class="bi bi-ticket-perforated me-1"></i>
+                                <span th:text="${code}">MEALI22</span>
+                            </span>
+                            </div>
+                            <!-- Nếu món ăn không áp dụng coupon nào -->
+                            <span th:unless="${food.couponCodes != null and !#lists.isEmpty(food.couponCodes)}"
+                                  class="text-muted small">
+                            Không có
+                        </span>
+                        </td>
                         </td>
 
                         <!-- PHÍ DỊCH VỤ -->
