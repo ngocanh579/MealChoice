@@ -10,8 +10,15 @@ import java.util.UUID;
 public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
     List<Coupon> findAllByMerchant_IdOrderByCreatedAtDesc(UUID merchantId);
+    // lọc coupon còn hiệu lực
+    List<Coupon> findAllByMerchant_IdAndIsActiveTrueOrderByCreatedAtDesc(UUID merchantId);
 
     Optional<Coupon> findByIdAndMerchant_Id(Long id, UUID merchantId);
+
+    List<Coupon> findAllByIdInAndMerchant_Id(
+            List<Long> ids,
+            UUID merchantId
+    );
 
     boolean existsByMerchant_IdAndCouponCode(
             UUID merchantId,
