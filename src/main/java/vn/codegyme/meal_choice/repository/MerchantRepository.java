@@ -57,4 +57,13 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
     List<UUID> findLikedMerchantIdsByUserId(
             @Param("userId") UUID userId
     );
+
+    // Lấy danh sách tất cả Merchant kèm địa chỉ, sắp xếp Merchant mới nhất lên trước
+    @Query("""
+    SELECT DISTINCT m
+    FROM Merchant m
+    LEFT JOIN FETCH m.addresses
+    ORDER BY m.id DESC
+""")
+    List<Merchant> findAllWithAddressesOrderByIdDesc();
 }

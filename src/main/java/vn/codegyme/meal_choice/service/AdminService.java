@@ -4,6 +4,7 @@ import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.MerchantStatus;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface AdminService {
@@ -32,6 +33,12 @@ public interface AdminService {
     // Duyệt đối tác thân thiết
     void approveTrustedPartner(UUID id);
 
+    // Từ chối đăng ký đối tác thân thiết
+    void rejectTrustedPartner(UUID id, String reason);
+
     // Bỏ đối tác thân thiết
     void removeTrustedPartner(UUID id);
+
+    // lấy danh sách merchant đang có yêu cầu đối tác thân thiết
+    Set<UUID> getPendingTrustedPartnerMerchantIds();
 }

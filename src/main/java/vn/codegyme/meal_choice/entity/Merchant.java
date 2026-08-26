@@ -108,4 +108,11 @@ public class Merchant {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<User> likedByUsers = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "merchant",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<TrustedPartnerRequest> trustedPartnerRequests = new ArrayList<>();
 }

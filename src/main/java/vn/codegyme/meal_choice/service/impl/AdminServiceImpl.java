@@ -3,18 +3,19 @@ package vn.codegyme.meal_choice.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.codegyme.meal_choice.entity.Merchant;
-import vn.codegyme.meal_choice.entity.MerchantStatus;
-import vn.codegyme.meal_choice.entity.Role;
-import vn.codegyme.meal_choice.entity.User;
+import vn.codegyme.meal_choice.entity.*;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.RoleRepository;
+import vn.codegyme.meal_choice.repository.TrustedPartnerRequestRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.service.AdminService;
+import vn.codegyme.meal_choice.service.EmailService;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,11 +25,13 @@ public class AdminServiceImpl implements AdminService {
     private final MerchantRepository merchantRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final TrustedPartnerRequestRepository trustedPartnerRequestRepository;
+    private final EmailService emailService;
     // Xem danh sách
     @Override
     @Transactional(readOnly = true)
     public List<Merchant> getAllMerchants() {
-        return merchantRepository.findAllByOrderByIdDesc();
+        return merchantRepository.findAllWithAddressesOrderByIdDesc();
     }
 
     // Lọc theo trạng thái
@@ -150,8 +153,64 @@ public class AdminServiceImpl implements AdminService {
             );
         }
 
+        TrustedPartnerRequest request =
+                trustedPartnerRequestRepository
+                        .findFirstByMerchant_IdAndStatusOrderByCreatedAtDesc(
+                                id,
+                                TrustedPartnerRequestStatus.PENDING
+                        )
+                        .orElseThrow(() ->
+                                new IllegalStateException(
+                                        "Không tìm thấy yêu cầu đăng ký đối tác thân thiết đang chờ duyệt"
+                                ));
+
+        request.setStatus(TrustedPartnerRequestStatus.APPROVED);
+        request.setReviewedAt(LocalDateTime.now());
+
         merchant.setTrustedPartner(true);
+
+        trustedPartnerRequestRepository.save(request);
         merchantRepository.save(merchant);
+
+        emailService.sendTrustedPartnerApprovedEmail(
+                merchant.getMerchantEmail(),
+                merchant.getMerchantRestaurantName()
+        );
+    }
+
+    // từ chối đối tác thân thiết
+    @Override
+    public void rejectTrustedPartner(UUID id, String reason) {
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new IllegalStateException(
+                    "Vui lòng nhập lý do từ chối"
+            );
+        }
+
+        Merchant merchant = findMerchant(id);
+
+        TrustedPartnerRequest request =
+                trustedPartnerRequestRepository
+                        .findFirstByMerchant_IdAndStatusOrderByCreatedAtDesc(
+                                id,
+                                TrustedPartnerRequestStatus.PENDING
+                        )
+                        .orElseThrow(() ->
+                                new IllegalStateException(
+                                        "Không tìm thấy yêu cầu đăng ký đối tác thân thiết đang chờ duyệt"
+                                ));
+
+        request.setStatus(TrustedPartnerRequestStatus.REJECTED);
+        request.setReviewedAt(LocalDateTime.now());
+        request.setRejectReason(reason.trim());
+
+        trustedPartnerRequestRepository.save(request);
+
+        emailService.sendTrustedPartnerRejectedEmail(
+                merchant.getMerchantEmail(),
+                merchant.getMerchantRestaurantName(),
+                reason.trim()
+        );
     }
 
     // Bỏ đối tác thân thiết
@@ -170,5 +229,17 @@ public class AdminServiceImpl implements AdminService {
                                 "Không tìm thấy merchant có id = " + id
                         )
                 );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<UUID> getPendingTrustedPartnerMerchantIds() {
+        return trustedPartnerRequestRepository
+                .findByStatusOrderByCreatedAtDesc(
+                        TrustedPartnerRequestStatus.PENDING
+                )
+                .stream()
+                .map(request -> request.getMerchant().getId())
+                .collect(Collectors.toSet());
     }
 }
