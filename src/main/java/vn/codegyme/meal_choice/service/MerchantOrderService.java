@@ -1,5 +1,7 @@
 package vn.codegyme.meal_choice.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import vn.codegyme.meal_choice.dto.order.OrderResponseDTO;
 import vn.codegyme.meal_choice.entity.OrderStatus;
 
@@ -17,6 +19,11 @@ public interface MerchantOrderService {
     List<OrderResponseDTO> getMerchantOrders(UUID merchantId, OrderStatus status);
 
     /**
+     * TÍNH NĂNG 1: Lấy danh sách đơn hàng của quán có phân trang (mặc định mới nhất đến cũ nhất)
+     */
+    Page<OrderResponseDTO> getMerchantOrders(UUID merchantId, OrderStatus status, Pageable pageable);
+
+    /**
      * TÍNH NĂNG 2: Xem chi tiết một đơn hàng của quán
      */
     OrderResponseDTO getMerchantOrderDetail(UUID merchantId, Long orderId);
@@ -25,6 +32,11 @@ public interface MerchantOrderService {
      * TÍNH NĂNG 1: Merchant bấm "Nhận đơn" (Chuyển sang PREPARING)
      */
     OrderResponseDTO acceptOrder(UUID merchantId, Long orderId);
+
+    /**
+     * Merchant bấm "Bắt đầu giao hàng" (Chuyển sang DELIVERING)
+     */
+    OrderResponseDTO startDelivery(UUID merchantId, Long orderId);
 
     /**
      * TÍNH NĂNG 3: Merchant bấm "Hủy đơn" (Chuyển sang CANCELLED kèm lý do)
