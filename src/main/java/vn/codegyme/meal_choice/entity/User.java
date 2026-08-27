@@ -12,17 +12,18 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
-@Table (name="users")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @JdbcTypeCode(SqlTypes.VARCHAR) // Ép Hibernate lưu UUID thành kiểu VARCHAR(36)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(length = 36)
     @EqualsAndHashCode.Include
     private UUID id;
@@ -30,13 +31,13 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false,length = 60)
+    @Column(nullable = false, length = 60)
     private String password;
 
     @Column(nullable = false, length = 32)
     private String displayName;
 
-    @Column(unique = true, nullable = false,length = 20)
+    @Column(unique = true, nullable = false, length = 20)
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
@@ -48,6 +49,12 @@ public class User {
 
     @Column()
     private LocalDate dob;
+
+    @Column()
+    private Double latitude;
+
+    @Column()
+    private Double longitude;
 
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -64,7 +71,7 @@ public class User {
 
     @Builder.Default
     @Column(nullable = false)
-    @ColumnDefault("true") // Sinh ra SQL DDL: DEFAULT true
+    @ColumnDefault("true")
     private Boolean isActive = true;
 
     @Column(updatable = false)
