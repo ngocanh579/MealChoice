@@ -1,12 +1,21 @@
 package vn.codegyme.meal_choice.mapper;
 
+<<<<<<< HEAD
 import org.springframework.data.domain.Page;
+=======
+>>>>>>> hung
 import org.springframework.stereotype.Component;
 import vn.codegyme.meal_choice.dto.order.OrderItemResponseDTO;
 import vn.codegyme.meal_choice.dto.order.OrderResponseDTO;
 import vn.codegyme.meal_choice.entity.*;
+<<<<<<< HEAD
 
 import java.time.Duration;
+=======
+import vn.codegyme.meal_choice.entity.MerchantAddress;
+
+
+>>>>>>> hung
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -32,6 +41,7 @@ public class OrderMapper {
 
         Merchant merchant = order.getMerchant();
         User user = order.getUser();
+<<<<<<< HEAD
         LocalDateTime now = LocalDateTime.now();
 
         Long remainingPrepSeconds = null;
@@ -50,6 +60,8 @@ public class OrderMapper {
                     || order.getEstimatedDeliveryTime() == null
                     || now.isAfter(order.getEstimatedDeliveryTime());
         }
+=======
+>>>>>>> hung
 
         return OrderResponseDTO.builder()
                 // 1. Thông tin chung đơn hàng
@@ -57,6 +69,7 @@ public class OrderMapper {
                 .orderCode(order.getOrderCode())
                 .createdAt(order.getCreatedAt())
                 .formattedCreatedAt(formatDateTime(order.getCreatedAt()))
+<<<<<<< HEAD
                 .acceptedAt(order.getAcceptedAt())
                 .formattedAcceptedAt(formatDateTime(order.getAcceptedAt()))
                 .preparingUntil(order.getPreparingUntil())
@@ -66,6 +79,10 @@ public class OrderMapper {
                 .remainingPrepSeconds(remainingPrepSeconds)
                 .remainingDeliverySeconds(remainingDeliverySeconds)
                 .canComplete(canComplete)
+=======
+                .estimatedDeliveryTime(order.getEstimatedDeliveryTime())
+                .formattedEstimatedDeliveryTime(formatDateTime(order.getEstimatedDeliveryTime()))
+>>>>>>> hung
                 .cancelReason(order.getCancelReason())
 
                 // 2. Trạng thái & Phương thức thanh toán
@@ -83,14 +100,21 @@ public class OrderMapper {
                 .merchantBankName(merchant != null ? merchant.getBankName() : "")
                 .merchantBankAccountNumber(merchant != null ? merchant.getBankAccountNumber() : "")
 
+<<<<<<< HEAD
                 // 4. Thông tin Khách hàng (Customer) & Đơn vị vận chuyển
+=======
+                // 4. Thông tin Khách hàng (Customer)
+>>>>>>> hung
                 .userId(user != null ? user.getId() : null)
                 .customerName(order.getContactName())
                 .customerPhone(order.getContactPhone())
                 .deliveryAddress(order.getDeliveryAddress())
                 .note(order.getNote())
+<<<<<<< HEAD
                 .deliveryPartnerId(order.getDeliveryPartner() != null ? order.getDeliveryPartner().getId() : null)
                 .deliveryPartnerName(order.getDeliveryPartner() != null ? order.getDeliveryPartner().getPartnerName() : "Giao hàng tiêu chuẩn")
+=======
+>>>>>>> hung
 
                 // 5. Chi tiết bảng giá thanh toán
                 .subtotalPrice(order.getSubtotalPrice())
@@ -151,6 +175,7 @@ public class OrderMapper {
                 .collect(Collectors.toList());
     }
 
+<<<<<<< HEAD
     /**
      * Chuyển đổi Page<Order> sang Page<OrderResponseDTO>
      */
@@ -161,6 +186,8 @@ public class OrderMapper {
         return orderPage.map(this::toOrderResponseDTO);
     }
 
+=======
+>>>>>>> hung
     // =========================================================================
     // CÁC HÀM TIỆN ÍCH PHỤ TRỢ (HELPER METHODS - GIÚP CODE TRONG SÁNG & GỌN GÀNG)
     // =========================================================================
@@ -206,6 +233,7 @@ public class OrderMapper {
     }
 
     /**
+<<<<<<< HEAD
      * Lấy địa chỉ cửa hàng an toàn
      */
     private String getMerchantAddress(Merchant merchant) {
@@ -220,12 +248,31 @@ public class OrderMapper {
         } catch (Exception e) {
             return "";
         }
+=======
+     * Lấy địa chỉ của hàng ăn
+     */
+    private String getMerchantAddress(Merchant merchant) {
+        if (merchant == null
+                || merchant.getAddresses() == null
+                || merchant.getAddresses().isEmpty()) {
+            return "";
+        }
+
+        MerchantAddress address = merchant.getAddresses().get(0);
+
+        if (address == null || address.getMerchantAddress() == null) {
+            return "";
+        }
+
+        return address.getMerchantAddress();
+>>>>>>> hung
     }
 
     /**
      * Tìm ảnh đại diện của món ăn (ưu tiên ảnh lưu trong item, fallback sang ảnh của Food)
      */
     private String resolveFoodImage(OrderItem item) {
+<<<<<<< HEAD
         if (item == null) {
             return "";
         }
@@ -238,6 +285,14 @@ public class OrderMapper {
                 return food.getImages().get(0).getImageUrl();
             }
         } catch (Exception ignored) {
+=======
+        if (item.getFoodImage() != null && !item.getFoodImage().isBlank()) {
+            return item.getFoodImage();
+        }
+        Food food = item.getFood();
+        if (food != null && food.getImages() != null && !food.getImages().isEmpty()) {
+            return food.getImages().get(0).getImageUrl();
+>>>>>>> hung
         }
         return "";
     }

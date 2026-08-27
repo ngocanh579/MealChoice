@@ -1,6 +1,11 @@
 <nav th:fragment="navbar"
      xmlns:th="http://www.thymeleaf.org"
+<<<<<<< HEAD
      class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm sticky-top">
+=======
+     class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm sticky-top"
+     xmlns:sec="http://www.w3.org/1999/xhtml">
+>>>>>>> hung
 
     <div class="container">
 
@@ -162,7 +167,10 @@
 
                     <a class="btn btn-danger rounded-pill px-3 py-1 text-sm
                               d-flex align-items-center gap-1 fw-semibold"
+<<<<<<< HEAD
                        style="font-size: 0.85rem;"
+=======
+>>>>>>> hung
                        href="/admin/merchants">
 
                         <i class="bi bi-shield-lock-fill"></i>
@@ -170,6 +178,7 @@
                         <span>Quản lý Admin</span>
 
                     </a>
+<<<<<<< HEAD
                 </li>
                 <li class="nav-item"
                     th:classappend="${isAdmin} ? '' : 'd-none'">
@@ -186,6 +195,12 @@
                     </a>
                 </li>
 
+=======
+
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+>>>>>>> hung
 
                 <!-- User chưa đăng ký Merchant -->
                 <li class="nav-item d-none"
@@ -299,6 +314,18 @@
                         </li>
 
                         <li>
+<<<<<<< HEAD
+=======
+                            <a class="dropdown-item d-flex align-items-center gap-2"
+                               href="/merchant/stats"
+                               sec:authorize="hasAnyRole('MERCHANT', 'ADMIN')">
+                            <i class="bi bi-bar-chart-line fs-5 text-secondary"></i>
+                            <span>Thống kê</span>
+                        </a>
+                        </li>
+
+                        <li>
+>>>>>>> hung
                             <hr class="dropdown-divider">
                         </li>
 

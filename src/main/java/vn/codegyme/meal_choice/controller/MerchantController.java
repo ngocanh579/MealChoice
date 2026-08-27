@@ -4,6 +4,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+<<<<<<< HEAD
+=======
+import org.springframework.stereotype.Controller;
+>>>>>>> hung
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -191,4 +195,15 @@ public class MerchantController {
 
                 return ResponseEntity.ok(response);
         }
+<<<<<<< HEAD
+=======
+
+        @Controller
+        public class MerchantViewController {
+                @GetMapping("/merchant/stats")
+                public String showStatsPage() {
+                        return "merchant/stats"; // Trỏ tới file stats.html trong folder templates/merchant
+                }
+        }
+>>>>>>> hung
 }

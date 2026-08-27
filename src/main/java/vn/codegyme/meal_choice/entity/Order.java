@@ -34,10 +34,13 @@ public class Order {
     @JoinColumn(name = "merchant_id", nullable = false)
     private Merchant merchant;
 
+<<<<<<< HEAD
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delivery_partner_id")
     private DeliveryPartner deliveryPartner;
 
+=======
+>>>>>>> hung
     @Column(name = "contact_name", nullable = false, length = 100)
     private String contactName;
 
@@ -81,12 +84,15 @@ public class Order {
     @Column(name = "cancel_reason", length = 500)
     private String cancelReason;
 
+<<<<<<< HEAD
     @Column(name = "accepted_at")
     private LocalDateTime acceptedAt;
 
     @Column(name = "preparing_until")
     private LocalDateTime preparingUntil;
 
+=======
+>>>>>>> hung
     @Column(name = "estimated_delivery_time")
     private LocalDateTime estimatedDeliveryTime;
 

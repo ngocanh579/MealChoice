@@ -66,10 +66,14 @@
             name: /*[[${food.foodName}]]*/ "",
             price: /*[[${food.price}]]*/ 0,
             discountPrice: /*[[${food.discountPrice != null ? food.discountPrice : food.price}]]*/ 0,
+<<<<<<< HEAD
             serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0,
             merchantId: /*[[${food.merchant != null ? food.merchant.id : ''}]]*/ "",
             merchantName: /*[[${food.merchant != null ? food.merchant.merchantRestaurantName : ''}]]*/ "",
             image: /*[[${foodImagesList != null && !foodImagesList.isEmpty() ? foodImagesList[0] : ''}]]*/ ""
+=======
+            serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0
+>>>>>>> hung
         };
 
         // Trạng thái giỏ hàng cục bộ của Drawer
@@ -87,6 +91,7 @@
             const globalCart = (typeof getGlobalCart === 'function') ? getGlobalCart() : [];
             
             if (mode === 'buy_now') {
+<<<<<<< HEAD
                 // Chế độ Mua Ngay: Kiểm tra quán khác
                 if (globalCart.length > 0 && sidebarFood.merchantId && globalCart[0].merchantId && globalCart[0].merchantId !== sidebarFood.merchantId) {
                     drawerCart = [];
@@ -94,6 +99,10 @@
                     drawerCart = [...globalCart];
                 }
 
+=======
+                // Chế độ Mua Ngay: Lấy giỏ hàng hiện tại
+                drawerCart = [...globalCart];
+>>>>>>> hung
                 // Nếu sản phẩm hiện tại chưa có trong giỏ hàng, ta thêm tạm thời vào Drawer
                 const exists = drawerCart.find(item => item.id === sidebarFood.id);
                 if (!exists) {
@@ -103,9 +112,12 @@
                         price: sidebarFood.price,
                         discountPrice: sidebarFood.discountPrice,
                         serviceFee: sidebarFood.serviceFee,
+<<<<<<< HEAD
                         merchantId: sidebarFood.merchantId,
                         merchantName: sidebarFood.merchantName,
                         image: sidebarFood.image,
+=======
+>>>>>>> hung
                         quantity: 1,
                         isTemporary: true // Đánh dấu là sản phẩm tạm thời, không lưu vào localStorage
                     });

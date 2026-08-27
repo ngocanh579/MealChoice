@@ -16,7 +16,10 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+<<<<<<< HEAD
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+=======
+>>>>>>> hung
 public class Merchant {
 
     @Id
@@ -109,4 +112,10 @@ public class Merchant {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<User> likedByUsers = new ArrayList<>();
+<<<<<<< HEAD
 }
+=======
+}
+
+
+>>>>>>> hung

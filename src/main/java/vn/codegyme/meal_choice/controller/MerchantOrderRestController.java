@@ -14,6 +14,10 @@ import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.security.CustomUserDetails;
 import vn.codegyme.meal_choice.service.MerchantOrderService;
 
+<<<<<<< HEAD
+=======
+import java.util.List;
+>>>>>>> hung
 import java.util.Map;
 import java.util.UUID;
 
@@ -40,6 +44,7 @@ public class MerchantOrderRestController {
     }
 
     /**
+<<<<<<< HEAD
      * REST API: Lấy danh sách đơn hàng của Merchant (có thể lọc theo trạng thái, phân trang 50 đơn/trang)
      */
     @GetMapping
@@ -52,14 +57,27 @@ public class MerchantOrderRestController {
             org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
                     Math.max(0, page), size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
             org.springframework.data.domain.Page<OrderResponseDTO> orderPage = merchantOrderService.getMerchantOrders(merchant.getId(), status, pageable);
+=======
+     * REST API: Lấy danh sách đơn hàng của Merchant (có thể lọc theo trạng thái)
+     */
+    @GetMapping
+    public ResponseEntity<?> getOrders(@RequestParam(name = "status", required = false) OrderStatus status) {
+        try {
+            Merchant merchant = getCurrentMerchant();
+            List<OrderResponseDTO> orders = merchantOrderService.getMerchantOrders(merchant.getId(), status);
+>>>>>>> hung
             long pendingCount = merchantOrderService.countPendingOrders(merchant.getId());
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
+<<<<<<< HEAD
                     "orders", orderPage.getContent(),
                     "totalElements", orderPage.getTotalElements(),
                     "totalPages", orderPage.getTotalPages(),
                     "currentPage", orderPage.getNumber(),
+=======
+                    "orders", orders,
+>>>>>>> hung
                     "pendingCount", pendingCount
             ));
         } catch (Exception e) {
@@ -115,6 +133,7 @@ public class MerchantOrderRestController {
     }
 
     /**
+<<<<<<< HEAD
      * REST API: Bắt đầu giao hàng (Chuyển trạng thái sang DELIVERING)
      */
     @PostMapping("/{id}/start-delivery")
@@ -137,6 +156,8 @@ public class MerchantOrderRestController {
     }
 
     /**
+=======
+>>>>>>> hung
      * REST API: Hủy đơn hàng (Chuyển trạng thái sang CANCELLED)
      */
     @PostMapping("/{id}/cancel")

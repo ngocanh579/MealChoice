@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+<<<<<<< HEAD
 import org.springframework.http.HttpStatus;
+=======
+>>>>>>> hung
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -13,7 +16,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+<<<<<<< HEAD
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+=======
+>>>>>>> hung
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -53,12 +59,19 @@ public class SecurityConfig {
                                 "/home",
                                 "/search/**",
                                 "/restaurants/**",
+<<<<<<< HEAD
                                 "/stores/**",
+=======
+>>>>>>> hung
                                 "/food/**",
                                 "/foods/**",
                                 "/categories/**",
                                 "/api/foods/**",
                                 "/api/categories/**",
+<<<<<<< HEAD
+=======
+                                "/api/merchant/stats/**",
+>>>>>>> hung
                                 "/login",
                                 "/register",
                                 "/activate",
@@ -103,6 +116,7 @@ public class SecurityConfig {
                                 "/api/merchants/**"
                         ).permitAll()
 
+<<<<<<< HEAD
                         // API tương tác Merchant (follow / unfollow)
                         .requestMatchers(
                                 HttpMethod.POST,
@@ -110,6 +124,8 @@ public class SecurityConfig {
                                 "/api/merchants/*/unfollow"
                         ).authenticated()
 
+=======
+>>>>>>> hung
                         // Merchant
                         .requestMatchers(
                                 "/merchant/**",
@@ -119,12 +135,19 @@ public class SecurityConfig {
                                 "ADMIN"
                         )
 
+<<<<<<< HEAD
                         // User / Checkout / Delivery APIs
                         .requestMatchers(
                                 "/user/**",
                                 "/api/user/**",
                                 "/api/checkout/**",
                                 "/api/delivery/**"
+=======
+                        // User
+                        .requestMatchers(
+                                "/user/**",
+                                "/api/user/**"
+>>>>>>> hung
                         ).authenticated()
 
                         // Các request còn lại
@@ -132,6 +155,7 @@ public class SecurityConfig {
                         .authenticated()
                 )
 
+<<<<<<< HEAD
                 // Xử lý khi chưa xác thực
                 .exceptionHandling(ex -> ex
                         .defaultAuthenticationEntryPointFor(
@@ -139,6 +163,11 @@ public class SecurityConfig {
                                 request -> request.getRequestURI().startsWith("/api/")
                         )
                         .defaultAuthenticationEntryPointFor(
+=======
+                // Chưa đăng nhập -> /login
+                .exceptionHandling(ex -> ex
+                        .defaultAuthenticationEntryPointFor(
+>>>>>>> hung
                                 new LoginUrlAuthenticationEntryPoint("/login"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )

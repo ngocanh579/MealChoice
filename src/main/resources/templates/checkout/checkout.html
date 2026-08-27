@@ -49,6 +49,7 @@
             border-color: #ef4444;
             background-color: #fef2f2;
         }
+<<<<<<< HEAD
         .delivery-partner-card {
             border: 2px solid #e2e8f0;
             border-radius: 12px;
@@ -65,6 +66,8 @@
             border-color: #ef4444;
             background-color: #fef2f2;
         }
+=======
+>>>>>>> hung
         .payment-card.disabled-payment-method {
             background-color: #f1f5f9;
             opacity: 0.65;
@@ -119,16 +122,25 @@
 
             <!-- 1. CHỌN ĐỊA CHỈ GIAO HÀNG -->
             <div class="checkout-card">
+<<<<<<< HEAD
                 <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+=======
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+>>>>>>> hung
                     <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                         <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
                         1. Địa chỉ giao hàng
                     </h5>
+<<<<<<< HEAD
                     <button type="button" class="btn btn-sm btn-outline-danger rounded-pill fw-semibold px-3" data-bs-toggle="modal" data-bs-target="#newAddressModal">
+=======
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill fw-semibold" data-bs-toggle="modal" data-bs-target="#newAddressModal">
+>>>>>>> hung
                         <i class="bi bi-plus-lg me-1"></i>Thêm địa chỉ mới
                     </button>
                 </div>
 
+<<<<<<< HEAD
                 <!-- Thẻ hiển thị địa chỉ nhận hàng đã chọn -->
                 <div id="addressSelectionWrapper">
                     <div th:if="${#lists.isEmpty(addresses)}" id="noAddressPrompt" class="text-center py-4 text-muted bg-light rounded-4 border border-dashed">
@@ -162,11 +174,51 @@
                         <div id="selectedNoteContainer" class="text-muted font-size-12 fst-italic mt-2 bg-white p-2 rounded border border-dashed"
                              th:style="${addresses[0].note != null && !addresses[0].note.isBlank()} ? 'display: block;' : 'display: none;'">
                             <i class="bi bi-info-circle me-1 text-primary"></i>Ghi chú: <span id="selectedNoteText" th:text="${addresses[0].note}"></span>
+=======
+                <!-- Danh sách địa chỉ của User -->
+                <div class="d-flex flex-column gap-3" id="addressListContainer">
+                    <div th:if="${#lists.isEmpty(addresses)}" class="text-center py-4 text-muted">
+                        <i class="bi bi-geo fs-2 d-block text-secondary opacity-50 mb-2"></i>
+                        <p class="mb-2">Bạn chưa có địa chỉ nhận hàng nào đã lưu.</p>
+                        <button type="button" class="btn btn-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#newAddressModal">
+                            Thêm địa chỉ ngay
+                        </button>
+                    </div>
+
+                    <div th:each="addr, iterStat : ${addresses}"
+                         class="address-card"
+                         th:classappend="${addr.isDefault != null && addr.isDefault} ? 'selected' : (${iterStat.first} ? 'selected' : '')"
+                         th:data-id="${addr.id}"
+                         th:data-name="${addr.contactName}"
+                         th:data-phone="${addr.contactPhone}"
+                         th:data-address="${addr.street + ', ' + addr.ward + ', ' + addr.district + ', ' + addr.city}"
+                         onclick="selectAddress(this)">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <strong class="text-dark" th:text="${addr.contactName}">Nguyễn Văn A</strong>
+                                    <span class="text-muted">|</span>
+                                    <span class="text-danger fw-semibold" th:text="${addr.contactPhone}">0900000000</span>
+                                    <span th:if="${addr.isDefault}" class="badge bg-danger rounded-pill font-size-11 ms-1">Mặc định</span>
+                                </div>
+                                <div class="text-secondary small">
+                                    <span th:text="${addr.street + ', ' + addr.ward + ', ' + addr.district + ', ' + addr.city}">Địa chỉ chi tiết</span>
+                                </div>
+                                <div th:if="${addr.note != null && !addr.note.isBlank()}" class="text-muted font-size-12 fst-italic mt-1">
+                                    <i class="bi bi-info-circle me-1"></i><span th:text="${addr.note}"></span>
+                                </div>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="addressRadio"
+                                       th:checked="${addr.isDefault != null && addr.isDefault} ? true : (${iterStat.first} ? true : false)">
+                            </div>
+>>>>>>> hung
                         </div>
                     </div>
                 </div>
             </div>
 
+<<<<<<< HEAD
             <!-- 2. ĐƠN VỊ VẬN CHUYỂN & CƯỚC PHÍ GIAO HÀNG -->
             <div class="checkout-card">
                 <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
@@ -193,6 +245,13 @@
                 <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
                     <i class="bi bi-wallet2 text-danger fs-5"></i>
                     3. Phương thức thanh toán
+=======
+            <!-- 2. PHƯƠNG THỨC THANH TOÁN -->
+            <div class="checkout-card">
+                <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
+                    <i class="bi bi-wallet2 text-danger fs-5"></i>
+                    2. Phương thức thanh toán
+>>>>>>> hung
                 </h5>
 
                 <div class="d-flex flex-column gap-2.5">
@@ -261,11 +320,19 @@
                 </div>
             </div>
 
+<<<<<<< HEAD
             <!-- 4. GHI CHÚ DÀNH CHO CỬA HÀNG -->
             <div class="checkout-card">
                 <h5 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
                     <i class="bi bi-chat-left-text text-danger fs-5"></i>
                     4. Ghi chú cho cửa hàng
+=======
+            <!-- 3. GHI CHÚ DÀNH CHO CỬA HÀNG -->
+            <div class="checkout-card">
+                <h5 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+                    <i class="bi bi-chat-left-text text-danger fs-5"></i>
+                    3. Ghi chú cho cửa hàng
+>>>>>>> hung
                 </h5>
                 <p class="text-muted small mb-3">Ví dụ: không hành, ít cay, để riêng nước sốt...</p>
                 <textarea class="form-control" id="orderNoteInput" rows="2" placeholder="Nhập ghi chú cho quán nếu có..."></textarea>
@@ -358,6 +425,7 @@
 
 </div>
 
+<<<<<<< HEAD
 <!-- MODAL CHỌN ĐỊA CHỈ KHÁC -->
 <div class="modal fade" id="chooseAddressModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -419,6 +487,8 @@
     </div>
 </div>
 
+=======
+>>>>>>> hung
 <!-- MODAL THÊM ĐỊA CHỈ MỚI -->
 <div class="modal fade" id="newAddressModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -458,6 +528,7 @@
                             <label class="form-label small fw-semibold">Ghi chú (Tùy chọn)</label>
                             <input type="text" class="form-control" id="modalNote" placeholder="Cổng màu xanh, gọi trước khi tới...">
                         </div>
+<<<<<<< HEAD
                         <div class="col-12 mt-1">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="modalIsDefault" checked>
@@ -466,6 +537,8 @@
                                 </label>
                             </div>
                         </div>
+=======
+>>>>>>> hung
                     </div>
                 </form>
             </div>
@@ -481,6 +554,10 @@
 <div th:replace="~{layout/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<<<<<<< HEAD
+=======
+<script th:src="@{/js/navbar.js}"></script>
+>>>>>>> hung
 <script th:src="@{/js/checkout.js}"></script>
 
 </body>

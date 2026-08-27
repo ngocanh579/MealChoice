@@ -1,12 +1,16 @@
 // API Base URL
 const API_BASE = '/api/user';
+<<<<<<< HEAD
 const PROVINCES_API = "https://provinces.open-api.vn/api/";
+=======
+>>>>>>> hung
 
 // Global state
 let currentUser = null;
 let isEditing = false;
 let initialProfileData = {};
 let initialAddressData = {};
+<<<<<<< HEAD
 let cachedProvinces = null;
 
 // Tải danh sách tỉnh thành (có cache)
@@ -55,13 +59,18 @@ async function getWardsByDistrictCode(distCode) {
     }
     return [];
 }
+=======
+>>>>>>> hung
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
     setupEventListeners();
+<<<<<<< HEAD
     setupAddressSelectListeners();
     getProvinces(); // Tiền nạp danh sách tỉnh trong nền
+=======
+>>>>>>> hung
 });
 
 // Helper to get Auth Headers with JWT Bearer Token
@@ -358,6 +367,7 @@ function displayAddresses(addresses) {
     `).join('');
 }
 
+<<<<<<< HEAD
 // Gắn listener thay đổi dropdown địa chỉ
 function setupAddressSelectListeners() {
     const citySelect = document.getElementById('city');
@@ -414,6 +424,9 @@ function setupAddressSelectListeners() {
 }
 
 // Open address modal (Tỉnh/Huyện/Xã)
+=======
+// Open address modal ( Tỉnh/Huyện/Xã)
+>>>>>>> hung
 async function openAddressModal(addressId = null) {
     const modalEl = document.getElementById('addressModal');
     if (!modalEl) return;
@@ -442,8 +455,13 @@ async function openAddressModal(addressId = null) {
 
         document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil me-2 text-danger"></i>Chỉnh Sửa Địa Chỉ';
         document.getElementById('addressId').value = address.id;
+<<<<<<< HEAD
         contactNameInput.value = address.contactName || '';
         contactPhoneInput.value = address.contactPhone || '';
+=======
+        contactNameInput.value = address.contactName;
+        contactPhoneInput.value = address.contactPhone;
+>>>>>>> hung
 
         contactNameInput.disabled = false;
         contactPhoneInput.disabled = true;
@@ -453,6 +471,7 @@ async function openAddressModal(addressId = null) {
         document.getElementById('note').value = address.note || '';
         document.getElementById('isDefault').checked = Boolean(address.isDefault);
 
+<<<<<<< HEAD
         const oldCity = (address.city || '').trim();
         const oldDistrict = (address.district || '').trim();
         const oldWard = (address.ward || '').trim();
@@ -555,6 +574,33 @@ async function openAddressModal(addressId = null) {
             city: oldCity,
             district: oldDistrict,
             ward: oldWard,
+=======
+        try {
+            if (window.provincesLoadedPromise) {
+                await window.provincesLoadedPromise;
+            }
+
+            let selectedCityOption = Array.from(citySelect.options).find(opt => opt.value === address.city);
+            if (selectedCityOption) {
+                citySelect.value = address.city;
+                await loadDistrictsByCity(citySelect);
+
+                let selectedDistrictOption = Array.from(districtSelect.options).find(opt => opt.value === address.district);
+                if (selectedDistrictOption) {
+                    districtSelect.value = address.district;
+                    await loadWardsByDistrict(districtSelect);
+                    wardSelect.value = address.ward;
+                }
+            }
+        } catch (err) {
+            console.error('Lỗi nạp địa chỉ cũ:', err);
+        }
+
+        initialAddressData = {
+            city: address.city || '',
+            district: address.district || '',
+            ward: address.ward || '',
+>>>>>>> hung
             street: address.street || '',
             note: address.note || '',
             isDefault: Boolean(address.isDefault)
@@ -565,13 +611,17 @@ async function openAddressModal(addressId = null) {
         contactPhoneInput.disabled = false;
         if (contactNotice) contactNotice.classList.add('d-none');
 
+<<<<<<< HEAD
         citySelect.innerHTML = '<option value="" selected disabled>Đang tải Tỉnh/Thành phố...</option>';
+=======
+>>>>>>> hung
         districtSelect.innerHTML = '<option value="" selected disabled>Quận/Huyện</option>';
         wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
         districtSelect.disabled = true;
         wardSelect.disabled = true;
 
         initialAddressData = {};
+<<<<<<< HEAD
         modal.show();
 
         const provinces = await getProvinces();
@@ -581,6 +631,11 @@ async function openAddressModal(addressId = null) {
         });
         citySelect.innerHTML = cityHtml;
     }
+=======
+    }
+
+    modal.show();
+>>>>>>> hung
 }
 
 // Close address modal
@@ -610,6 +665,7 @@ async function submitAddressForm() {
     const addressId = document.getElementById('addressId').value;
     const isEdit = Boolean(addressId);
 
+<<<<<<< HEAD
     const contactName = document.getElementById('contactName').value.trim();
     const contactPhone = document.getElementById('contactPhone').value.trim();
     const city = document.getElementById('city').value;
@@ -632,10 +688,16 @@ async function submitAddressForm() {
     let url;
     let method;
     let formData;
+=======
+    let formData;
+    let url;
+    let method;
+>>>>>>> hung
 
     if (isEdit) {
         url = `${API_BASE}/address/${addressId}`;
         method = 'PATCH';
+<<<<<<< HEAD
         formData = {
             city: city,
             district: district,
@@ -644,10 +706,34 @@ async function submitAddressForm() {
             note: note,
             isDefault: isDefault
         };
+=======
+
+        const currentCity = document.getElementById('city').value;
+        const currentDistrict = document.getElementById('district').value;
+        const currentWard = document.getElementById('ward').value;
+        const currentStreet = document.getElementById('street').value;
+        const currentNote = document.getElementById('note').value || '';
+        const currentIsDefault = document.getElementById('isDefault').checked;
+
+        formData = {};
+        if (currentCity !== initialAddressData.city) formData.city = currentCity;
+        if (currentDistrict !== initialAddressData.district) formData.district = currentDistrict;
+        if (currentWard !== initialAddressData.ward) formData.ward = currentWard;
+        if (currentStreet !== initialAddressData.street) formData.street = currentStreet;
+        if (currentNote !== initialAddressData.note) formData.note = currentNote;
+        if (currentIsDefault !== initialAddressData.isDefault) formData.isDefault = currentIsDefault;
+
+        if (Object.keys(formData).length === 0) {
+            showAlert('info', 'Bạn chưa thay đổi thông tin nào để sửa');
+            closeAddressModal();
+            return;
+        }
+>>>>>>> hung
     } else {
         url = `${API_BASE}/address`;
         method = 'POST';
         formData = {
+<<<<<<< HEAD
             contactName: contactName,
             contactPhone: contactPhone,
             city: city,
@@ -656,6 +742,16 @@ async function submitAddressForm() {
             street: street,
             note: note,
             isDefault: isDefault
+=======
+            contactName: document.getElementById('contactName').value,
+            contactPhone: document.getElementById('contactPhone').value,
+            city: document.getElementById('city').value,
+            district: document.getElementById('district').value,
+            ward: document.getElementById('ward').value,
+            street: document.getElementById('street').value,
+            note: document.getElementById('note').value || null,
+            isDefault: document.getElementById('isDefault').checked
+>>>>>>> hung
         };
     }
 

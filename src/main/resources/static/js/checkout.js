@@ -6,19 +6,27 @@
 let selectedPayment = 'COD';
 let appliedVoucher = '';
 let discountAmount = 0;
+<<<<<<< HEAD
 let currentShippingFee = 15000;
 let selectedDeliveryPartnerId = null;
 let shippingQuotesList = [];
+=======
+const shippingFee = 15000;
+>>>>>>> hung
 let serviceFee = 0;
 let subtotalPrice = 0;
 let currentMerchantId = null;
 let merchantBankInfo = null;
+<<<<<<< HEAD
 let currentSelectedAddress = null;
+=======
+>>>>>>> hung
 
 function formatCurrency(val) {
     return new Intl.NumberFormat('vi-VN').format(Math.round(val)) + ' đ';
 }
 
+<<<<<<< HEAD
 // 1. CHỌN ĐỊA CHỈ TRONG MODAL
 function selectModalAddress(cardEl) {
     document.querySelectorAll('.address-modal-card').forEach(c => {
@@ -218,10 +226,16 @@ function renderFallbackDeliveryPartner() {
 
 function selectDeliveryPartnerCard(cardEl, partnerId, fee) {
     document.querySelectorAll('.delivery-partner-card').forEach(c => {
+=======
+// 1. CHỌN ĐỊA CHỈ
+function selectAddress(cardEl) {
+    document.querySelectorAll('.address-card').forEach(c => {
+>>>>>>> hung
         c.classList.remove('selected');
         const radio = c.querySelector('input[type="radio"]');
         if (radio) radio.checked = false;
     });
+<<<<<<< HEAD
 
     cardEl.classList.add('selected');
     const r = cardEl.querySelector('input[type="radio"]');
@@ -233,6 +247,14 @@ function selectDeliveryPartnerCard(cardEl, partnerId, fee) {
 }
 
 // 3. CHỌN PHƯƠNG THỨC THANH TOÁN
+=======
+    cardEl.classList.add('selected');
+    const r = cardEl.querySelector('input[type="radio"]');
+    if (r) r.checked = true;
+}
+
+// 2. CHỌN PHƯƠNG THỨC THANH TOÁN
+>>>>>>> hung
 function selectPaymentMethod(cardEl, method) {
     if (cardEl.classList.contains('disabled-payment-method')) {
         return;
@@ -250,7 +272,11 @@ function selectPaymentMethod(cardEl, method) {
 
     const bankBox = document.getElementById('bankTransferInfoBox');
     if (bankBox) {
+<<<<<<< HEAD
         if (method === 'CARD') {
+=======
+        if (method === 'CARD' && merchantBankInfo && merchantBankInfo.hasBank) {
+>>>>>>> hung
             bankBox.style.display = 'block';
         } else {
             bankBox.style.display = 'none';
@@ -277,9 +303,15 @@ function updateMerchantBankStatus(data) {
 
     merchantBankInfo = {
         hasBank: hasBank,
+<<<<<<< HEAD
         bankName: hasBank ? bankName : "Vietcombank",
         bankAccountNumber: hasBank ? bankAccount : "999888777666",
         ownerName: data.merchantRestaurantName || "Cửa hàng"
+=======
+        bankName: bankName,
+        bankAccountNumber: bankAccount,
+        ownerName: data.merchantRestaurantName || ""
+>>>>>>> hung
     };
 
     const cardEl = document.getElementById('paymentMethodCARD');
@@ -287,6 +319,7 @@ function updateMerchantBankStatus(data) {
     const notSupportedNotice = document.getElementById('bankNotSupportedNotice');
     const bankBox = document.getElementById('bankTransferInfoBox');
 
+<<<<<<< HEAD
     if (cardEl) cardEl.classList.remove('disabled-payment-method');
     if (cardRadio) cardRadio.disabled = false;
     if (notSupportedNotice) notSupportedNotice.style.display = 'none';
@@ -305,6 +338,45 @@ function updateMerchantBankStatus(data) {
 }
 
 // 4. TẢI VÀ RENDER GIỎ HÀNG TẠI CHECKOUT
+=======
+    if (!hasBank) {
+        if (cardEl) {
+            cardEl.classList.add('disabled-payment-method');
+            cardEl.classList.remove('selected');
+        }
+        if (cardRadio) {
+            cardRadio.disabled = true;
+            cardRadio.checked = false;
+        }
+        if (notSupportedNotice) notSupportedNotice.style.display = 'block';
+        if (bankBox) bankBox.style.display = 'none';
+
+        // Tự động chuyển về COD nếu đang chọn CARD
+        const codEl = document.getElementById('paymentMethodCOD');
+        const codRadio = document.getElementById('paymentRadioCOD');
+        if (codEl) codEl.classList.add('selected');
+        if (codRadio) codRadio.checked = true;
+        selectedPayment = 'COD';
+    } else {
+        if (cardEl) cardEl.classList.remove('disabled-payment-method');
+        if (cardRadio) cardRadio.disabled = false;
+        if (notSupportedNotice) notSupportedNotice.style.display = 'none';
+
+        const bankNameEl = document.getElementById('checkoutMerchantBankName');
+        if (bankNameEl) bankNameEl.innerText = bankName;
+        const bankAccEl = document.getElementById('checkoutMerchantBankAccount');
+        if (bankAccEl) bankAccEl.innerText = bankAccount;
+        const ownerEl = document.getElementById('checkoutMerchantOwnerName');
+        if (ownerEl) ownerEl.innerText = data.merchantRestaurantName || "Cửa hàng";
+
+        if (selectedPayment === 'CARD' && bankBox) {
+            bankBox.style.display = 'block';
+        }
+    }
+}
+
+// 3. TẢI VÀ RENDER GIỎ HÀNG TẠI CHECKOUT
+>>>>>>> hung
 async function loadCheckoutCart() {
     const cart = (typeof getGlobalCart === 'function') ? getGlobalCart() : [];
     const itemsList = document.getElementById('checkoutItemsList');
@@ -316,6 +388,7 @@ async function loadCheckoutCart() {
     if (cart.length === 0) {
         itemsList.innerHTML = `
             <div class="text-center py-4 text-muted">
+<<<<<<< HEAD
                 <i class="bi bi-cart-x fs-2 d-block text-secondary opacity-50 mb-2"></i>
                 <p class="mb-2 fw-medium">Giỏ hàng của bạn đang trống!</p>
                 <a href="/home" class="btn btn-outline-danger btn-sm rounded-pill px-3">Quay lại trang chủ</a>
@@ -367,12 +440,49 @@ async function loadCheckoutCart() {
     }
 
     // Render danh sách món ăn
+=======
+                <i class="bi bi-basket fs-2 d-block opacity-50 mb-1"></i>
+                <span>Chưa có món ăn nào trong giỏ hàng.</span>
+                <div class="mt-2"><a href="/" class="btn btn-sm btn-danger rounded-pill px-3">Duyệt thực đơn</a></div>
+            </div>
+        `;
+        document.getElementById('btnPlaceOrder')?.setAttribute('disabled', 'true');
+        return;
+    }
+
+    // Lấy thông tin món đầu tiên để xác định Merchant ID & thông tin ngân hàng
+    let firstItem = cart[0];
+    try {
+        const foodRes = await fetch(`/api/foods/${firstItem.id}/merchant-info`);
+        if (foodRes.ok) {
+            const foodData = await foodRes.json();
+            currentMerchantId = foodData.merchantId;
+            if (merchantTitle) {
+                merchantTitle.innerText = foodData.merchantRestaurantName || "Cửa hàng MealChoice";
+            }
+            updateMerchantBankStatus(foodData);
+        } else {
+            currentMerchantId = "10000000-0000-0000-0000-000000000001";
+            if (merchantTitle) merchantTitle.innerText = "Quán Ngon Hà Nội - Phở & Bún Chả";
+            updateMerchantBankStatus({
+                merchantRestaurantName: "Quán Ngon Hà Nội - Phở & Bún Chả",
+                bankName: "Vietcombank",
+                bankAccountNumber: "999888777666"
+            });
+        }
+    } catch (e) {
+        currentMerchantId = "10000000-0000-0000-0000-000000000001";
+        if (merchantTitle) merchantTitle.innerText = "Quán Ngon Hà Nội - Phở & Bún Chả";
+    }
+
+>>>>>>> hung
     itemsList.innerHTML = '';
     subtotalPrice = 0;
     serviceFee = 0;
     let totalItems = 0;
 
     cart.forEach(item => {
+<<<<<<< HEAD
         const price = item.discountPrice && item.discountPrice > 0 ? item.discountPrice : item.price;
         const itemSubtotal = price * item.quantity;
         subtotalPrice += itemSubtotal;
@@ -390,6 +500,20 @@ async function loadCheckoutCart() {
                      class="food-item-img border" 
                      alt="${item.name}"
                      onerror="this.src='/images/default-food.png'">
+=======
+        const price = item.discountPrice !== null && item.discountPrice !== undefined ? Number(item.discountPrice) : Number(item.price);
+        const itemSubtotal = price * item.quantity;
+        subtotalPrice += itemSubtotal;
+        totalItems += item.quantity;
+        if (item.serviceFee && Number(item.serviceFee) > serviceFee) {
+            serviceFee = Number(item.serviceFee);
+        }
+
+        const div = document.createElement('div');
+        div.className = 'd-flex align-items-center justify-content-between py-2 border-bottom';
+        div.innerHTML = `
+            <div class="d-flex align-items-center gap-2.5 pe-2 overflow-hidden">
+>>>>>>> hung
                 <div class="fw-bold text-dark fs-7">${item.quantity}x</div>
                 <div class="overflow-hidden">
                     <div class="fw-semibold text-dark fs-7 text-truncate" title="${item.name}">${item.name}</div>
@@ -406,11 +530,19 @@ async function loadCheckoutCart() {
 }
 
 function updatePriceSummary() {
+<<<<<<< HEAD
     const total = subtotalPrice + currentShippingFee + serviceFee - discountAmount;
     const subEl = document.getElementById('summarySubtotal');
     if (subEl) subEl.innerText = formatCurrency(subtotalPrice);
     const shipEl = document.getElementById('summaryShippingFee');
     if (shipEl) shipEl.innerText = formatCurrency(currentShippingFee);
+=======
+    const total = subtotalPrice + shippingFee + serviceFee - discountAmount;
+    const subEl = document.getElementById('summarySubtotal');
+    if (subEl) subEl.innerText = formatCurrency(subtotalPrice);
+    const shipEl = document.getElementById('summaryShippingFee');
+    if (shipEl) shipEl.innerText = formatCurrency(shippingFee);
+>>>>>>> hung
     const srvEl = document.getElementById('summaryServiceFee');
     if (srvEl) srvEl.innerText = formatCurrency(serviceFee);
     const totalEl = document.getElementById('summaryTotalAmount');
@@ -429,6 +561,7 @@ function updatePriceSummary() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+<<<<<<< HEAD
     // 1. Khởi tạo hiển thị địa chỉ đang chọn từ danh sách modal
     const initialSelectedCard = document.querySelector('.address-modal-card.selected') || document.querySelector('.address-modal-card');
     if (initialSelectedCard) {
@@ -445,6 +578,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCheckoutCart();
 
     // 3. ÁP DỤNG VOUCHER
+=======
+    loadCheckoutCart();
+
+    // 4. ÁP DỤNG VOUCHER
+>>>>>>> hung
     document.getElementById('btnApplyVoucher')?.addEventListener('click', () => {
         const codeInput = document.getElementById('voucherInput');
         const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
@@ -513,7 +651,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePriceSummary();
     });
 
+<<<<<<< HEAD
     // 4. LƯU ĐỊA CHỈ MỚI QUA API
+=======
+    // 5. LƯU ĐỊA CHỈ MỚI QUA API
+>>>>>>> hung
     document.getElementById('btnSaveAddress')?.addEventListener('click', async () => {
         const contactName = document.getElementById('modalContactName')?.value.trim();
         const contactPhone = document.getElementById('modalContactPhone')?.value.trim();
@@ -522,13 +664,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const ward = document.getElementById('modalWard')?.value.trim();
         const street = document.getElementById('modalStreet')?.value.trim();
         const note = document.getElementById('modalNote')?.value.trim();
+<<<<<<< HEAD
         const isDefault = document.getElementById('modalIsDefault')?.checked ?? true;
+=======
+>>>>>>> hung
 
         if (!contactName || !contactPhone || !city || !district || !ward || !street) {
             alert('Vui lòng điền đầy đủ các thông tin bắt buộc (*)');
             return;
         }
 
+<<<<<<< HEAD
         const phoneRegex = /^(0|\+84)[0-9]{9,10}$/;
         if (!phoneRegex.test(contactPhone)) {
             alert('Số điện thoại không hợp lệ (ví dụ: 0987654321 hoặc +84987654321)');
@@ -544,34 +690,50 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const fetchFn = (typeof fetchWithAuth === 'function') ? fetchWithAuth : fetch;
             const response = await fetchFn('/api/user/address', {
+=======
+        try {
+            const response = await fetch('/api/user/address', {
+>>>>>>> hung
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(typeof getAuthHeaders === 'function' ? getAuthHeaders() : {})
                 },
                 body: JSON.stringify({
+<<<<<<< HEAD
                     contactName, contactPhone, city, district, ward, street, note, isDefault
+=======
+                    contactName, contactPhone, city, district, ward, street, note, isDefault: true
+>>>>>>> hung
                 })
             });
 
             if (response.ok) {
+<<<<<<< HEAD
                 const modalEl = document.getElementById('newAddressModal');
                 if (modalEl && typeof bootstrap !== 'undefined') {
                     const modal = bootstrap.Modal.getInstance(modalEl);
                     if (modal) modal.hide();
                 }
+=======
+                alert('Thêm địa chỉ mới thành công!');
+>>>>>>> hung
                 location.reload();
             } else {
                 const err = await response.json();
                 alert(err.message || 'Không thể lưu địa chỉ');
+<<<<<<< HEAD
                 if (saveBtn) {
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = 'Lưu địa chỉ';
                 }
+=======
+>>>>>>> hung
             }
         } catch (e) {
             console.error('Lỗi lưu địa chỉ:', e);
             alert('Đã xảy ra lỗi kết nối');
+<<<<<<< HEAD
             if (saveBtn) {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = 'Lưu địa chỉ';
@@ -582,13 +744,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. XỬ LÝ ĐẶT HÀNG (PLACE ORDER)
     document.getElementById('btnPlaceOrder')?.addEventListener('click', async () => {
         if (!currentSelectedAddress || !currentSelectedAddress.address) {
+=======
+        }
+    });
+
+    // 6. XỬ LÝ ĐẶT HÀNG (PLACE ORDER)
+    document.getElementById('btnPlaceOrder')?.addEventListener('click', async () => {
+        const selectedAddressCard = document.querySelector('.address-card.selected');
+        if (!selectedAddressCard) {
+>>>>>>> hung
             alert('Vui lòng chọn hoặc thêm địa chỉ giao hàng trước khi đặt món!');
             return;
         }
 
+<<<<<<< HEAD
         const contactName = currentSelectedAddress.name;
         const contactPhone = currentSelectedAddress.phone;
         const deliveryAddress = currentSelectedAddress.address;
+=======
+        const contactName = selectedAddressCard.getAttribute('data-name');
+        const contactPhone = selectedAddressCard.getAttribute('data-phone');
+        const deliveryAddress = selectedAddressCard.getAttribute('data-address');
+>>>>>>> hung
         const note = document.getElementById('orderNoteInput')?.value.trim() || '';
 
         const cart = (typeof getGlobalCart === 'function') ? getGlobalCart() : [];
@@ -605,7 +782,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const payload = {
             merchantId: currentMerchantId || "10000000-0000-0000-0000-000000000001",
+<<<<<<< HEAD
             deliveryPartnerId: selectedDeliveryPartnerId,
+=======
+>>>>>>> hung
             contactName: contactName,
             contactPhone: contactPhone,
             deliveryAddress: deliveryAddress,
@@ -622,8 +802,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+<<<<<<< HEAD
             const fetchFn = (typeof fetchWithAuth === 'function') ? fetchWithAuth : fetch;
             const response = await fetchFn('/api/checkout/place-order', {
+=======
+            const response = await fetch('/api/checkout/place-order', {
+>>>>>>> hung
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

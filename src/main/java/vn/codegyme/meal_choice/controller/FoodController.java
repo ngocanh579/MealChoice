@@ -28,12 +28,16 @@ import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.security.CustomUserDetails;
 import vn.codegyme.meal_choice.service.FoodService;
 
+<<<<<<< HEAD
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+=======
+import java.util.*;
+>>>>>>> hung
 
 @Slf4j
 @Controller
@@ -266,6 +270,7 @@ public class FoodController {
                     foodImagesList
             );
 
+<<<<<<< HEAD
             // Lấy danh sách thế mạnh (Top 2 danh mục có nhiều món nhất của quán)
             List<FoodCategory> storeSpecialties = Collections.emptyList();
             if (food.getMerchant() != null) {
@@ -276,6 +281,8 @@ public class FoodController {
             }
             model.addAttribute("storeSpecialties", storeSpecialties);
 
+=======
+>>>>>>> hung
             List<Food> allActiveFoods =
                     foodRepository
                             .findAllByIsActiveTrueAndDeletedAtIsNullOrderByIdDesc(
@@ -526,7 +533,11 @@ public class FoodController {
         boolean isAdmin = false;
         boolean isMerchant = false;
         List<Long> likedFoodIds = Collections.emptyList();
+<<<<<<< HEAD
         List<String> likedMerchantIds = Collections.emptyList();
+=======
+        List<UUID> likedMerchantIds = Collections.emptyList();
+>>>>>>> hung
 
         if (authentication != null
                 && authentication.isAuthenticated()
@@ -567,8 +578,13 @@ public class FoodController {
                                                     .contains("MERCHANT"));
                 }
 
+<<<<<<< HEAD
                 likedFoodIds = foodRepository.findLikedFoodIdsByUserId(user.getId().toString());
                 likedMerchantIds = merchantRepository.findLikedMerchantIdsByUserId(user.getId().toString());
+=======
+                likedFoodIds = foodRepository.findLikedFoodIdsByUserId(user.getId());
+                likedMerchantIds = merchantRepository.findLikedMerchantIdsByUserId(user.getId());
+>>>>>>> hung
             }
         }
 
@@ -631,6 +647,10 @@ public class FoodController {
 
     // ==================== LIKE FOOD ====================
 
+<<<<<<< HEAD
+=======
+    @Transactional
+>>>>>>> hung
     @ResponseBody
     @PostMapping("/api/foods/{id}/like")
     public ResponseEntity<?> likeFood(
@@ -644,10 +664,27 @@ public class FoodController {
                     .body("Chưa đăng nhập");
         }
 
+<<<<<<< HEAD
         foodRepository.likeFood(id, user.getId().toString());
         return ResponseEntity.ok(Map.of("success", true, "liked", true));
     }
 
+=======
+        Food food = foodRepository.findById(id).orElse(null);
+        if (food == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (!food.getLikedByUsers().contains(user)) {
+            food.getLikedByUsers().add(user);
+            foodRepository.save(food);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Transactional
+>>>>>>> hung
     @ResponseBody
     @PostMapping("/api/foods/{id}/unlike")
     public ResponseEntity<?> unlikeFood(
@@ -661,28 +698,50 @@ public class FoodController {
                     .body("Chưa đăng nhập");
         }
 
+<<<<<<< HEAD
         foodRepository.unlikeFood(id, user.getId().toString());
         return ResponseEntity.ok(Map.of("success", true, "liked", false));
+=======
+        Food food = foodRepository.findById(id).orElse(null);
+        if (food == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        food.getLikedByUsers().removeIf(u -> u.getId().equals(user.getId()));
+        foodRepository.save(food);
+
+        return ResponseEntity.ok().build();
+>>>>>>> hung
     }
 
     // ==================== FOLLOW MERCHANT ====================
 
+<<<<<<< HEAD
+=======
+    @Transactional
+>>>>>>> hung
     @ResponseBody
     @PostMapping("/api/merchants/{id}/follow")
     public ResponseEntity<?> followMerchant(
             @PathVariable("id") UUID id,
             Authentication authentication) {
 
+<<<<<<< HEAD
         log.info("=== FOLLOW REQUEST === merchantId={}, auth={}", id, authentication != null ? authentication.getName() : "NULL");
 
         User user = getAuthenticatedUser(authentication);
         if (user == null) {
             log.warn("=== FOLLOW FAILED === User không xác thực được");
+=======
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) {
+>>>>>>> hung
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body("Chưa đăng nhập");
         }
 
+<<<<<<< HEAD
         String merchantIdStr = id.toString();
         String userIdStr = user.getId().toString();
         log.info("=== FOLLOW === merchantId={}, userId={}", merchantIdStr, userIdStr);
@@ -700,22 +759,44 @@ public class FoodController {
         ));
     }
 
+=======
+        Merchant merchant = merchantRepository.findById(id).orElse(null);
+        if (merchant == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (!merchant.getLikedByUsers().contains(user)) {
+            merchant.getLikedByUsers().add(user);
+            merchantRepository.save(merchant);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Transactional
+>>>>>>> hung
     @ResponseBody
     @PostMapping("/api/merchants/{id}/unfollow")
     public ResponseEntity<?> unfollowMerchant(
             @PathVariable("id") UUID id,
             Authentication authentication) {
 
+<<<<<<< HEAD
         log.info("=== UNFOLLOW REQUEST === merchantId={}, auth={}", id, authentication != null ? authentication.getName() : "NULL");
 
         User user = getAuthenticatedUser(authentication);
         if (user == null) {
             log.warn("=== UNFOLLOW FAILED === User không xác thực được");
+=======
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) {
+>>>>>>> hung
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body("Chưa đăng nhập");
         }
 
+<<<<<<< HEAD
         String merchantIdStr = id.toString();
         String userIdStr = user.getId().toString();
         log.info("=== UNFOLLOW === merchantId={}, userId={}", merchantIdStr, userIdStr);
@@ -731,6 +812,17 @@ public class FoodController {
                 "followed", false,
                 "followerCount", followerCount
         ));
+=======
+        Merchant merchant = merchantRepository.findById(id).orElse(null);
+        if (merchant == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        merchant.getLikedByUsers().removeIf(u -> u.getId().equals(user.getId()));
+        merchantRepository.save(merchant);
+
+        return ResponseEntity.ok().build();
+>>>>>>> hung
     }
 
 

@@ -1,5 +1,9 @@
 /**
+<<<<<<< HEAD
  * Quản lý Chi tiết Đơn hàng của Merchant (Realtime countdown & auto status transition)
+=======
+ * Quản lý Chi tiết Đơn hàng của Merchant
+>>>>>>> hung
  * File: static/js/merchant-order-detail.js
  */
 
@@ -7,7 +11,10 @@ let detailCancelOrderId = null;
 let detailCancelModalInstance = null;
 let detailRejectOrderId = null;
 let detailRejectModalInstance = null;
+<<<<<<< HEAD
 let detailActiveInterval = null;
+=======
+>>>>>>> hung
 
 document.addEventListener('DOMContentLoaded', () => {
     const modalEl = document.getElementById('cancelOrderDetailModal');
@@ -31,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reason = document.getElementById('rejectDetailReasonInput')?.value;
         executeRejectDeliveryDetail(detailRejectOrderId, reason);
     });
+<<<<<<< HEAD
 
     // Khởi tạo countdown widget trên trang chi tiết nếu có
     initDetailTimer();
@@ -174,6 +182,10 @@ function transitionDetailToDelivering(orderId, deliverySeconds = 900) {
     initDetailTimer();
 }
 
+=======
+});
+
+>>>>>>> hung
 // 1. NHẬN ĐƠN
 async function handleAcceptOrderDetail(orderId) {
     if (!confirm('Bạn có chắc chắn muốn nhận đơn hàng này và bắt đầu chuẩn bị món?')) return;
@@ -186,15 +198,19 @@ async function handleAcceptOrderDetail(orderId) {
 
         const result = await response.json();
         if (result.success) {
+<<<<<<< HEAD
             const data = result.data;
             const prepSeconds = data?.remainingPrepSeconds || 600;
 
+=======
+>>>>>>> hung
             const badge = document.getElementById('detailStatusBadge');
             if (badge) {
                 badge.className = 'badge badge-status-lg bg-primary text-white';
                 badge.innerText = 'Đang chuẩn bị';
             }
 
+<<<<<<< HEAD
             // Cập nhật header sang nút "Bắt đầu giao ngay"
             const actionHeader = document.getElementById('detailActionHeader');
             if (actionHeader) {
@@ -204,6 +220,22 @@ async function handleAcceptOrderDetail(orderId) {
                                 onclick="handleStartDeliveryDetail(${orderId})">
                             <i class="bi bi-send-fill fs-5"></i>
                             <span>Bắt đầu giao ngay</span>
+=======
+            // Cập nhật header sang các nút hoàn thành / từ chối
+            const actionHeader = document.getElementById('detailActionHeader');
+            if (actionHeader) {
+                actionHeader.innerHTML = `
+                    <div class="d-flex gap-2" id="preparingButtonGroup">
+                        <button type="button" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2"
+                                onclick="handleCompleteOrderDetail(${orderId})">
+                            <i class="bi bi-check-circle-fill fs-5"></i>
+                            <span>Đã nhận tiền & Hoàn thành</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2"
+                                onclick="openRejectDeliveryModalDetail(${orderId}, '${result.data?.orderCode || ''}')">
+                            <i class="bi bi-person-x fs-5"></i>
+                            <span>Khách không nhận</span>
+>>>>>>> hung
                         </button>
                     </div>
                     <a href="/merchant/orders" class="btn btn-light border rounded-pill px-4 py-2 text-secondary fw-semibold">
@@ -212,8 +244,12 @@ async function handleAcceptOrderDetail(orderId) {
                 `;
             }
 
+<<<<<<< HEAD
             alert('Đã nhận đơn hàng thành công! Đang chuyển sang giai đoạn chuẩn bị.');
             location.reload();
+=======
+            alert('Đã nhận đơn hàng thành công! Đang chuyển sang chuẩn bị.');
+>>>>>>> hung
         } else {
             alert(result.message || 'Không thể nhận đơn');
         }
@@ -223,6 +259,7 @@ async function handleAcceptOrderDetail(orderId) {
     }
 }
 
+<<<<<<< HEAD
 // 2. BẮT ĐẦU GIAO HÀNG
 async function handleStartDeliveryDetail(orderId) {
     if (!confirm('Xác nhận món ăn đã làm xong và bắt đầu giao cho khách?')) return;
@@ -250,6 +287,9 @@ async function handleStartDeliveryDetail(orderId) {
 }
 
 // 3. MỞ MODAL HỦY ĐƠN (PENDING)
+=======
+// 2. MỞ MODAL HỦY ĐƠN (PENDING)
+>>>>>>> hung
 function openCancelModalDetail(orderId, orderCode) {
     detailCancelOrderId = orderId;
     const codeEl = document.getElementById('modalDetailOrderCode');
@@ -261,7 +301,11 @@ function openCancelModalDetail(orderId, orderCode) {
     }
 }
 
+<<<<<<< HEAD
 // 4. THỰC HIỆN HỦY ĐƠN
+=======
+// 3. THỰC HIỆN HỦY ĐƠN
+>>>>>>> hung
 async function executeCancelOrderDetail(orderId, reason) {
     try {
         const response = await fetch(`/api/merchant/orders/${orderId}/cancel`, {
@@ -296,7 +340,11 @@ async function executeCancelOrderDetail(orderId, reason) {
     }
 }
 
+<<<<<<< HEAD
 // 5. HOÀN THÀNH ĐƠN (ĐÃ NHẬN TIỀN)
+=======
+// 4. HOÀN THÀNH ĐƠN (ĐÃ NHẬN TIỀN)
+>>>>>>> hung
 async function handleCompleteOrderDetail(orderId) {
     if (!confirm('Xác nhận bạn đã giao món và nhận tiền đầy đủ cho đơn hàng này?')) return;
 
@@ -308,17 +356,24 @@ async function handleCompleteOrderDetail(orderId) {
 
         const result = await response.json();
         if (result.success) {
+<<<<<<< HEAD
             if (detailActiveInterval) {
                 clearInterval(detailActiveInterval);
             }
 
+=======
+>>>>>>> hung
             const badge = document.getElementById('detailStatusBadge');
             if (badge) {
                 badge.className = 'badge badge-status-lg bg-success text-white';
                 badge.innerText = 'Hoàn thành';
             }
 
+<<<<<<< HEAD
             const group = document.getElementById('deliveringButtonGroup') || document.getElementById('preparingButtonGroup');
+=======
+            const group = document.getElementById('preparingButtonGroup');
+>>>>>>> hung
             if (group) group.remove();
 
             alert('Đơn hàng đã được ghi nhận hoàn thành thành công!');
@@ -332,7 +387,11 @@ async function handleCompleteOrderDetail(orderId) {
     }
 }
 
+<<<<<<< HEAD
 // 6. MỞ MODAL KHÁCH KHÔNG NHẬN HÀNG
+=======
+// 5. MỞ MODAL KHÁCH KHÔNG NHẬN HÀNG
+>>>>>>> hung
 function openRejectDeliveryModalDetail(orderId, orderCode) {
     detailRejectOrderId = orderId;
     const codeEl = document.getElementById('rejectDetailModalOrderCode');
@@ -344,7 +403,11 @@ function openRejectDeliveryModalDetail(orderId, orderCode) {
     }
 }
 
+<<<<<<< HEAD
 // 7. THỰC HIỆN GHI NHẬN KHÁCH KHÔNG NHẬN HÀNG
+=======
+// 6. THỰC HIỆN GHI NHẬN KHÁCH KHÔNG NHẬN HÀNG
+>>>>>>> hung
 async function executeRejectDeliveryDetail(orderId, reason) {
     try {
         const response = await fetch(`/api/merchant/orders/${orderId}/failed-delivery`, {
@@ -359,17 +422,24 @@ async function executeRejectDeliveryDetail(orderId, reason) {
                 detailRejectModalInstance.hide();
             }
 
+<<<<<<< HEAD
             if (detailActiveInterval) {
                 clearInterval(detailActiveInterval);
             }
 
+=======
+>>>>>>> hung
             const badge = document.getElementById('detailStatusBadge');
             if (badge) {
                 badge.className = 'badge badge-status-lg bg-danger text-white';
                 badge.innerText = 'Đã hủy';
             }
 
+<<<<<<< HEAD
             const group = document.getElementById('deliveringButtonGroup') || document.getElementById('preparingButtonGroup');
+=======
+            const group = document.getElementById('preparingButtonGroup');
+>>>>>>> hung
             if (group) group.remove();
 
             alert('Đã ghi nhận đơn hàng bị hủy do khách không nhận hàng.');

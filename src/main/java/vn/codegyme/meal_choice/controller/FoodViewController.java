@@ -149,4 +149,21 @@ public class FoodViewController {
 
         return "food/edit";
     }
+<<<<<<< HEAD
+=======
+
+
+
+    // CHUYỂN HƯỚNG MẶC ĐỊNH: Vào /merchant sẽ tự nhảy sang /merchant/stats
+    @GetMapping("/merchant")
+    public String merchantIndex() {
+        return "redirect:/merchant/stats";
+    }
+
+    // Hiển thị giao diện stats.html
+    @GetMapping("/merchant/stats")
+    public String showStatsPage() {
+            return "merchant/stats";
+    }
+>>>>>>> hung
 }

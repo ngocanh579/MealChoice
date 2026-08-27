@@ -16,7 +16,10 @@ import vn.codegyme.meal_choice.entity.Address;
 import vn.codegyme.meal_choice.entity.Food;
 import vn.codegyme.meal_choice.entity.FoodCategory;
 import vn.codegyme.meal_choice.entity.Merchant;
+<<<<<<< HEAD
 import vn.codegyme.meal_choice.entity.MerchantAddress;
+=======
+>>>>>>> hung
 import vn.codegyme.meal_choice.entity.OrderStatus;
 import vn.codegyme.meal_choice.entity.PaymentMethod;
 import vn.codegyme.meal_choice.entity.User;
@@ -32,7 +35,10 @@ import vn.codegyme.meal_choice.service.MerchantOrderService;
 import vn.codegyme.meal_choice.service.UserOrderService;
 
 import java.math.BigDecimal;
+<<<<<<< HEAD
 import java.time.LocalTime;
+=======
+>>>>>>> hung
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -114,7 +120,11 @@ public class PageController {
         boolean isMerchant = false;
 
         List<Long> likedFoodIds = Collections.emptyList();
+<<<<<<< HEAD
         List<String> likedMerchantIds = Collections.emptyList();
+=======
+        List<UUID> likedMerchantIds = Collections.emptyList();
+>>>>>>> hung
 
         if (authentication != null
                 && authentication.isAuthenticated()
@@ -146,10 +156,17 @@ public class PageController {
                 UUID userId = user.getId();
 
                 likedFoodIds =
+<<<<<<< HEAD
                         foodRepository.findLikedFoodIdsByUserId(userId.toString());
 
                 likedMerchantIds =
                         merchantRepository.findLikedMerchantIdsByUserId(userId.toString());
+=======
+                        foodRepository.findLikedFoodIdsByUserId(userId);
+
+                likedMerchantIds =
+                        merchantRepository.findLikedMerchantIdsByUserId(userId);
+>>>>>>> hung
             }
         }
 
@@ -720,10 +737,14 @@ public class PageController {
 
     // Trang lịch sử đơn hàng của User
     @GetMapping("/user/orders")
+<<<<<<< HEAD
     public String userOrdersPage(
             @RequestParam(name = "page", defaultValue = "0") int page,
             Authentication authentication,
             Model model) {
+=======
+    public String userOrdersPage(Authentication authentication, Model model) {
+>>>>>>> hung
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
             return "redirect:/login";
@@ -734,6 +755,7 @@ public class PageController {
             return "redirect:/login";
         }
 
+<<<<<<< HEAD
         int pageSize = 50;
         Pageable pageable = PageRequest.of(Math.max(0, page), pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
         Page<OrderResponseDTO> orderPage = userOrderService.getUserOrders(user.getId(), pageable);
@@ -742,6 +764,11 @@ public class PageController {
         model.addAttribute("orders", orderPage.getContent());
         model.addAttribute("orderPage", orderPage);
         model.addAttribute("currentPage", page);
+=======
+        List<OrderResponseDTO> orders = userOrderService.getUserOrders(user.getId());
+        model.addAttribute("user", user);
+        model.addAttribute("orders", orders);
+>>>>>>> hung
 
         return "user/orders";
     }
@@ -752,7 +779,10 @@ public class PageController {
     @GetMapping("/merchant/orders")
     public String merchantOrdersPage(
             @RequestParam(name = "status", required = false) OrderStatus status,
+<<<<<<< HEAD
             @RequestParam(name = "page", defaultValue = "0") int page,
+=======
+>>>>>>> hung
             Authentication authentication,
             Model model) {
 
@@ -766,6 +796,7 @@ public class PageController {
             return "redirect:/merchant/register";
         }
 
+<<<<<<< HEAD
         int pageSize = 50;
         Pageable pageable = PageRequest.of(Math.max(0, page), pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
         Page<OrderResponseDTO> orderPage = merchantOrderService.getMerchantOrders(merchant.getId(), status, pageable);
@@ -775,6 +806,13 @@ public class PageController {
         model.addAttribute("orders", orderPage.getContent());
         model.addAttribute("orderPage", orderPage);
         model.addAttribute("currentPage", page);
+=======
+        List<OrderResponseDTO> orders = merchantOrderService.getMerchantOrders(merchant.getId(), status);
+        long pendingCount = merchantOrderService.countPendingOrders(merchant.getId());
+
+        model.addAttribute("merchant", merchant);
+        model.addAttribute("orders", orders);
+>>>>>>> hung
         model.addAttribute("selectedStatus", status);
         model.addAttribute("pendingCount", pendingCount);
         model.addAttribute("orderStatuses", OrderStatus.values());
@@ -805,6 +843,7 @@ public class PageController {
 
         return "merchant/orders/detail";
     }
+<<<<<<< HEAD
 
     // ==================== CUSTOMER STORE PAGE ====================
 
@@ -890,5 +929,7 @@ public class PageController {
             return "redirect:/";
         }
     }
+=======
+>>>>>>> hung
 }
 
