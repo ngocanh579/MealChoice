@@ -30,6 +30,23 @@ public interface AdminService {
             String lockReason
     );
 
+    // Tạo đối tác vận chuyển
+    void createDeliveryPartner(
+            DeliveryPartner partner
+    );
+
+    // Cập nhật đối tác vận chuyển
+    void updateDeliveryPartner(
+            UUID id,
+            DeliveryPartner partner
+    );
+
+    // Khóa/ mở khóa đối tác vận chuyển
+    void toggleDeliveryPartnerLock(
+            UUID id,
+            String lockReason
+    );
+
     // Duyệt đối tác thân thiết
     void approveTrustedPartner(UUID id);
 
