@@ -62,7 +62,7 @@ public class FoodController {
                         new RuntimeException("Không tìm thấy Merchant"));
     }
 
-    // ==================== MERCHANT FOOD API ====================
+    // MERCHANT FOOD API
 
     // Thêm món
     @PostMapping(
@@ -186,8 +186,7 @@ public class FoodController {
         return ResponseEntity.ok().build();
     }
 
-    // ==================== FOOD DETAIL PAGE ====================
-
+    //FOOD DETAIL PAGE
     @Transactional
     @GetMapping("/foods/{id}")
     public String foodDetailPage(
@@ -617,7 +616,7 @@ public class FoodController {
         ));
     }
 
-    // ==================== LIKE FOOD ====================
+    // LIKE FOOD
 
     @Transactional
     @ResponseBody

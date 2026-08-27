@@ -45,7 +45,7 @@ public class FoodViewController {
                         new RuntimeException("Không tìm thấy Merchant"));
     }
 
-    // ==================== DANH SÁCH MÓN ====================
+    // DANH SÁCH MÓN
 
     // GET /merchant/foods
     @GetMapping
@@ -61,9 +61,8 @@ public class FoodViewController {
         return "food/list";
     }
 
-    // ==================== FORM THÊM MÓN ====================
+    //  FORM THÊM MÓN
 
-    // GET /merchant/foods/create
     // GET /merchant/foods/create
     @GetMapping("/create")
     public String create(Model model) {
@@ -104,8 +103,7 @@ public class FoodViewController {
         return "food/create";
     }
 
-    // ==================== CHI TIẾT MÓN ====================
-
+    //  CHI TIẾT MÓN
     // GET /merchant/foods/{foodId}
     @GetMapping("/{foodId}")
     public String detail(
@@ -125,7 +123,7 @@ public class FoodViewController {
         return "food/detail";
     }
 
-    // ==================== FORM CHỈNH SỬA ====================
+    //  FORM CHỈNH SỬA
 
     // GET /merchant/foods/{foodId}/edit
     @GetMapping("/{foodId}/edit")
@@ -171,4 +169,15 @@ public class FoodViewController {
     }
 
 
+    // Chuyển hướng mặc định: /merchant -> /merchant/stats
+    @GetMapping("/merchant")
+    public String merchantIndex() {
+        return "redirect:/merchant/stats";
+    }
+
+    // Hiển thị giao diện stats.html
+    @GetMapping("/merchant/stats")
+    public String showStatsPage() {
+        return "merchant/stats";
+    }
 }
