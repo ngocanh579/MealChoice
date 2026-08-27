@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.codegyme.meal_choice.entity.Food;
+import vn.codegyme.meal_choice.entity.FoodCategory;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,29 +17,24 @@ import java.util.UUID;
 public interface FoodRepository extends JpaRepository<Food, Long> {
     boolean existsByMerchantAddress_Id(UUID merchantAddressId);
 
-    // Lấy danh sách món của Merchant
     List<Food> findByMerchant_IdAndDeletedAtIsNullOrderByCreatedAtDesc(
             UUID merchantId
     );
 
-    // Lấy một món thuộc Merchant
     Optional<Food> findByIdAndMerchant_IdAndDeletedAtIsNull(
             Long foodId,
             UUID merchantId
     );
 
-    // Kiểm tra món có thuộc Merchant không
     boolean existsByIdAndMerchant_IdAndDeletedAtIsNull(
             Long foodId,
             UUID merchantId
     );
 
-    // Lấy tất cả món đang hoạt động
     Page<Food> findAllByIsActiveTrueAndDeletedAtIsNullOrderByIdDesc(
             Pageable pageable
     );
 
-    // Lấy món theo danh mục
     @Query("""
             SELECT DISTINCT f
             FROM Food f
@@ -53,7 +49,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Tìm kiếm theo tên món
     @Query("""
             SELECT f
             FROM Food f
@@ -67,7 +62,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Tìm kiếm theo tên món và danh mục
     @Query("""
             SELECT DISTINCT f
             FROM Food f
@@ -84,7 +78,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Lấy món giảm giá nhiều nhất
     @Query("""
             SELECT f
             FROM Food f
@@ -98,7 +91,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Lấy món giảm giá theo danh mục
     @Query("""
             SELECT DISTINCT f
             FROM Food f
@@ -115,7 +107,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Lấy món theo khu vực
     @Query("""
             SELECT DISTINCT f
             FROM Food f
@@ -131,7 +122,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Lấy món theo khu vực và danh mục
     @Query("""
             SELECT DISTINCT f
             FROM Food f
@@ -150,13 +140,11 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Lấy danh sách món của Merchant đang hoạt động
     Page<Food> findAllByMerchant_IdAndIsActiveTrueAndDeletedAtIsNullOrderByIdDesc(
             UUID merchantId,
             Pageable pageable
     );
 
-    // Lấy danh sách món đang hoạt động trong thành phố
     @Query("""
             SELECT DISTINCT f
             FROM Food f
@@ -170,7 +158,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             @Param("city") String city
     );
 
-    // Lấy ID các món user đã thích
     @Query("""
             SELECT f.id
             FROM Food f
@@ -181,7 +168,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             @Param("userId") UUID userId
     );
 
-    // Lấy món mới nhất theo danh mục
     @Query("""
             SELECT DISTINCT f
             FROM Food f
@@ -196,7 +182,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Lấy món ăn từ đối tác chọn lọc
     @Query("""
             SELECT DISTINCT f
             FROM Food f
@@ -210,7 +195,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Lấy món đối tác chọn lọc theo danh mục
     @Query("""
             SELECT DISTINCT f
             FROM Food f
@@ -227,9 +211,9 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Tìm kiếm gộp Tên món hoặc Địa chỉ dành riêng cho Merchant
     @Query("""
-            SELECT DISTINCT f FROM Food f
+            SELECT DISTINCT f
+            FROM Food f
             LEFT JOIN f.merchantAddress ma
             WHERE f.merchant.id = :merchantId
               AND f.deletedAt IS NULL
@@ -242,4 +226,68 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             @Param("keyword") String keyword,
             Pageable pageable
     );
+
+    @Query("""
+            SELECT DISTINCT c
+            FROM Food f
+            JOIN f.foodCategories c
+            WHERE f.merchant.id = :merchantId
+              AND f.isActive = true
+              AND f.deletedAt IS NULL
+            ORDER BY c.id ASC
+            """)
+    List<FoodCategory> findDistinctCategoriesByMerchantId(
+            @Param("merchantId") UUID merchantId
+    );
+
+    @Query("""
+            SELECT c
+            FROM Food f
+            JOIN f.foodCategories c
+            WHERE f.merchant.id = :merchantId
+              AND f.isActive = true
+              AND f.deletedAt IS NULL
+            GROUP BY c.id, c.categoryName, c.categoryDescription, c.createdAt, c.updatedAt
+            ORDER BY COUNT(f.id) DESC
+            """)
+    List<FoodCategory> findTopCategoriesByMerchantId(
+            @Param("merchantId") UUID merchantId,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT DISTINCT f
+            FROM Food f
+            JOIN f.foodCategories c
+            WHERE f.merchant.id = :merchantId
+              AND f.isActive = true
+              AND f.deletedAt IS NULL
+              AND c.id = :categoryId
+            ORDER BY f.id DESC
+            """)
+    Page<Food> findActiveFoodsByMerchantAndCategory(
+            @Param("merchantId") UUID merchantId,
+            @Param("categoryId") Long categoryId,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT DISTINCT f
+            FROM Food f
+            LEFT JOIN f.foodCategories c
+            WHERE f.merchant.id = :merchantId
+              AND f.isActive = true
+              AND f.deletedAt IS NULL
+              AND LOWER(f.foodName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              AND (:categoryId IS NULL OR c.id = :categoryId)
+            ORDER BY f.id DESC
+            """)
+    Page<Food> searchCustomerFoodsInMerchant(
+            @Param("merchantId") UUID merchantId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            Pageable pageable
+    );
+
+    long countByMerchant_IdAndIsActiveTrueAndDeletedAtIsNull(UUID merchantId);
 }
