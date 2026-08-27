@@ -622,17 +622,21 @@ public class PageController {
                 && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
             String email = userDetails.getUsername();
-            Optional<Merchant> merchantOpt =
-                    merchantRepository.findByMerchantEmailWithAddresses(email);
+            // Tìm User theo email tài khoản, sau đó tìm Merchant liên kết qua user_id
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isPresent()) {
+                Optional<Merchant> merchantOpt =
+                        merchantRepository.findByUser_Id(userOpt.get().getId());
 
-            if (merchantOpt.isPresent()) {
-                Merchant merchant = merchantOpt.get();
-                model.addAttribute("merchant", merchant);
-                model.addAttribute(
-                        "foodCount",
-                        foodService.getFoods(merchant.getId()).size()
-                );
-                return "merchant/dashboard";
+                if (merchantOpt.isPresent()) {
+                    Merchant merchant = merchantOpt.get();
+                    model.addAttribute("merchant", merchant);
+                    model.addAttribute(
+                            "foodCount",
+                            foodService.getFoods(merchant.getId()).size()
+                    );
+                    return "merchant/dashboard";
+                }
             }
         }
 
@@ -654,12 +658,16 @@ public class PageController {
                 && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
             String email = userDetails.getUsername();
-            Optional<Merchant> merchantOpt =
-                    merchantRepository.findByMerchantEmailWithAddresses(email);
+            // Tìm User theo email tài khoản, sau đó tìm Merchant liên kết qua user_id
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isPresent()) {
+                Optional<Merchant> merchantOpt =
+                        merchantRepository.findByUser_Id(userOpt.get().getId());
 
-            if (merchantOpt.isPresent()) {
-                model.addAttribute("merchant", merchantOpt.get());
-                return "merchant/profile";
+                if (merchantOpt.isPresent()) {
+                    model.addAttribute("merchant", merchantOpt.get());
+                    return "merchant/profile";
+                }
             }
         }
 
