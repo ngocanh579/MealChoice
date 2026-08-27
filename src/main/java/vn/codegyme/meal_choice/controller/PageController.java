@@ -16,6 +16,7 @@ import vn.codegyme.meal_choice.entity.Address;
 import vn.codegyme.meal_choice.entity.Food;
 import vn.codegyme.meal_choice.entity.FoodCategory;
 import vn.codegyme.meal_choice.entity.Merchant;
+import vn.codegyme.meal_choice.entity.MerchantAddress;
 import vn.codegyme.meal_choice.entity.OrderStatus;
 import vn.codegyme.meal_choice.entity.PaymentMethod;
 import vn.codegyme.meal_choice.entity.User;
@@ -31,6 +32,7 @@ import vn.codegyme.meal_choice.service.MerchantOrderService;
 import vn.codegyme.meal_choice.service.UserOrderService;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -112,7 +114,7 @@ public class PageController {
         boolean isMerchant = false;
 
         List<Long> likedFoodIds = Collections.emptyList();
-        List<UUID> likedMerchantIds = Collections.emptyList();
+        List<String> likedMerchantIds = Collections.emptyList();
 
         if (authentication != null
                 && authentication.isAuthenticated()
@@ -144,10 +146,10 @@ public class PageController {
                 UUID userId = user.getId();
 
                 likedFoodIds =
-                        foodRepository.findLikedFoodIdsByUserId(userId);
+                        foodRepository.findLikedFoodIdsByUserId(userId.toString());
 
                 likedMerchantIds =
-                        merchantRepository.findLikedMerchantIdsByUserId(userId);
+                        merchantRepository.findLikedMerchantIdsByUserId(userId.toString());
             }
         }
 
@@ -626,30 +628,26 @@ public class PageController {
             Authentication authentication,
             Model model) {
 
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+        if (authentication != null
+                && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
-            return "redirect:/login";
+            String email = userDetails.getUsername();
+            Optional<Merchant> merchantOpt =
+                    merchantRepository.findByMerchantEmailWithAddresses(email);
+
+            if (merchantOpt.isPresent()) {
+                Merchant merchant = merchantOpt.get();
+                model.addAttribute("merchant", merchant);
+                model.addAttribute(
+                        "foodCount",
+                        foodService.getFoods(merchant.getId()).size()
+                );
+                return "merchant/dashboard";
+            }
         }
 
-        Optional<Merchant> merchantOpt =
-                merchantRepository.findByUser_Id(userDetails.getId());
-
-        if (merchantOpt.isEmpty()) {
-            return "redirect:/merchant/register";
-        }
-
-        Merchant merchant = merchantOpt.get();
-
-        model.addAttribute("merchant", merchant);
-
-        model.addAttribute(
-                "foodCount",
-                foodService.getFoods(merchant.getId()).size()
-        );
-
-        return "merchant/dashboard";
+        // Nếu tài khoản chưa phải là Merchant -> Chuyển hướng đến trang đăng ký
+        return "redirect:/merchant/register";
     }
 
     // Trang hồ sơ Merchant
@@ -662,25 +660,21 @@ public class PageController {
             Authentication authentication,
             Model model) {
 
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+        if (authentication != null
+                && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
-            return "redirect:/login";
+            String email = userDetails.getUsername();
+            Optional<Merchant> merchantOpt =
+                    merchantRepository.findByMerchantEmailWithAddresses(email);
+
+            if (merchantOpt.isPresent()) {
+                model.addAttribute("merchant", merchantOpt.get());
+                return "merchant/profile";
+            }
         }
 
-        Optional<Merchant> merchantOpt =
-                merchantRepository.findByUser_Id(userDetails.getId());
-
-        if (merchantOpt.isEmpty()) {
-            return "redirect:/merchant/register";
-        }
-
-        Merchant merchant = merchantOpt.get();
-
-        model.addAttribute("merchant", merchant);
-
-        return "merchant/profile";
+        // Nếu tài khoản chưa phải là Merchant -> Chuyển hướng đến trang đăng ký
+        return "redirect:/merchant/register";
     }
 
     // ==================== CHECKOUT & USER ORDERS ====================
@@ -726,7 +720,10 @@ public class PageController {
 
     // Trang lịch sử đơn hàng của User
     @GetMapping("/user/orders")
-    public String userOrdersPage(Authentication authentication, Model model) {
+    public String userOrdersPage(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            Authentication authentication,
+            Model model) {
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
             return "redirect:/login";
@@ -737,9 +734,14 @@ public class PageController {
             return "redirect:/login";
         }
 
-        List<OrderResponseDTO> orders = userOrderService.getUserOrders(user.getId());
+        int pageSize = 50;
+        Pageable pageable = PageRequest.of(Math.max(0, page), pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+        Page<OrderResponseDTO> orderPage = userOrderService.getUserOrders(user.getId(), pageable);
+
         model.addAttribute("user", user);
-        model.addAttribute("orders", orders);
+        model.addAttribute("orders", orderPage.getContent());
+        model.addAttribute("orderPage", orderPage);
+        model.addAttribute("currentPage", page);
 
         return "user/orders";
     }
@@ -750,6 +752,7 @@ public class PageController {
     @GetMapping("/merchant/orders")
     public String merchantOrdersPage(
             @RequestParam(name = "status", required = false) OrderStatus status,
+            @RequestParam(name = "page", defaultValue = "0") int page,
             Authentication authentication,
             Model model) {
 
@@ -763,11 +766,15 @@ public class PageController {
             return "redirect:/merchant/register";
         }
 
-        List<OrderResponseDTO> orders = merchantOrderService.getMerchantOrders(merchant.getId(), status);
+        int pageSize = 50;
+        Pageable pageable = PageRequest.of(Math.max(0, page), pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+        Page<OrderResponseDTO> orderPage = merchantOrderService.getMerchantOrders(merchant.getId(), status, pageable);
         long pendingCount = merchantOrderService.countPendingOrders(merchant.getId());
 
         model.addAttribute("merchant", merchant);
-        model.addAttribute("orders", orders);
+        model.addAttribute("orders", orderPage.getContent());
+        model.addAttribute("orderPage", orderPage);
+        model.addAttribute("currentPage", page);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("pendingCount", pendingCount);
         model.addAttribute("orderStatuses", OrderStatus.values());
@@ -798,5 +805,89 @@ public class PageController {
 
         return "merchant/orders/detail";
     }
-}
 
+    // ==================== CUSTOMER STORE PAGE ====================
+
+    // Trang chi tiết Cửa Hàng (Customer Store Page)
+    @GetMapping("/stores/{id}")
+    public String storeDetailPage(
+            @PathVariable("id") UUID id,
+            @RequestParam(name = "categoryId", required = false) Long categoryId,
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            Authentication authentication,
+            Model model) {
+
+        try {
+            Merchant merchant = merchantRepository.findByIdWithAddresses(id).orElse(null);
+            if (merchant == null) {
+                return "redirect:/";
+            }
+
+            addLikeStatusToModel(authentication, model);
+
+            // Địa chỉ mặc định hoặc đầu tiên của quán
+            MerchantAddress defaultAddress = null;
+            if (merchant.getAddresses() != null && !merchant.getAddresses().isEmpty()) {
+                defaultAddress = merchant.getAddresses().stream()
+                        .filter(a -> a != null && a.isDefault())
+                        .findFirst()
+                        .orElse(merchant.getAddresses().get(0));
+            }
+
+            // Kiểm tra trạng thái mở/đóng cửa
+            boolean isOpenNow = true;
+            LocalTime now = LocalTime.now();
+            if (defaultAddress != null && defaultAddress.getMerchantOpenTime() != null && defaultAddress.getMerchantCloseTime() != null) {
+                LocalTime openTime = defaultAddress.getMerchantOpenTime();
+                LocalTime closeTime = defaultAddress.getMerchantCloseTime();
+                if (closeTime.isAfter(openTime)) {
+                    isOpenNow = !now.isBefore(openTime) && !now.isAfter(closeTime);
+                } else {
+                    // Mở qua đêm
+                    isOpenNow = !now.isBefore(openTime) || !now.isAfter(closeTime);
+                }
+            }
+
+            // Danh sách danh mục món của riêng quán (cho các Tab thực đơn)
+            List<FoodCategory> storeCategories = foodRepository.findDistinctCategoriesByMerchantId(id);
+
+            // Top 2 danh mục có nhiều món nhất của quán (cho tag Thế mạnh quán ở Header)
+            List<FoodCategory> topSpecialties = foodRepository.findTopCategoriesByMerchantId(id, PageRequest.of(0, 2));
+
+            // Lấy danh sách món ăn (hỗ trợ tìm kiếm & lọc category)
+            Pageable pageable = PageRequest.of(Math.max(0, page), 30);
+            String cleanKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+
+            Page<Food> foodPage;
+            if (cleanKeyword != null) {
+                foodPage = foodRepository.searchCustomerFoodsInMerchant(id, cleanKeyword, categoryId, pageable);
+            } else if (categoryId != null) {
+                foodPage = foodRepository.findActiveFoodsByMerchantAndCategory(id, categoryId, pageable);
+            } else {
+                foodPage = foodRepository.findAllByMerchant_IdAndIsActiveTrueAndDeletedAtIsNullOrderByIdDesc(id, pageable);
+            }
+
+            // Tổng số món & Lượt theo dõi
+            long totalFoods = foodRepository.countByMerchant_IdAndIsActiveTrueAndDeletedAtIsNull(id);
+            long followerCount = merchantRepository.countFollowersByMerchantId(id.toString());
+
+            model.addAttribute("merchant", merchant);
+            model.addAttribute("defaultAddress", defaultAddress);
+            model.addAttribute("isOpenNow", isOpenNow);
+            model.addAttribute("storeCategories", storeCategories);
+            model.addAttribute("topSpecialties", topSpecialties);
+            model.addAttribute("foodPage", foodPage);
+            model.addAttribute("selectedCategoryId", categoryId);
+            model.addAttribute("keyword", cleanKeyword);
+            model.addAttribute("totalFoods", totalFoods);
+            model.addAttribute("followerCount", followerCount);
+
+            return "merchant/store/detail";
+
+        } catch (Exception e) {
+            log.error("Lỗi khi tải trang cửa hàng: {}", e.getMessage(), e);
+            return "redirect:/";
+        }
+    }
+}
