@@ -1,5 +1,5 @@
 /**
- * Quản lý Danh sách Đơn hàng của Merchant
+ * Quản lý Danh sách Đơn hàng của Merchant (Realtime countdown & auto status transition)
  * File: static/js/merchant-order-list.js
  */
 
@@ -7,6 +7,7 @@ let currentCancelOrderId = null;
 let cancelModalInstance = null;
 let currentRejectOrderId = null;
 let rejectModalInstance = null;
+const activeTimers = new Map();
 
 document.addEventListener('DOMContentLoaded', () => {
     const cancelModalEl = document.getElementById('cancelOrderModal');
@@ -30,11 +31,220 @@ document.addEventListener('DOMContentLoaded', () => {
         const reason = document.getElementById('rejectReasonInput')?.value;
         executeRejectDelivery(currentRejectOrderId, reason);
     });
+
+    initAllTimers();
 });
 
-// 1. XỬ LÝ NHẬN ĐƠN (ACCEPT ORDER)
+function initAllTimers() {
+    document.querySelectorAll('.prep-timer-badge').forEach(el => {
+        const orderId = el.dataset.orderId;
+        const remaining = parseInt(el.dataset.remaining, 10);
+
+        if (orderId && !isNaN(remaining) && remaining > 0) {
+            startPrepCountdown(orderId, remaining);
+        }
+    });
+
+    document.querySelectorAll('.delivery-timer-badge').forEach(el => {
+        const orderId = el.dataset.orderId;
+        const remaining = parseInt(el.dataset.remaining, 10);
+
+        if (orderId && !isNaN(remaining)) {
+            startDeliveryCountdown(orderId, remaining);
+        }
+    });
+}
+
+function formatTime(seconds) {
+    if (seconds <= 0) return '00:00';
+
+    const minutes = Math.floor(seconds / 60);
+    const secondsRemaining = seconds % 60;
+
+    return `${minutes.toString().padStart(2, '0')}:${secondsRemaining.toString().padStart(2, '0')}`;
+}
+
+function startPrepCountdown(orderId, initialSeconds) {
+    const timerKey = `prep_${orderId}`;
+
+    if (activeTimers.has(timerKey)) {
+        clearInterval(activeTimers.get(timerKey));
+    }
+
+    let remaining = initialSeconds;
+    const badgeEl = document.getElementById(`prep-timer-${orderId}`);
+
+    function updateDisplay() {
+        if (!badgeEl) return;
+
+        const textEl = badgeEl.querySelector('.timer-text');
+
+        if (textEl) {
+            textEl.innerText = `Chuẩn bị: ${formatTime(remaining)}`;
+        }
+    }
+
+    updateDisplay();
+
+    const intervalId = setInterval(() => {
+        remaining--;
+
+        if (remaining <= 0) {
+            clearInterval(intervalId);
+            activeTimers.delete(timerKey);
+
+            transitionToDelivering(orderId, 15 * 60);
+        } else {
+            updateDisplay();
+        }
+    }, 1000);
+
+    activeTimers.set(timerKey, intervalId);
+}
+
+function startDeliveryCountdown(orderId, initialSeconds) {
+    const timerKey = `delivery_${orderId}`;
+
+    if (activeTimers.has(timerKey)) {
+        clearInterval(activeTimers.get(timerKey));
+    }
+
+    let remaining = initialSeconds;
+    const badgeEl = document.getElementById(`delivery-timer-${orderId}`);
+    const completeBtn = document.getElementById(`btn-complete-${orderId}`);
+
+    function updateDisplay() {
+        if (badgeEl) {
+            const textEl = badgeEl.querySelector('.timer-text');
+
+            if (textEl) {
+                textEl.innerText = `Giao hàng: ${formatTime(remaining)}`;
+            }
+        }
+
+        if (completeBtn && remaining > 0) {
+            const btnText = completeBtn.querySelector('.btn-complete-text');
+
+            if (btnText) {
+                btnText.innerText = `Đang giao (${formatTime(remaining)})`;
+            }
+        }
+    }
+
+    if (remaining > 0) {
+        updateDisplay();
+
+        const intervalId = setInterval(() => {
+            remaining--;
+
+            if (remaining <= 0) {
+                clearInterval(intervalId);
+                activeTimers.delete(timerKey);
+
+                enableCompleteButton(orderId);
+            } else {
+                updateDisplay();
+            }
+        }, 1000);
+
+        activeTimers.set(timerKey, intervalId);
+    } else {
+        enableCompleteButton(orderId);
+    }
+}
+
+function enableCompleteButton(orderId) {
+    const badgeEl = document.getElementById(`delivery-timer-${orderId}`);
+
+    if (badgeEl) {
+        badgeEl.innerHTML = `
+            <i class="bi bi-geo-alt-fill text-success me-1"></i>
+            <span class="text-success fw-bold">Đã đến nơi</span>
+        `;
+    }
+
+    const completeBtn = document.getElementById(`btn-complete-${orderId}`);
+
+    if (completeBtn) {
+        completeBtn.disabled = false;
+        completeBtn.classList.remove('btn-outline-success', 'opacity-75');
+        completeBtn.classList.add('btn-success');
+        completeBtn.title = 'Xác nhận đã nhận tiền và giao xong';
+
+        const btnText = completeBtn.querySelector('.btn-complete-text');
+
+        if (btnText) {
+            btnText.innerText = 'Hoàn thành';
+        }
+    }
+
+    const rejectBtn = document.getElementById(`btn-reject-${orderId}`);
+
+    if (rejectBtn) {
+        rejectBtn.classList.remove('d-none');
+    }
+}
+
+function transitionToDelivering(orderId, deliverySeconds = 900) {
+    const statusCol = document.getElementById(`order-status-col-${orderId}`);
+
+    if (statusCol) {
+        statusCol.innerHTML = `
+            <span class="badge badge-status bg-info text-dark">
+                Đang giao
+            </span>
+            <div class="font-size-11 text-info fw-medium mt-1 delivery-timer-badge"
+                 id="delivery-timer-${orderId}"
+                 data-remaining="${deliverySeconds}"
+                 data-order-id="${orderId}">
+                <i class="bi bi-truck me-1"></i>
+                <span class="timer-text">Đang giao...</span>
+            </div>
+        `;
+    }
+
+    const actionCol = document.getElementById(`order-action-col-${orderId}`);
+
+    if (actionCol) {
+        actionCol.innerHTML = `
+            <div class="d-flex align-items-center justify-content-center gap-1.5"
+                 id="order-delivering-group-${orderId}">
+                <button type="button"
+                        class="btn btn-sm btn-outline-success opacity-75 rounded-pill px-2.5 py-1 font-size-12 fw-semibold d-inline-flex align-items-center gap-1 complete-btn"
+                        id="btn-complete-${orderId}"
+                        disabled
+                        title="Đang giao hàng, vui lòng chờ..."
+                        data-order-id="${orderId}"
+                        onclick="handleCompleteOrder(${orderId})">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span class="btn-complete-text">Đang giao...</span>
+                </button>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 font-size-12 fw-semibold d-inline-flex align-items-center gap-1 d-none"
+                        id="btn-reject-${orderId}"
+                        title="Khách từ chối nhận hàng"
+                        onclick="openRejectDeliveryModal(${orderId}, '')">
+                    <i class="bi bi-person-x"></i>
+                    <span>Không nhận</span>
+                </button>
+
+                <a href="/merchant/orders/${orderId}"
+                   class="btn btn-sm btn-light border rounded-pill px-2 py-1 font-size-12 text-secondary"
+                   title="Xem chi tiết">
+                    <i class="bi bi-eye"></i>
+                </a>
+            </div>
+        `;
+    }
+
+    startDeliveryCountdown(orderId, deliverySeconds);
+}
+
 async function handleAcceptOrder(orderId) {
-    if (!confirm('Bạn có chắc chắn muốn nhận đơn hàng này và bắt đầu chuẩn bị món?')) return;
+    if (!confirm('Bạn có chắc chắn muốn nhận đơn hàng này và bắt đầu chuẩn bị món?')) {
+        return;
+    }
 
     try {
         const response = await fetch(`/api/merchant/orders/${orderId}/accept`, {
@@ -45,36 +255,42 @@ async function handleAcceptOrder(orderId) {
         });
 
         const result = await response.json();
+
         if (result.success) {
-            // Cập nhật trạng thái hiển thị
+            const data = result.data;
+            const prepSeconds = data?.remainingPrepSeconds || 600;
+
             const statusCol = document.getElementById(`order-status-col-${orderId}`);
+
             if (statusCol) {
                 statusCol.innerHTML = `
                     <span class="badge badge-status bg-primary text-white">
                         Đang chuẩn bị
                     </span>
+                    <div class="font-size-11 text-primary fw-medium mt-1 prep-timer-badge"
+                         id="prep-timer-${orderId}"
+                         data-remaining="${prepSeconds}"
+                         data-order-id="${orderId}">
+                        <i class="bi bi-stopwatch me-1"></i>
+                        <span class="timer-text">Chuẩn bị món...</span>
+                    </div>
                 `;
             }
 
-            // Cập nhật các nút hành động sang nhóm PREPARING
             const actionCol = document.getElementById(`order-action-col-${orderId}`);
+
             if (actionCol) {
                 actionCol.innerHTML = `
-                    <div class="d-flex align-items-center justify-content-center gap-1.5" id="order-preparing-group-${orderId}">
+                    <div class="d-flex align-items-center justify-content-center gap-1.5"
+                         id="order-preparing-group-${orderId}">
                         <button type="button"
-                                class="btn btn-sm btn-success rounded-pill px-2.5 py-1 font-size-12 fw-semibold d-inline-flex align-items-center gap-1"
-                                title="Xác nhận đã nhận tiền và giao xong"
-                                onclick="handleCompleteOrder(${orderId})">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>Hoàn thành</span>
+                                class="btn btn-sm btn-primary rounded-pill px-2.5 py-1 font-size-12 fw-semibold d-inline-flex align-items-center gap-1"
+                                title="Món đã chuẩn bị xong, bắt đầu giao ngay"
+                                onclick="handleStartDelivery(${orderId})">
+                            <i class="bi bi-send-fill"></i>
+                            <span>Giao hàng ngay</span>
                         </button>
-                        <button type="button"
-                                class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 font-size-12 fw-semibold d-inline-flex align-items-center gap-1"
-                                title="Khách từ chối nhận hàng"
-                                onclick="openRejectDeliveryModal(${orderId}, '${result.data?.orderCode || ''}')">
-                            <i class="bi bi-person-x"></i>
-                            <span>Không nhận</span>
-                        </button>
+
                         <a href="/merchant/orders/${orderId}"
                            class="btn btn-sm btn-light border rounded-pill px-2 py-1 font-size-12 text-secondary"
                            title="Xem chi tiết">
@@ -84,7 +300,13 @@ async function handleAcceptOrder(orderId) {
                 `;
             }
 
-            showToast('Thành công', 'Đã nhận đơn hàng! Đơn đã chuyển sang trạng thái Đang chuẩn bị.', 'success');
+            startPrepCountdown(orderId, prepSeconds);
+
+            showToast(
+                'Thành công',
+                'Đã nhận đơn hàng! Đơn đã chuyển sang trạng thái Đang chuẩn bị.',
+                'success'
+            );
         } else {
             alert(result.message || 'Không thể nhận đơn hàng');
         }
@@ -94,19 +316,68 @@ async function handleAcceptOrder(orderId) {
     }
 }
 
-// 2. MỞ MODAL HỦY ĐƠN (PENDING)
+async function handleStartDelivery(orderId) {
+    if (!confirm('Xác nhận món ăn đã làm xong và bắt đầu giao cho khách?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/merchant/orders/${orderId}/start-delivery`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            const data = result.data;
+            const deliverySeconds = data?.remainingDeliverySeconds || 900;
+
+            const prepTimerKey = `prep_${orderId}`;
+
+            if (activeTimers.has(prepTimerKey)) {
+                clearInterval(activeTimers.get(prepTimerKey));
+                activeTimers.delete(prepTimerKey);
+            }
+
+            transitionToDelivering(orderId, deliverySeconds);
+
+            showToast(
+                'Bắt đầu giao',
+                'Đơn hàng đã chuyển sang trạng thái Đang giao!',
+                'info'
+            );
+        } else {
+            alert(result.message || 'Không thể cập nhật trạng thái giao hàng');
+        }
+    } catch (error) {
+        console.error('Lỗi khi bắt đầu giao hàng:', error);
+        alert('Đã xảy ra lỗi kết nối');
+    }
+}
+
 function openCancelModal(orderId, orderCode) {
     currentCancelOrderId = orderId;
+
     const codeEl = document.getElementById('modalOrderCode');
-    if (codeEl) codeEl.innerText = orderCode;
+
+    if (codeEl) {
+        codeEl.innerText = orderCode;
+    }
+
     const reasonInput = document.getElementById('cancelReasonInput');
-    if (reasonInput) reasonInput.value = '';
+
+    if (reasonInput) {
+        reasonInput.value = '';
+    }
+
     if (cancelModalInstance) {
         cancelModalInstance.show();
     }
 }
 
-// 3. THỰC HIỆN HỦY ĐƠN
 async function executeCancelOrder(orderId, reason) {
     try {
         const response = await fetch(`/api/merchant/orders/${orderId}/cancel`, {
@@ -114,16 +385,33 @@ async function executeCancelOrder(orderId, reason) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ cancelReason: reason })
+            body: JSON.stringify({
+                cancelReason: reason
+            })
         });
 
         const result = await response.json();
+
         if (result.success) {
             if (cancelModalInstance) {
                 cancelModalInstance.hide();
             }
 
+            const prepTimerKey = `prep_${orderId}`;
+            const deliveryTimerKey = `delivery_${orderId}`;
+
+            if (activeTimers.has(prepTimerKey)) {
+                clearInterval(activeTimers.get(prepTimerKey));
+                activeTimers.delete(prepTimerKey);
+            }
+
+            if (activeTimers.has(deliveryTimerKey)) {
+                clearInterval(activeTimers.get(deliveryTimerKey));
+                activeTimers.delete(deliveryTimerKey);
+            }
+
             const statusCol = document.getElementById(`order-status-col-${orderId}`);
+
             if (statusCol) {
                 statusCol.innerHTML = `
                     <span class="badge badge-status bg-danger text-white">
@@ -136,16 +424,22 @@ async function executeCancelOrder(orderId, reason) {
             }
 
             const actionCol = document.getElementById(`order-action-col-${orderId}`);
+
             if (actionCol) {
                 actionCol.innerHTML = `
                     <a href="/merchant/orders/${orderId}"
                        class="btn btn-sm btn-light border rounded-pill px-3 py-1 font-size-13 text-secondary">
-                        <i class="bi bi-eye me-1"></i>Chi tiết
+                        <i class="bi bi-eye me-1"></i>
+                        Chi tiết
                     </a>
                 `;
             }
 
-            showToast('Đã hủy', 'Đơn hàng đã được hủy thành công.', 'warning');
+            showToast(
+                'Đã hủy',
+                'Đơn hàng đã được hủy thành công.',
+                'warning'
+            );
         } else {
             alert(result.message || 'Không thể hủy đơn hàng');
         }
@@ -155,9 +449,10 @@ async function executeCancelOrder(orderId, reason) {
     }
 }
 
-// 4. XỬ LÝ HOÀN THÀNH ĐƠN (ĐÃ NHẬN TIỀN & GIAO XONG)
 async function handleCompleteOrder(orderId) {
-    if (!confirm('Xác nhận bạn đã giao món và nhận tiền đầy đủ cho đơn hàng này?')) return;
+    if (!confirm('Xác nhận bạn đã giao món và nhận tiền đầy đủ cho đơn hàng này?')) {
+        return;
+    }
 
     try {
         const response = await fetch(`/api/merchant/orders/${orderId}/complete`, {
@@ -168,8 +463,17 @@ async function handleCompleteOrder(orderId) {
         });
 
         const result = await response.json();
+
         if (result.success) {
+            const deliveryTimerKey = `delivery_${orderId}`;
+
+            if (activeTimers.has(deliveryTimerKey)) {
+                clearInterval(activeTimers.get(deliveryTimerKey));
+                activeTimers.delete(deliveryTimerKey);
+            }
+
             const statusCol = document.getElementById(`order-status-col-${orderId}`);
+
             if (statusCol) {
                 statusCol.innerHTML = `
                     <span class="badge badge-status bg-success text-white">
@@ -179,16 +483,22 @@ async function handleCompleteOrder(orderId) {
             }
 
             const actionCol = document.getElementById(`order-action-col-${orderId}`);
+
             if (actionCol) {
                 actionCol.innerHTML = `
                     <a href="/merchant/orders/${orderId}"
                        class="btn btn-sm btn-light border rounded-pill px-3 py-1 font-size-13 text-secondary">
-                        <i class="bi bi-eye me-1"></i>Chi tiết
+                        <i class="bi bi-eye me-1"></i>
+                        Chi tiết
                     </a>
                 `;
             }
 
-            showToast('Thành công', 'Đơn hàng đã được hoàn thành thành công!', 'success');
+            showToast(
+                'Thành công',
+                'Đơn hàng đã được hoàn thành thành công!',
+                'success'
+            );
         } else {
             alert(result.message || 'Không thể hoàn thành đơn hàng');
         }
@@ -198,19 +508,26 @@ async function handleCompleteOrder(orderId) {
     }
 }
 
-// 5. MỞ MODAL KHÁCH KHÔNG NHẬN HÀNG
 function openRejectDeliveryModal(orderId, orderCode) {
     currentRejectOrderId = orderId;
+
     const codeEl = document.getElementById('rejectModalOrderCode');
-    if (codeEl) codeEl.innerText = orderCode;
+
+    if (codeEl) {
+        codeEl.innerText = orderCode;
+    }
+
     const reasonInput = document.getElementById('rejectReasonInput');
-    if (reasonInput) reasonInput.value = 'Khách không nhận hàng';
+
+    if (reasonInput) {
+        reasonInput.value = 'Khách không nhận hàng';
+    }
+
     if (rejectModalInstance) {
         rejectModalInstance.show();
     }
 }
 
-// 6. THỰC HIỆN GHI NHẬN KHÁCH KHÔNG NHẬN HÀNG
 async function executeRejectDelivery(orderId, reason) {
     try {
         const response = await fetch(`/api/merchant/orders/${orderId}/failed-delivery`, {
@@ -218,16 +535,33 @@ async function executeRejectDelivery(orderId, reason) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ cancelReason: reason })
+            body: JSON.stringify({
+                cancelReason: reason
+            })
         });
 
         const result = await response.json();
+
         if (result.success) {
             if (rejectModalInstance) {
                 rejectModalInstance.hide();
             }
 
+            const prepTimerKey = `prep_${orderId}`;
+            const deliveryTimerKey = `delivery_${orderId}`;
+
+            if (activeTimers.has(prepTimerKey)) {
+                clearInterval(activeTimers.get(prepTimerKey));
+                activeTimers.delete(prepTimerKey);
+            }
+
+            if (activeTimers.has(deliveryTimerKey)) {
+                clearInterval(activeTimers.get(deliveryTimerKey));
+                activeTimers.delete(deliveryTimerKey);
+            }
+
             const statusCol = document.getElementById(`order-status-col-${orderId}`);
+
             if (statusCol) {
                 statusCol.innerHTML = `
                     <span class="badge badge-status bg-danger text-white">
@@ -240,16 +574,22 @@ async function executeRejectDelivery(orderId, reason) {
             }
 
             const actionCol = document.getElementById(`order-action-col-${orderId}`);
+
             if (actionCol) {
                 actionCol.innerHTML = `
                     <a href="/merchant/orders/${orderId}"
                        class="btn btn-sm btn-light border rounded-pill px-3 py-1 font-size-13 text-secondary">
-                        <i class="bi bi-eye me-1"></i>Chi tiết
+                        <i class="bi bi-eye me-1"></i>
+                        Chi tiết
                     </a>
                 `;
             }
 
-            showToast('Đã hủy', 'Đã ghi nhận đơn hàng bị hủy do khách không nhận hàng.', 'warning');
+            showToast(
+                'Đã hủy',
+                'Đã ghi nhận đơn hàng bị hủy do khách không nhận hàng.',
+                'warning'
+            );
         } else {
             alert(result.message || 'Không thể ghi nhận hủy đơn hàng');
         }
