@@ -11,18 +11,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Lớp Mapper chuyên chuyển đổi Entity (Order, OrderItem) sang DTO (OrderResponseDTO, OrderItemResponseDTO)
- * Được thiết kế theo chuẩn Clean Code: phân tách rõ ràng, an toàn với null và cực kỳ dễ đọc.
- */
 @Component
 public class OrderMapper {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
 
-    /**
-     * Chuyển đổi một Entity Order sang OrderResponseDTO
-     */
     public OrderResponseDTO toOrderResponseDTO(Order order) {
         if (order == null) {
             return null;
@@ -32,7 +26,6 @@ public class OrderMapper {
         User user = order.getUser();
 
         return OrderResponseDTO.builder()
-                // 1. Thông tin chung đơn hàng
                 .id(order.getId())
                 .orderCode(order.getOrderCode())
                 .createdAt(order.getCreatedAt())
@@ -40,45 +33,32 @@ public class OrderMapper {
                 .estimatedDeliveryTime(order.getEstimatedDeliveryTime())
                 .formattedEstimatedDeliveryTime(formatDateTime(order.getEstimatedDeliveryTime()))
                 .cancelReason(order.getCancelReason())
-
-                // 2. Trạng thái & Phương thức thanh toán
                 .status(order.getStatus())
                 .statusDisplayName(getStatusDisplayName(order.getStatus()))
                 .statusBadgeClass(getStatusBadgeClass(order.getStatus()))
                 .paymentMethod(order.getPaymentMethod())
                 .paymentMethodDisplayName(getPaymentMethodDisplayName(order.getPaymentMethod()))
-
-                // 3. Thông tin Cửa hàng (Merchant)
                 .merchantId(merchant != null ? merchant.getId() : null)
                 .merchantName(merchant != null ? merchant.getMerchantRestaurantName() : "")
                 .merchantPhone(merchant != null ? merchant.getMerchantPhone() : "")
                 .merchantAddress(getMerchantAddress(merchant))
                 .merchantBankName(merchant != null ? merchant.getBankName() : "")
                 .merchantBankAccountNumber(merchant != null ? merchant.getBankAccountNumber() : "")
-
-                // 4. Thông tin Khách hàng (Customer)
                 .userId(user != null ? user.getId() : null)
                 .customerName(order.getContactName())
                 .customerPhone(order.getContactPhone())
                 .deliveryAddress(order.getDeliveryAddress())
                 .note(order.getNote())
-
-                // 5. Chi tiết bảng giá thanh toán
                 .subtotalPrice(order.getSubtotalPrice())
                 .shippingFee(order.getShippingFee())
                 .serviceFee(order.getServiceFee())
                 .discountAmount(order.getDiscountAmount())
                 .totalAmount(order.getTotalAmount())
                 .totalItems(calculateTotalQuantity(order.getOrderItems()))
-
-                // 6. Danh sách món ăn đã đặt
                 .items(toOrderItemResponseDTOList(order.getOrderItems()))
                 .build();
     }
 
-    /**
-     * Chuyển đổi một Entity OrderItem sang OrderItemResponseDTO
-     */
     public OrderItemResponseDTO toOrderItemResponseDTO(OrderItem item) {
         if (item == null) {
             return null;
@@ -98,108 +78,102 @@ public class OrderMapper {
                 .build();
     }
 
-    /**
-     * Chuyển đổi danh sách OrderItem sang danh sách DTO
-     */
     public List<OrderItemResponseDTO> toOrderItemResponseDTOList(List<OrderItem> items) {
         if (items == null || items.isEmpty()) {
             return Collections.emptyList();
         }
+
         return items.stream()
                 .map(this::toOrderItemResponseDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Chuyển đổi danh sách Order sang danh sách DTO
-     */
     public List<OrderResponseDTO> toOrderResponseDTOList(List<Order> orders) {
         if (orders == null || orders.isEmpty()) {
             return Collections.emptyList();
         }
+
         return orders.stream()
                 .map(this::toOrderResponseDTO)
                 .collect(Collectors.toList());
     }
 
-    // =========================================================================
-    // CÁC HÀM TIỆN ÍCH PHỤ TRỢ (HELPER METHODS - GIÚP CODE TRONG SÁNG & GỌN GÀNG)
-    // =========================================================================
-
-    /**
-     * Format ngày giờ hoặc trả về rỗng nếu null
-     */
     private String formatDateTime(LocalDateTime dateTime) {
-        return dateTime != null ? dateTime.format(DATE_TIME_FORMATTER) : "";
+        return dateTime != null
+                ? dateTime.format(DATE_TIME_FORMATTER)
+                : "";
     }
 
-    /**
-     * Lấy tên hiển thị trạng thái đơn hàng an toàn
-     */
     private String getStatusDisplayName(OrderStatus status) {
-        return status != null ? status.getDisplayName() : "";
+        return status != null
+                ? status.getDisplayName()
+                : "";
     }
 
-    /**
-     * Lấy class badge màu sắc trạng thái an toàn
-     */
     private String getStatusBadgeClass(OrderStatus status) {
-        return status != null ? status.getBadgeClass() : "";
+        return status != null
+                ? status.getBadgeClass()
+                : "";
     }
 
-    /**
-     * Lấy tên hiển thị phương thức thanh toán an toàn
-     */
     private String getPaymentMethodDisplayName(PaymentMethod paymentMethod) {
-        return paymentMethod != null ? paymentMethod.getDisplayName() : "";
+        return paymentMethod != null
+                ? paymentMethod.getDisplayName()
+                : "";
     }
 
-    /**
-     * Tính tổng số lượng món ăn trong đơn
-     */
     private int calculateTotalQuantity(List<OrderItem> items) {
         if (items == null || items.isEmpty()) {
             return 0;
         }
+
         return items.stream()
                 .mapToInt(item -> item.getQuantity() != null ? item.getQuantity() : 0)
                 .sum();
     }
 
-    /**
-     * Lấy địa chỉ cửa hàng an toàn
-     */
     private String getMerchantAddress(Merchant merchant) {
         if (merchant == null) {
             return "";
         }
+
         try {
             if (merchant.getAddresses() == null || merchant.getAddresses().isEmpty()) {
                 return "";
             }
-            return merchant.getAddresses().get(0).getMerchantAddress();
+
+            MerchantAddress address = merchant.getAddresses().get(0);
+
+            if (address == null || address.getMerchantAddress() == null) {
+                return "";
+            }
+
+            return address.getMerchantAddress();
         } catch (Exception e) {
             return "";
         }
     }
 
-    /**
-     * Tìm ảnh đại diện của món ăn (ưu tiên ảnh lưu trong item, fallback sang ảnh của Food)
-     */
     private String resolveFoodImage(OrderItem item) {
         if (item == null) {
             return "";
         }
+
         if (item.getFoodImage() != null && !item.getFoodImage().isBlank()) {
             return item.getFoodImage();
         }
+
         try {
             Food food = item.getFood();
-            if (food != null && food.getImages() != null && !food.getImages().isEmpty()) {
+
+            if (food != null
+                    && food.getImages() != null
+                    && !food.getImages().isEmpty()) {
                 return food.getImages().get(0).getImageUrl();
             }
         } catch (Exception ignored) {
         }
+
         return "";
     }
 }
