@@ -4,18 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thông tin Merchant và địa chỉ - Merchant</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" th:href="@{/css/merchant.css}">
 </head>
-
 <body class="merchant-page">
 
 <div th:replace="~{merchant/layout :: shell('Thông tin Merchant và địa chỉ', 'profile', ~{::content})}">
     <section th:fragment="content" class="d-flex flex-column gap-4">
-
-        <!-- Header -->
         <div class="d-flex align-items-center justify-content-between mb-1">
             <div>
                 <h2 class="fw-bold text-dark mb-1">Hồ sơ nhà hàng</h2>
@@ -27,14 +23,12 @@
 
         <div id="alertContainer" class="mb-0"></div>
 
-        <!-- Thông tin nhà hàng -->
         <div class="merchant-page-card p-4">
             <div class="d-flex align-items-center justify-content-between pb-3 mb-4 border-bottom">
                 <h5 class="fw-bold text-dark mb-0">
                     <i class="bi bi-shop text-danger me-2"></i>
                     Thông tin nhà hàng
                 </h5>
-
                 <div>
                     <span th:if="${merchant.trustedPartner}"
                           class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 font-size-12 fw-bold">
@@ -45,11 +39,8 @@
             </div>
 
             <div class="row g-4 mb-3">
-
                 <div class="col-md-6 col-lg-3">
-                    <label class="text-muted small fw-medium d-block mb-1">
-                        Tên nhà hàng
-                    </label>
+                    <label class="text-muted small fw-medium d-block mb-1">Tên nhà hàng</label>
                     <div class="fw-bold fs-5 text-dark"
                          th:text="${merchant.merchantRestaurantName}">
                         Quán Cơm Gà
@@ -57,9 +48,7 @@
                 </div>
 
                 <div class="col-md-6 col-lg-3">
-                    <label class="text-muted small fw-medium d-block mb-1">
-                        Email liên hệ
-                    </label>
+                    <label class="text-muted small fw-medium d-block mb-1">Email liên hệ</label>
                     <div class="fw-semibold text-dark"
                          th:text="${merchant.merchantEmail}">
                         merchant@email.com
@@ -67,9 +56,7 @@
                 </div>
 
                 <div class="col-md-6 col-lg-3">
-                    <label class="text-muted small fw-medium d-block mb-1">
-                        Số điện thoại
-                    </label>
+                    <label class="text-muted small fw-medium d-block mb-1">Số điện thoại</label>
                     <div class="fw-semibold text-dark"
                          th:text="${merchant.merchantPhone}">
                         0900000000
@@ -77,9 +64,7 @@
                 </div>
 
                 <div class="col-md-6 col-lg-3">
-                    <label class="text-muted small fw-medium d-block mb-1">
-                        Trạng thái duyệt
-                    </label>
+                    <label class="text-muted small fw-medium d-block mb-1">Trạng thái duyệt</label>
 
                     <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
                           class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill font-size-12">
@@ -138,9 +123,7 @@
             </div>
         </div>
 
-        <!-- Địa chỉ -->
         <div class="merchant-page-card p-4">
-
             <div class="d-flex align-items-center justify-content-between pb-3 mb-4 border-bottom flex-wrap gap-2">
                 <h5 class="fw-bold text-dark mb-0">
                     <i class="bi bi-geo-alt text-danger me-2"></i>
@@ -156,10 +139,8 @@
                 </button>
             </div>
 
-            <!-- Chưa có địa chỉ -->
             <div th:if="${#lists.isEmpty(merchant.addresses)}"
                  class="text-center py-5">
-
                 <i class="bi bi-geo-alt fs-1 d-block mb-3 text-muted opacity-50"></i>
 
                 <h5 class="fw-bold text-dark mb-1">
@@ -179,12 +160,9 @@
                 </button>
             </div>
 
-            <!-- Danh sách địa chỉ -->
             <div th:unless="${#lists.isEmpty(merchant.addresses)}"
                  class="table-responsive">
-
                 <table class="table table-hover align-middle mb-0">
-
                     <thead class="bg-light">
                     <tr class="text-muted font-size-13 text-uppercase">
                         <th class="ps-3 border-0" style="width:60px">STT</th>
@@ -199,7 +177,6 @@
 
                     <tbody>
                     <tr th:each="address,stat : ${merchant.addresses}">
-
                         <td class="ps-3 fw-bold text-muted font-size-14"
                             th:text="${stat.count}">
                             1
@@ -230,8 +207,6 @@
 
                         <td class="text-center pe-3">
                             <div class="d-flex align-items-center justify-content-center gap-1">
-
-                                <!-- Xem -->
                                 <button type="button"
                                         class="btn btn-sm btn-light border text-secondary rounded-2"
                                         th:data-address="${address.merchantAddress}"
@@ -242,7 +217,6 @@
                                     <i class="bi bi-eye"></i>
                                 </button>
 
-                                <!-- Sửa -->
                                 <button type="button"
                                         class="btn btn-sm btn-light border text-primary rounded-2"
                                         th:data-merchant-id="${merchant.id}"
@@ -258,7 +232,6 @@
                                     <i class="bi bi-pencil"></i>
                                 </button>
 
-                                <!-- Xóa -->
                                 <button type="button"
                                         class="btn btn-sm btn-light border text-danger rounded-2"
                                         th:data-merchant-id="${merchant.id}"
@@ -267,7 +240,6 @@
                                         title="Xóa địa chỉ">
                                     <i class="bi bi-trash"></i>
                                 </button>
-
                             </div>
                         </td>
                     </tr>
@@ -275,11 +247,9 @@
                 </table>
             </div>
         </div>
-
     </section>
 </div>
 
-<!-- Modal sửa thông tin nhà hàng -->
 <div class="modal fade" id="editMerchantModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow">
@@ -305,27 +275,36 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted">Email liên hệ</label>
+                        <label class="form-label fw-semibold text-muted">
+                            Email liên hệ
+                        </label>
                         <input type="email"
                                class="form-control bg-light border-0 text-muted"
                                th:value="${merchant.merchantEmail}"
                                readonly>
-                        <div class="form-text font-size-12">Email tài khoản không thể chỉnh sửa.</div>
+                        <div class="form-text font-size-12">
+                            Email tài khoản không thể chỉnh sửa.
+                        </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted">Số điện thoại</label>
+                        <label class="form-label fw-semibold text-muted">
+                            Số điện thoại
+                        </label>
                         <input type="text"
                                class="form-control bg-light border-0 text-muted"
                                th:value="${merchant.merchantPhone}"
                                readonly>
-                        <div class="form-text font-size-12">Số điện thoại đăng ký không thể chỉnh sửa.</div>
+                        <div class="form-text font-size-12">
+                            Số điện thoại đăng ký không thể chỉnh sửa.
+                        </div>
                     </div>
 
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">
-                                <i class="bi bi-bank me-1 text-danger"></i>Ngân hàng nhận tiền
+                                <i class="bi bi-bank me-1 text-danger"></i>
+                                Ngân hàng nhận tiền
                             </label>
                             <input type="text"
                                    class="form-control bg-light border-0"
@@ -333,9 +312,11 @@
                                    th:value="${merchant.bankName}"
                                    placeholder="Ví dụ: Vietcombank, MBBank...">
                         </div>
+
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">
-                                <i class="bi bi-credit-card-2-back me-1 text-danger"></i>Số tài khoản
+                                <i class="bi bi-credit-card-2-back me-1 text-danger"></i>
+                                Số tài khoản
                             </label>
                             <input type="text"
                                    class="form-control bg-light border-0 font-monospace"
@@ -343,6 +324,7 @@
                                    th:value="${merchant.bankAccountNumber}"
                                    placeholder="Ví dụ: 0123456789">
                         </div>
+
                         <div class="col-12">
                             <div class="form-text font-size-12 text-muted">
                                 * Lưu ý: Nhập đầy đủ cả 2 ô để nhận chuyển khoản hoặc để trống cả 2 nếu quán không nhận chuyển khoản.
@@ -352,14 +334,22 @@
 
                     <div class="alert alert-light border rounded-3 mb-0 font-size-13 text-muted">
                         <i class="bi bi-info-circle me-1 text-danger"></i>
-                        Địa chỉ và giờ hoạt động được quản lý riêng tại bảng <strong>Địa chỉ hoạt động</strong>.
+                        Địa chỉ và giờ hoạt động được quản lý riêng tại bảng
+                        <strong>Địa chỉ hoạt động</strong>.
                     </div>
                 </div>
 
                 <div class="modal-footer border-top px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
-                        <i class="bi bi-check-lg me-1"></i> Lưu thay đổi
+                    <button type="button"
+                            class="btn btn-light rounded-pill px-4 fw-semibold border"
+                            data-bs-dismiss="modal">
+                        Hủy
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="bi bi-check-lg me-1"></i>
+                        Lưu thay đổi
                     </button>
                 </div>
             </form>
@@ -367,7 +357,6 @@
     </div>
 </div>
 
-<!-- Modal thêm địa chỉ -->
 <div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 rounded-4 shadow">
@@ -385,42 +374,84 @@
                         <label class="form-label fw-semibold">
                             Địa chỉ chi tiết <span class="text-danger">*</span>
                         </label>
+
                         <div class="row g-2 mb-3">
                             <div class="col-md-4">
-                                <select class="form-select bg-light border-0" id="newProvinceSelect" required>
-                                    <option value="" selected disabled>Tỉnh / Thành phố</option>
+                                <select class="form-select bg-light border-0"
+                                        id="newProvinceSelect"
+                                        required>
+                                    <option value="" selected disabled>
+                                        Tỉnh / Thành phố
+                                    </option>
                                 </select>
                             </div>
+
                             <div class="col-md-4">
-                                <select class="form-select bg-light border-0" id="newDistrictSelect" required disabled>
-                                    <option value="" selected disabled>Quận / Huyện</option>
+                                <select class="form-select bg-light border-0"
+                                        id="newDistrictSelect"
+                                        required
+                                        disabled>
+                                    <option value="" selected disabled>
+                                        Quận / Huyện
+                                    </option>
                                 </select>
                             </div>
+
                             <div class="col-md-4">
-                                <select class="form-select bg-light border-0" id="newWardSelect" required disabled>
-                                    <option value="" selected disabled>Phường / Xã</option>
+                                <select class="form-select bg-light border-0"
+                                        id="newWardSelect"
+                                        required
+                                        disabled>
+                                    <option value="" selected disabled>
+                                        Phường / Xã
+                                    </option>
                                 </select>
                             </div>
                         </div>
-                        <input type="text" class="form-control bg-light border-0" id="newStreetInput" placeholder="Số nhà, Tên đường..." required>
+
+                        <input type="text"
+                               class="form-control bg-light border-0"
+                               id="newStreetInput"
+                               placeholder="Số nhà, Tên đường..."
+                               required>
                     </div>
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Giờ mở cửa <span class="text-danger">*</span></label>
-                            <input type="time" class="form-control bg-light border-0" id="newOpenTime" value="08:00" required>
+                            <label class="form-label fw-semibold">
+                                Giờ mở cửa <span class="text-danger">*</span>
+                            </label>
+                            <input type="time"
+                                   class="form-control bg-light border-0"
+                                   id="newOpenTime"
+                                   value="08:00"
+                                   required>
                         </div>
+
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Giờ đóng cửa <span class="text-danger">*</span></label>
-                            <input type="time" class="form-control bg-light border-0" id="newCloseTime" value="22:00" required>
+                            <label class="form-label fw-semibold">
+                                Giờ đóng cửa <span class="text-danger">*</span>
+                            </label>
+                            <input type="time"
+                                   class="form-control bg-light border-0"
+                                   id="newCloseTime"
+                                   value="22:00"
+                                   required>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-footer border-top px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
-                        <i class="bi bi-plus-lg me-1"></i> Thêm địa chỉ
+                    <button type="button"
+                            class="btn btn-light rounded-pill px-4 fw-semibold border"
+                            data-bs-dismiss="modal">
+                        Hủy
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="bi bi-plus-lg me-1"></i>
+                        Thêm địa chỉ
                     </button>
                 </div>
             </form>
@@ -428,48 +459,72 @@
     </div>
 </div>
 
-<!-- Modal xem địa chỉ -->
 <div class="modal fade" id="viewAddressModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-bottom px-4 pt-4 pb-3">
                 <h5 class="modal-title fw-bold text-dark">
-                    <i class="bi bi-info-circle text-danger me-2"></i> Chi tiết địa chỉ
+                    <i class="bi bi-info-circle text-danger me-2"></i>
+                    Chi tiết địa chỉ
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
             </div>
+
             <div class="modal-body px-4 py-4">
                 <div class="mb-4">
-                    <label class="text-muted small fw-medium d-block mb-1">Địa chỉ hoạt động</label>
+                    <label class="text-muted small fw-medium d-block mb-1">
+                        Địa chỉ hoạt động
+                    </label>
                     <div class="fw-bold fs-5 text-dark" id="viewAddress"></div>
                 </div>
+
                 <div class="row g-3">
                     <div class="col-6">
-                        <label class="text-muted small fw-medium d-block mb-1">Giờ mở cửa</label>
-                        <div class="fw-bold fs-5 text-success" id="viewOpenTime"></div>
+                        <label class="text-muted small fw-medium d-block mb-1">
+                            Giờ mở cửa
+                        </label>
+                        <div class="fw-bold fs-5 text-success"
+                             id="viewOpenTime">
+                        </div>
                     </div>
+
                     <div class="col-6">
-                        <label class="text-muted small fw-medium d-block mb-1">Giờ đóng cửa</label>
-                        <div class="fw-bold fs-5 text-danger" id="viewCloseTime"></div>
+                        <label class="text-muted small fw-medium d-block mb-1">
+                            Giờ đóng cửa
+                        </label>
+                        <div class="fw-bold fs-5 text-danger"
+                             id="viewCloseTime">
+                        </div>
                     </div>
                 </div>
             </div>
+
             <div class="modal-footer border-top px-4 py-3">
-                <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">Đóng</button>
+                <button type="button"
+                        class="btn btn-light rounded-pill px-4 fw-semibold border"
+                        data-bs-dismiss="modal">
+                    Đóng
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal sửa địa chỉ -->
 <div class="modal fade" id="editAddressModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-bottom px-4 pt-4 pb-3">
                 <h5 class="modal-title fw-bold text-dark">
-                    <i class="bi bi-pencil-square text-danger me-2"></i> Sửa địa chỉ hoạt động
+                    <i class="bi bi-pencil-square text-danger me-2"></i>
+                    Sửa địa chỉ hoạt động
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
             </div>
 
             <form id="editAddressForm">
@@ -481,42 +536,82 @@
                         <label class="form-label fw-semibold">
                             Địa chỉ chi tiết <span class="text-danger">*</span>
                         </label>
+
                         <div class="row g-2 mb-3">
                             <div class="col-md-4">
-                                <select class="form-select bg-light border-0" id="editProvinceSelect" required>
-                                    <option value="" selected disabled>Tỉnh / Thành phố</option>
+                                <select class="form-select bg-light border-0"
+                                        id="editProvinceSelect"
+                                        required>
+                                    <option value="" selected disabled>
+                                        Tỉnh / Thành phố
+                                    </option>
                                 </select>
                             </div>
+
                             <div class="col-md-4">
-                                <select class="form-select bg-light border-0" id="editDistrictSelect" required disabled>
-                                    <option value="" selected disabled>Quận / Huyện</option>
+                                <select class="form-select bg-light border-0"
+                                        id="editDistrictSelect"
+                                        required
+                                        disabled>
+                                    <option value="" selected disabled>
+                                        Quận / Huyện
+                                    </option>
                                 </select>
                             </div>
+
                             <div class="col-md-4">
-                                <select class="form-select bg-light border-0" id="editWardSelect" required disabled>
-                                    <option value="" selected disabled>Phường / Xã</option>
+                                <select class="form-select bg-light border-0"
+                                        id="editWardSelect"
+                                        required
+                                        disabled>
+                                    <option value="" selected disabled>
+                                        Phường / Xã
+                                    </option>
                                 </select>
                             </div>
                         </div>
-                        <input type="text" class="form-control bg-light border-0" id="editStreetInput" placeholder="Số nhà, Tên đường..." required>
+
+                        <input type="text"
+                               class="form-control bg-light border-0"
+                               id="editStreetInput"
+                               placeholder="Số nhà, Tên đường..."
+                               required>
                     </div>
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Giờ mở cửa <span class="text-danger">*</span></label>
-                            <input type="time" class="form-control bg-light border-0" id="editAddressOpenTime" required>
+                            <label class="form-label fw-semibold">
+                                Giờ mở cửa <span class="text-danger">*</span>
+                            </label>
+                            <input type="time"
+                                   class="form-control bg-light border-0"
+                                   id="editAddressOpenTime"
+                                   required>
                         </div>
+
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Giờ đóng cửa <span class="text-danger">*</span></label>
-                            <input type="time" class="form-control bg-light border-0" id="editAddressCloseTime" required>
+                            <label class="form-label fw-semibold">
+                                Giờ đóng cửa <span class="text-danger">*</span>
+                            </label>
+                            <input type="time"
+                                   class="form-control bg-light border-0"
+                                   id="editAddressCloseTime"
+                                   required>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-footer border-top px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
-                        <i class="bi bi-check-lg me-1"></i> Lưu thay đổi
+                    <button type="button"
+                            class="btn btn-light rounded-pill px-4 fw-semibold border"
+                            data-bs-dismiss="modal">
+                        Hủy
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="bi bi-check-lg me-1"></i>
+                        Lưu thay đổi
                     </button>
                 </div>
             </form>
@@ -541,9 +636,11 @@
 
     async function getJson(url) {
         const response = await fetch(url);
+
         if (!response.ok) {
             throw new Error("Không thể tải dữ liệu địa chỉ.");
         }
+
         return response.json();
     }
 
@@ -578,7 +675,10 @@
                 message = data.message || message;
             } catch {
                 const text = await response.text();
-                if (text) message = text;
+
+                if (text) {
+                    message = text;
+                }
             }
 
             throw new Error(message);
@@ -589,11 +689,28 @@
 
     function timeValue(id) {
         const value = document.getElementById(id)?.value;
-        return value ? (value.length === 5 ? `${value}:00` : value) : null;
+
+        if (!value) {
+            return null;
+        }
+
+        return value.length === 5 ? `${value}:00` : value;
     }
 
     function formatTime(value) {
-        return value && value !== "--" ? value.substring(0, 5) : "--";
+        return value && value !== "--"
+            ? value.substring(0, 5)
+            : "--";
+    }
+
+    function toTimeInput(value, defaultVal = "08:00") {
+        if (!value || value === "--") {
+            return defaultVal;
+        }
+
+        return value.length >= 5
+            ? value.substring(0, 5)
+            : defaultVal;
     }
 
     function addressPayload(prefix) {
@@ -629,7 +746,10 @@
 
     async function loadProvinces(prefix) {
         const province = document.getElementById(`${prefix}ProvinceSelect`);
-        if (!province) return;
+
+        if (!province) {
+            return;
+        }
 
         const data = await getJson(`${API}?depth=1`);
 
@@ -644,7 +764,9 @@
         const district = document.getElementById(`${prefix}DistrictSelect`);
         const ward = document.getElementById(`${prefix}WardSelect`);
 
-        if (!district || !ward || !provinceCode) return;
+        if (!district || !ward || !provinceCode) {
+            return;
+        }
 
         district.disabled = true;
         ward.disabled = true;
@@ -669,7 +791,9 @@
     async function loadWards(prefix, districtCode) {
         const ward = document.getElementById(`${prefix}WardSelect`);
 
-        if (!ward || !districtCode) return;
+        if (!ward || !districtCode) {
+            return;
+        }
 
         ward.disabled = true;
 
@@ -706,18 +830,21 @@
         const merchantId = btn.getAttribute("data-merchant-id");
         const addressId = btn.getAttribute("data-address-id");
         const addressFull = btn.getAttribute("data-address") || "";
-        const provinceCode = btn.getAttribute("data-province-code");
-        const districtCode = btn.getAttribute("data-district-code");
-        const wardCode = btn.getAttribute("data-ward-code");
+        const provinceCode = btn.getAttribute("data-province-code") || "";
+        const districtCode = btn.getAttribute("data-district-code") || "";
+        const wardCode = btn.getAttribute("data-ward-code") || "";
         const openTime = btn.getAttribute("data-open-time");
         const closeTime = btn.getAttribute("data-close-time");
 
         document.getElementById("editAddressMerchantId").value = merchantId;
         document.getElementById("editAddressId").value = addressId;
-        document.getElementById("editAddressOpenTime").value = formatTime(openTime);
-        document.getElementById("editAddressCloseTime").value = formatTime(closeTime);
+        document.getElementById("editAddressOpenTime").value =
+            toTimeInput(openTime, "08:00");
+        document.getElementById("editAddressCloseTime").value =
+            toTimeInput(closeTime, "22:00");
 
         const addressParts = addressFull.split(",");
+
         document.getElementById("editStreetInput").value =
             addressParts[0]?.trim() || "";
 
@@ -725,27 +852,34 @@
             await loadProvinces("edit");
 
             if (provinceCode) {
-                document.getElementById("editProvinceSelect").value = provinceCode;
+                document.getElementById("editProvinceSelect").value =
+                    provinceCode;
+
                 await loadDistricts("edit", provinceCode);
             }
 
             if (districtCode) {
-                document.getElementById("editDistrictSelect").value = districtCode;
+                document.getElementById("editDistrictSelect").value =
+                    districtCode;
+
                 await loadWards("edit", districtCode);
             }
 
             if (wardCode) {
-                document.getElementById("editWardSelect").value = wardCode;
+                document.getElementById("editWardSelect").value =
+                    wardCode;
             }
 
             new bootstrap.Modal(
                 document.getElementById("editAddressModal")
             ).show();
         } catch (error) {
+            console.error("Lỗi khi nạp địa chỉ sửa:", error);
+
             showNotice(
                 "danger",
                 "Không thể tải địa chỉ",
-                error.message
+                error.message || "Lỗi nạp dữ liệu"
             );
         }
     }
@@ -761,10 +895,14 @@
         try {
             const response = await request(
                 `/api/merchant/${merchantId}/addresses/${addressId}`,
-                { method: "DELETE" }
+                {
+                    method: "DELETE"
+                }
             );
 
-            if (!response) return;
+            if (!response) {
+                return;
+            }
 
             showNotice(
                 "success",
@@ -797,28 +935,44 @@
         document.getElementById("newProvinceSelect")
             ?.addEventListener("change", function () {
                 loadDistricts("new", this.value).catch(error => {
-                    showNotice("danger", "Lỗi tải dữ liệu", error.message);
+                    showNotice(
+                        "danger",
+                        "Lỗi tải dữ liệu",
+                        error.message
+                    );
                 });
             });
 
         document.getElementById("newDistrictSelect")
             ?.addEventListener("change", function () {
                 loadWards("new", this.value).catch(error => {
-                    showNotice("danger", "Lỗi tải dữ liệu", error.message);
+                    showNotice(
+                        "danger",
+                        "Lỗi tải dữ liệu",
+                        error.message
+                    );
                 });
             });
 
         document.getElementById("editProvinceSelect")
             ?.addEventListener("change", function () {
                 loadDistricts("edit", this.value).catch(error => {
-                    showNotice("danger", "Lỗi tải dữ liệu", error.message);
+                    showNotice(
+                        "danger",
+                        "Lỗi tải dữ liệu",
+                        error.message
+                    );
                 });
             });
 
         document.getElementById("editDistrictSelect")
             ?.addEventListener("change", function () {
                 loadWards("edit", this.value).catch(error => {
-                    showNotice("danger", "Lỗi tải dữ liệu", error.message);
+                    showNotice(
+                        "danger",
+                        "Lỗi tải dữ liệu",
+                        error.message
+                    );
                 });
             });
 
@@ -826,14 +980,27 @@
             ?.addEventListener("submit", async function (e) {
                 e.preventDefault();
 
-                const merchantId = this.getAttribute("data-merchant-id");
-                const nameInput = document.getElementById("editRestaurantName");
-                const bankNameInput = document.getElementById("editBankName");
-                const bankAccountInput = document.getElementById("editBankAccountNumber");
+                const merchantId =
+                    this.getAttribute("data-merchant-id");
+
+                const nameInput =
+                    document.getElementById("editRestaurantName");
+
+                const bankNameInput =
+                    document.getElementById("editBankName");
+
+                const bankAccountInput =
+                    document.getElementById("editBankAccountNumber");
 
                 const name = nameInput.value.trim();
-                const bankName = bankNameInput ? bankNameInput.value.trim() : "";
-                const bankAccountNumber = bankAccountInput ? bankAccountInput.value.trim() : "";
+
+                const bankName = bankNameInput
+                    ? bankNameInput.value.trim()
+                    : "";
+
+                const bankAccountNumber = bankAccountInput
+                    ? bankAccountInput.value.trim()
+                    : "";
 
                 if (!name) {
                     showNotice(
@@ -847,7 +1014,10 @@
                 const hasBankName = bankName.length > 0;
                 const hasBankAccount = bankAccountNumber.length > 0;
 
-                if ((hasBankName && !hasBankAccount) || (!hasBankName && hasBankAccount)) {
+                if (
+                    (hasBankName && !hasBankAccount) ||
+                    (!hasBankName && hasBankAccount)
+                ) {
                     showNotice(
                         "danger",
                         "Dữ liệu không hợp lệ",
@@ -869,29 +1039,36 @@
                         }
                     );
 
-                    if (!response) return;
+                    if (!response) {
+                        return;
+                    }
 
-                    // 1. Ẩn Modal Bootstrap
-                    const modalEl = document.getElementById("editMerchantModal");
-                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    const modalEl =
+                        document.getElementById("editMerchantModal");
+
+                    const modalInstance =
+                        bootstrap.Modal.getInstance(modalEl);
+
                     if (modalInstance) {
                         modalInstance.hide();
                     }
 
-                    // 2. DỌN DẸP SẠCH LỚP PHỦ XÁM (BACKDROP) BỊ KẸT
-                    document.querySelectorAll('.modal-backdrop, .merchant-notice-backdrop').forEach(el => el.remove());
-                    document.body.classList.remove('modal-open');
-                    document.body.style.removeProperty('overflow');
-                    document.body.style.removeProperty('padding-right');
+                    document
+                        .querySelectorAll(
+                            ".modal-backdrop, .merchant-notice-backdrop"
+                        )
+                        .forEach(el => el.remove());
 
-                    // 3. Hiển thị thông báo thành công
+                    document.body.classList.remove("modal-open");
+                    document.body.style.removeProperty("overflow");
+                    document.body.style.removeProperty("padding-right");
+
                     showNotice(
                         "success",
                         "Cập nhật thành công",
                         "Tên nhà hàng đã được cập nhật."
                     );
 
-                    // 4. Reload lại trang
                     setTimeout(() => location.reload(), 900);
                 } catch (error) {
                     showNotice(
@@ -901,11 +1078,14 @@
                     );
                 }
             });
+
         document.getElementById("addAddressForm")
             ?.addEventListener("submit", async function (e) {
                 e.preventDefault();
 
-                const merchantId = this.getAttribute("data-merchant-id");
+                const merchantId =
+                    this.getAttribute("data-merchant-id");
+
                 const payload = addressPayload("new");
 
                 if (!payload) {
@@ -917,8 +1097,11 @@
                     return;
                 }
 
-                payload.merchantOpenTime = timeValue("newOpenTime");
-                payload.merchantCloseTime = timeValue("newCloseTime");
+                payload.merchantOpenTime =
+                    timeValue("newOpenTime");
+
+                payload.merchantCloseTime =
+                    timeValue("newCloseTime");
 
                 try {
                     const response = await request(
@@ -929,7 +1112,9 @@
                         }
                     );
 
-                    if (!response) return;
+                    if (!response) {
+                        return;
+                    }
 
                     showNotice(
                         "success",
@@ -938,7 +1123,9 @@
                     );
 
                     bootstrap.Modal
-                        .getInstance(document.getElementById("addAddressModal"))
+                        .getInstance(
+                            document.getElementById("addAddressModal")
+                        )
                         ?.hide();
 
                     setTimeout(() => location.reload(), 900);
@@ -956,10 +1143,14 @@
                 e.preventDefault();
 
                 const merchantId =
-                    document.getElementById("editAddressMerchantId").value;
+                    document.getElementById(
+                        "editAddressMerchantId"
+                    ).value;
 
                 const addressId =
-                    document.getElementById("editAddressId").value;
+                    document.getElementById(
+                        "editAddressId"
+                    ).value;
 
                 const payload = addressPayload("edit");
 
@@ -972,8 +1163,11 @@
                     return;
                 }
 
-                payload.merchantOpenTime = timeValue("editAddressOpenTime");
-                payload.merchantCloseTime = timeValue("editAddressCloseTime");
+                payload.merchantOpenTime =
+                    timeValue("editAddressOpenTime");
+
+                payload.merchantCloseTime =
+                    timeValue("editAddressCloseTime");
 
                 try {
                     const response = await request(
@@ -984,7 +1178,9 @@
                         }
                     );
 
-                    if (!response) return;
+                    if (!response) {
+                        return;
+                    }
 
                     showNotice(
                         "success",
@@ -993,7 +1189,9 @@
                     );
 
                     bootstrap.Modal
-                        .getInstance(document.getElementById("editAddressModal"))
+                        .getInstance(
+                            document.getElementById("editAddressModal")
+                        )
                         ?.hide();
 
                     setTimeout(() => location.reload(), 900);
