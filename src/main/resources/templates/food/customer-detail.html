@@ -87,10 +87,6 @@
 
 <!-- Bootstrap 5 JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<<<<<<< HEAD
-=======
-<script th:src="@{/js/navbar.js}"></script>
->>>>>>> hung
 
 <!-- Detail Image Gallery & Quick Order Scripts -->
 <script th:inline="javascript">
@@ -100,14 +96,10 @@
         name: /*[[${food.foodName}]]*/ "",
         price: /*[[${food.price}]]*/ 0,
         discountPrice: /*[[${food.discountPrice}]]*/ null,
-<<<<<<< HEAD
         serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0,
         merchantId: /*[[${food.merchant != null ? food.merchant.id : ''}]]*/ "",
         merchantName: /*[[${food.merchant != null ? food.merchant.merchantRestaurantName : ''}]]*/ "",
         image: /*[[${foodImagesList != null && !foodImagesList.isEmpty() ? foodImagesList[0] : ''}]]*/ ""
-=======
-        serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0
->>>>>>> hung
     };
 
     // Danh sách ảnh từ backend

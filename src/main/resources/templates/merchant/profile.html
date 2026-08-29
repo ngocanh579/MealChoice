@@ -111,7 +111,7 @@
                         Ngân hàng nhận tiền
                     </label>
                     <div class="fw-semibold text-dark"
-                         th:text="${merchant.bankName != null && !merchant.bankName.isBlank() ? merchant.bankName : 'Chưa cập nhật'}">
+                         th:text="${merchant.bankName != null and !merchant.bankName.isBlank() ? merchant.bankName : 'Chưa cập nhật'}">
                         Vietcombank
                     </div>
                 </div>
@@ -121,7 +121,7 @@
                         Số tài khoản ngân hàng
                     </label>
                     <div class="fw-bold text-danger font-monospace fs-6"
-                         th:text="${merchant.bankAccountNumber != null && !merchant.bankAccountNumber.isBlank() ? merchant.bankAccountNumber : 'Chưa cập nhật'}">
+                         th:text="${merchant.bankAccountNumber != null and !merchant.bankAccountNumber.isBlank() ? merchant.bankAccountNumber : 'Chưa cập nhật'}">
                         999888777666
                     </div>
                 </div>
@@ -702,33 +702,23 @@
         ).show();
     }
 
-<<<<<<< HEAD
     function toTimeInput(value, defaultVal = "08:00") {
         if (!value || value === "--") return defaultVal;
         return value.length >= 5 ? value.substring(0, 5) : defaultVal;
     }
 
-=======
->>>>>>> hung
     async function openEditAddressModal(btn) {
         const merchantId = btn.getAttribute("data-merchant-id");
         const addressId = btn.getAttribute("data-address-id");
         const addressFull = btn.getAttribute("data-address") || "";
-<<<<<<< HEAD
         let provinceCode = btn.getAttribute("data-province-code") || "";
         let districtCode = btn.getAttribute("data-district-code") || "";
         let wardCode = btn.getAttribute("data-ward-code") || "";
-=======
-        const provinceCode = btn.getAttribute("data-province-code");
-        const districtCode = btn.getAttribute("data-district-code");
-        const wardCode = btn.getAttribute("data-ward-code");
->>>>>>> hung
         const openTime = btn.getAttribute("data-open-time");
         const closeTime = btn.getAttribute("data-close-time");
 
         document.getElementById("editAddressMerchantId").value = merchantId;
         document.getElementById("editAddressId").value = addressId;
-<<<<<<< HEAD
         document.getElementById("editAddressOpenTime").value = toTimeInput(openTime, "08:00");
         document.getElementById("editAddressCloseTime").value = toTimeInput(closeTime, "22:00");
 
@@ -805,48 +795,17 @@
                 document.getElementById("editDistrictSelect").disabled = false;
                 document.getElementById("editWardSelect").innerHTML = `<option value="${wName}" selected>${wName}</option>`;
                 document.getElementById("editWardSelect").disabled = false;
-=======
-        document.getElementById("editAddressOpenTime").value = formatTime(openTime);
-        document.getElementById("editAddressCloseTime").value = formatTime(closeTime);
-
-        const addressParts = addressFull.split(",");
-        document.getElementById("editStreetInput").value =
-            addressParts[0]?.trim() || "";
-
-        try {
-            await loadProvinces("edit");
-
-            if (provinceCode) {
-                document.getElementById("editProvinceSelect").value = provinceCode;
-                await loadDistricts("edit", provinceCode);
-            }
-
-            if (districtCode) {
-                document.getElementById("editDistrictSelect").value = districtCode;
-                await loadWards("edit", districtCode);
-            }
-
-            if (wardCode) {
-                document.getElementById("editWardSelect").value = wardCode;
->>>>>>> hung
             }
 
             new bootstrap.Modal(
                 document.getElementById("editAddressModal")
             ).show();
         } catch (error) {
-<<<<<<< HEAD
             console.error("Lỗi khi nạp địa chỉ sửa:", error);
             showNotice(
                 "danger",
                 "Không thể tải địa chỉ",
                 error.message || "Lỗi nạp dữ liệu"
-=======
-            showNotice(
-                "danger",
-                "Không thể tải địa chỉ",
-                error.message
->>>>>>> hung
             );
         }
     }

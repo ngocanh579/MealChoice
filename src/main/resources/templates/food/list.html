@@ -119,7 +119,7 @@
                     </tr>
 
                     <!-- 2. EMPTY STATE: CHỈ HIỂN THỊ KHI DANH SÁCH THỰC SỰ RỖNG -->
-                    <tr th:if="${foods == null || #lists.isEmpty(foods)}">
+                    <tr th:if="${foods == null or #lists.isEmpty(foods)}">
                         <td colspan="13" class="text-center py-5">
                             <div class="py-4">
                                 <i class="bi bi-inbox fs-1 d-block mb-3 text-muted opacity-50"></i>
@@ -136,7 +136,7 @@
                     </tr>
 
                     <!-- 3. DANH SÁCH MÓN ĂN -->
-                    <tr th:unless="${foods == null || #lists.isEmpty(foods)}"
+                    <tr th:unless="${foods == null or #lists.isEmpty(foods)}"
                         th:each="food : ${foods}"
                         class="food-row"
                         th:id="'food-row-' + ${food.id}">
@@ -146,17 +146,17 @@
                             <div class="d-flex align-items-center gap-3">
                                 <!-- IMAGE -->
                                 <div class="position-relative flex-shrink-0" style="width: 56px; height: 56px;">
-                                    <img th:if="${food.imageUrls != null && !#lists.isEmpty(food.imageUrls)}"
+                                    <img th:if="${food.imageUrls != null and !#lists.isEmpty(food.imageUrls)}"
                                          th:src="${food.imageUrls[0]}"
                                          alt="Ảnh món ăn"
                                          class="w-100 h-100 rounded-3 object-fit-cover border shadow-sm">
 
-                                    <div th:unless="${food.imageUrls != null && !#lists.isEmpty(food.imageUrls)}"
+                                    <div th:unless="${food.imageUrls != null and !#lists.isEmpty(food.imageUrls)}"
                                          class="w-100 h-100 rounded-3 bg-light d-flex align-items-center justify-content-center text-secondary border">
                                         <i class="bi bi-image fs-4"></i>
                                     </div>
 
-                                    <span th:if="${food.imageUrls != null && #lists.size(food.imageUrls) > 1}"
+                                    <span th:if="${food.imageUrls != null and #lists.size(food.imageUrls) > 1}"
                                           class="position-absolute bottom-0 end-0 bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm"
                                           style="width: 20px; height: 20px; font-size: 9px; opacity: 0.85; transform: translate(20%, 20%);"
                                           th:text="'+' + (${#lists.size(food.imageUrls)} - 1)">
@@ -183,15 +183,15 @@
                         <!-- CATEGORY -->
                         <td>
                             <div class="d-flex flex-wrap align-items-center gap-1" style="max-width: 220px;">
-                                <span th:if="${food.categoryNames == null || #lists.isEmpty(food.categoryNames)}"
+                                <span th:if="${food.categoryNames == null or #lists.isEmpty(food.categoryNames)}"
                                       class="text-muted small">Chưa có</span>
-                                <span th:if="${food.categoryNames != null && #lists.size(food.categoryNames) >= 1}"
+                                <span th:if="${food.categoryNames != null and #lists.size(food.categoryNames) >= 1}"
                                       class="badge bg-light text-dark border rounded-pill px-2 py-1 font-size-12 fw-medium"
                                       th:text="${food.categoryNames[0]}">Cơm & Món Việt</span>
-                                <span th:if="${food.categoryNames != null && #lists.size(food.categoryNames) >= 2}"
+                                <span th:if="${food.categoryNames != null and #lists.size(food.categoryNames) >= 2}"
                                       class="badge bg-light text-dark border rounded-pill px-2 py-1 font-size-12 fw-medium"
                                       th:text="${food.categoryNames[1]}">Bún / Phở / Mì</span>
-                                <span th:if="${food.categoryNames != null && #lists.size(food.categoryNames) > 2}"
+                                <span th:if="${food.categoryNames != null and #lists.size(food.categoryNames) > 2}"
                                       class="badge bg-secondary-subtle text-secondary border rounded-pill px-2 py-1 font-size-12 fw-bold"
                                       th:title="${#strings.listJoin(food.categoryNames, ', ')}"
                                       th:text="'+' + (${#lists.size(food.categoryNames)} - 2)">+2</span>
@@ -201,15 +201,15 @@
                         <!-- TAG -->
                         <td>
                             <div class="d-flex flex-wrap align-items-center gap-1" style="max-width: 220px;">
-                                <span th:if="${food.tagNames == null || #lists.isEmpty(food.tagNames)}"
+                                <span th:if="${food.tagNames == null or #lists.isEmpty(food.tagNames)}"
                                       class="text-muted small">Chưa có</span>
-                                <span th:if="${food.tagNames != null && #lists.size(food.tagNames) >= 1}"
+                                <span th:if="${food.tagNames != null and #lists.size(food.tagNames) >= 1}"
                                       class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 font-size-12 fw-medium"
                                       th:text="${food.tagNames[0]}">Bán chạy</span>
-                                <span th:if="${food.tagNames != null && #lists.size(food.tagNames) >= 2}"
+                                <span th:if="${food.tagNames != null and #lists.size(food.tagNames) >= 2}"
                                       class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 font-size-12 fw-medium"
                                       th:text="${food.tagNames[1]}">Món mới</span>
-                                <span th:if="${food.tagNames != null && #lists.size(food.tagNames) > 2}"
+                                <span th:if="${food.tagNames != null and #lists.size(food.tagNames) > 2}"
                                       class="badge bg-secondary-subtle text-secondary border rounded-pill px-2 py-1 font-size-12 fw-bold"
                                       th:title="${#strings.listJoin(food.tagNames, ', ')}"
                                       th:text="'+' + (${#lists.size(food.tagNames)} - 2)">+3</span>
@@ -222,13 +222,13 @@
                                 <i class="bi bi-geo-alt-fill text-danger mt-1 flex-shrink-0"></i>
                                 <span class="small text-dark text-truncate"
                                       style="max-width: 140px;"
-                                      th:if="${food.merchantAddress != null && !#strings.isEmpty(food.merchantAddress)}"
+                                      th:if="${food.merchantAddress != null and !#strings.isEmpty(food.merchantAddress)}"
                                       th:title="${food.merchantAddress}"
                                       th:text="${#strings.length(food.merchantAddress) > 25 ? #strings.substring(food.merchantAddress, 0, 25) + '...' : food.merchantAddress}">
                     123 Nguyễn Trãi...
                 </span>
                                 <span class="text-muted small"
-                                      th:unless="${food.merchantAddress != null && !#strings.isEmpty(food.merchantAddress)}">
+                                      th:unless="${food.merchantAddress != null and !#strings.isEmpty(food.merchantAddress)}">
                     Chưa có
                 </span>
                             </div>
@@ -236,7 +236,7 @@
 
                         <!-- GIỜ MỞ/ĐÓNG CỬA -->
                         <td class="text-center">
-                            <div th:if="${food.merchantOpenTime != null && food.merchantCloseTime != null}"
+                            <div th:if="${food.merchantOpenTime != null and food.merchantCloseTime != null}"
                                  class="d-inline-flex flex-column align-items-center">
                 <span class="small fw-semibold text-dark">
                     <i class="bi bi-clock text-danger me-1"></i>
@@ -246,7 +246,7 @@
                     - <span th:text="${#temporals.format(food.merchantCloseTime, 'HH:mm')}">22:00</span>
                 </span>
                             </div>
-                            <span th:unless="${food.merchantOpenTime != null && food.merchantCloseTime != null}"
+                            <span th:unless="${food.merchantOpenTime != null and food.merchantCloseTime != null}"
                                   class="text-muted small">
                 Chưa cập nhật
             </span>

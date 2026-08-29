@@ -80,7 +80,7 @@
 
                             <div class="p-3 bg-light rounded-3 border-0">
 
-                                <div th:if="${tags == null || #lists.isEmpty(tags)}"
+                                <div th:if="${tags == null or #lists.isEmpty(tags)}"
                                      class="text-muted small">
                                     Chưa có tag nào.
                                 </div>
