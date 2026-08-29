@@ -1,4 +1,7 @@
 package vn.codegyme.meal_choice.entity;
 
-public class PaymentStatus {
+public enum PaymentStatus {
+    UNPAID,
+    PAID,
+    REFUNDED
 }
