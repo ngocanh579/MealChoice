@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán - Trưa Nay Ăn Gì</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: system-ui, -apple-system, sans-serif; }
+        .card { border: none; border-radius: 1rem; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
+        .btn-danger-brand { background-color: #e23744; border-color: #e23744; color: #fff; }
+        .btn-danger-brand:hover { background-color: #d02b37; border-color: #d02b37; color: #fff; }
+        .address-option, .payment-option { cursor: pointer; border: 1.5px solid #e9ecef; border-radius: 0.75rem; }
+        .address-option.selected, .payment-option.selected { border-color: #e23744; background: #fff5f5; }
+        .food-thumb-sm { width: 44px; height: 44px; object-fit: cover; border-radius: 0.5rem; background: #f1f1f1; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<main class="container py-4" style="max-width: 900px;">
+
+    <h1 class="h3 fw-bold mb-4"><i class="bi bi-credit-card-2-front-fill text-danger me-2"></i>Xác nhận đơn hàng</h1>
+
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-danger" role="status"></div>
+        <p class="text-muted mt-2">Đang tải thông tin...</p>
+    </div>
+
+    <div id="checkoutContent" class="d-none">
+
+        <!-- Địa chỉ giao hàng -->
+        <div class="card p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Địa chỉ giao hàng</h6>
+                <a href="/user/profile" class="fs-8 text-decoration-none">+ Thêm địa chỉ mới</a>
+            </div>
+            <div id="addressList"></div>
+            <div id="noAddressState" class="d-none text-center text-muted py-3">
+                Bạn chưa có địa chỉ giao hàng.
+                <a href="/user/profile">Thêm địa chỉ ngay</a>
+            </div>
+        </div>
+
+        <!-- Danh sách món theo từng quán -->
+        <div id="orderGroups"></div>
+
+        <!-- Phương thức thanh toán -->
+        <div class="card p-3 mb-3">
+            <h6 class="fw-bold mb-2"><i class="bi bi-wallet2 text-danger me-1"></i>Phương thức thanh toán</h6>
+            <div class="d-flex gap-2 flex-wrap">
+                <div class="payment-option selected p-3 flex-grow-1" style="min-width:200px;" data-value="COD" onclick="selectPayment('COD')">
+                    <i class="bi bi-cash-coin fs-4 text-success"></i>
+                    <div class="fw-semibold">Thanh toán khi nhận hàng (COD)</div>
+                </div>
+                <div class="payment-option p-3 flex-grow-1 opacity-50" style="min-width:200px;" title="Sắp ra mắt">
+                    <i class="bi bi-credit-card fs-4 text-secondary"></i>
+                    <div class="fw-semibold">Thanh toán online <span class="badge bg-secondary">Sắp ra mắt</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ghi chú -->
+        <div class="card p-3 mb-3">
+            <h6 class="fw-bold mb-2"><i class="bi bi-chat-left-text text-danger me-1"></i>Ghi chú cho đơn hàng</h6>
+            <textarea class="form-control" id="orderNote" rows="2" placeholder="VD: Giao giờ hành chính, gọi trước khi đến..."></textarea>
+        </div>
+
+        <!-- Tổng kết -->
+        <div class="card p-3 mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">Tạm tính</span>
+                <span id="sumSubtotal">0 đ</span>
+            </div>
+            <p class="text-muted fs-8 mb-0">Phí dịch vụ &amp; phí giao hàng sẽ được tính chính xác cho từng quán sau khi đặt hàng.</p>
+        </div>
+
+        <button type="button" class="btn btn-danger-brand w-100 rounded-pill py-3 fw-bold fs-5" id="btnPlaceOrder">
+            Đặt hàng
+        </button>
+    </div>
+
+    <!-- Kết quả sau khi đặt hàng -->
+    <div id="resultState" class="d-none text-center py-5">
+        <i class="bi bi-check-circle-fill text-success display-1"></i>
+        <h4 class="fw-bold mt-3">Đặt hàng thành công!</h4>
+        <p class="text-muted" id="resultSummary"></p>
+        <div class="d-flex justify-content-center gap-2 mt-3">
+            <a href="/orders" class="btn btn-danger-brand rounded-pill px-4">Xem đơn hàng của tôi</a>
+            <a href="/" class="btn btn-outline-secondary rounded-pill px-4">Về trang chủ</a>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    let selectedAddressId = null;
+    let selectedPaymentMethod = 'COD';
+    let checkoutCart = null;
+    let checkoutMerchantIds = [];
+
+    async function init() {
+        try {
+            const raw = sessionStorage.getItem('checkoutMerchantIds');
+            checkoutMerchantIds = raw ? JSON.parse(raw) : [];
+
+            const [cart, addressRes] = await Promise.all([apiGetCart(), loadAddresses()]);
+            checkoutCart = cart;
+
+            if (checkoutMerchantIds.length === 0) {
+                checkoutMerchantIds = (cart.merchantGroups || []).map(g => g.merchantId);
+            }
+
+            renderAddresses(addressRes);
+            renderOrderGroups();
+
+            document.getElementById('loadingState').classList.add('d-none');
+            document.getElementById('checkoutContent').classList.remove('d-none');
+        } catch (e) {
+            document.getElementById('loadingState').innerHTML =
+                `<p class="text-danger">${escapeHtml(e.message || 'Không tải được thông tin thanh toán')}</p>
+                 <a href="/cart" class="btn btn-outline-danger rounded-pill mt-2">Quay lại giỏ hàng</a>`;
+        }
+    }
+
+    async function loadAddresses() {
+        const res = await fetchWithAuth('/api/user/address');
+        if (!res.ok) throw new Error('Không tải được danh sách địa chỉ');
+        const body = await res.json();
+        return body.data || [];
+    }
+
+    function renderAddresses(addresses) {
+        const listEl = document.getElementById('addressList');
+        const emptyEl = document.getElementById('noAddressState');
+
+        if (!addresses || addresses.length === 0) {
+            listEl.innerHTML = '';
+            emptyEl.classList.remove('d-none');
+            return;
+        }
+
+        const defaultAddr = addresses.find(a => a.isDefault) || addresses[0];
+        selectedAddressId = defaultAddr.id;
+
+        listEl.innerHTML = addresses.map(addr => `
+            <div class="address-option p-3 mb-2 ${addr.id === selectedAddressId ? 'selected' : ''}"
+                 id="addr-${addr.id}" onclick="selectAddress(${addr.id})">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <strong>${escapeHtml(addr.contactName)}</strong> - ${escapeHtml(addr.contactPhone)}
+                        ${addr.isDefault ? '<span class="badge bg-danger ms-1">Mặc định</span>' : ''}
+                    </div>
+                </div>
+                <div class="text-muted fs-8">${escapeHtml(addr.street)}, ${escapeHtml(addr.ward)}, ${escapeHtml(addr.district)}, ${escapeHtml(addr.city)}</div>
+            </div>
+        `).join('');
+    }
+
+    function selectAddress(id) {
+        selectedAddressId = id;
+        document.querySelectorAll('.address-option').forEach(el => el.classList.remove('selected'));
+        document.getElementById(`addr-${id}`)?.classList.add('selected');
+    }
+
+    function selectPayment(method) {
+        selectedPaymentMethod = method;
+        document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+    }
+
+    function renderOrderGroups() {
+        const groups = (checkoutCart.merchantGroups || []).filter(g => checkoutMerchantIds.includes(g.merchantId));
+        const container = document.getElementById('orderGroups');
+
+        let subtotal = 0;
+
+        container.innerHTML = groups.map(group => {
+            const itemsHtml = (group.items || []).filter(it => it.available).map(item => {
+                subtotal += item.subtotal;
+                return `
+                    <div class="d-flex align-items-center gap-2 py-1">
+                        <img src="${item.foodImageUrl || 'https://via.placeholder.com/44'}" class="food-thumb-sm" alt="">
+                        <div class="flex-grow-1 fs-8">
+                            <span class="fw-semibold">${escapeHtml(item.foodName)}</span> x${item.quantity}
+                        </div>
+                        <span class="fs-8 fw-semibold">${formatVnd(item.subtotal)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="card p-3 mb-3">
+                    <h6 class="fw-bold mb-2"><i class="bi bi-shop text-danger me-1"></i>${escapeHtml(group.merchantName)}</h6>
+                    ${itemsHtml}
+                </div>
+            `;
+        }).join('');
+
+        document.getElementById('sumSubtotal').innerText = formatVnd(subtotal);
+    }
+
+    document.getElementById('btnPlaceOrder').addEventListener('click', async () => {
+        if (!selectedAddressId) {
+            alert('Vui lòng chọn địa chỉ giao hàng!');
+            return;
+        }
+
+        const btn = document.getElementById('btnPlaceOrder');
+        btn.disabled = true;
+        btn.innerText = 'Đang xử lý...';
+
+        try {
+            const res = await fetchWithAuth('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    addressId: selectedAddressId,
+                    paymentMethod: selectedPaymentMethod,
+                    note: document.getElementById('orderNote').value || null,
+                    merchantSelections: checkoutMerchantIds.map(id => ({ merchantId: id }))
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => null);
+                throw new Error(err?.message || 'Đặt hàng thất bại');
+            }
+
+            const data = await res.json();
+            sessionStorage.removeItem('checkoutMerchantIds');
+
+            document.getElementById('checkoutContent').classList.add('d-none');
+            document.getElementById('resultState').classList.remove('d-none');
+            document.getElementById('resultSummary').innerText =
+                `Đã tạo ${data.orders.length} đơn hàng, tổng cộng ${formatVnd(data.grandTotal)}.`;
+
+            if (typeof refreshNavbarCart === 'function') refreshNavbarCart();
+
+        } catch (e) {
+            alert(e.message || 'Có lỗi xảy ra, vui lòng thử lại!');
+            btn.disabled = false;
+            btn.innerText = 'Đặt hàng';
+        }
+    });
+
+    init();
+</script>
+
+</body>
+</html>

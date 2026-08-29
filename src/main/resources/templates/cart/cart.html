@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ hàng - Trưa Nay Ăn Gì</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: system-ui, -apple-system, sans-serif; }
+        .card { border: none; border-radius: 1rem; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
+        .btn-danger-brand { background-color: #e23744; border-color: #e23744; color: #fff; }
+        .btn-danger-brand:hover { background-color: #d02b37; border-color: #d02b37; color: #fff; }
+        .food-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 0.75rem; background: #f1f1f1; }
+        .qty-btn { width: 28px; height: 28px; padding: 0; line-height: 1; }
+        .summary-bar { position: sticky; bottom: 0; z-index: 10; }
+        .unavailable-row { opacity: 0.55; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<main class="container py-4" style="max-width: 900px;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 fw-bold mb-0"><i class="bi bi-basket2-fill text-danger me-2"></i>Giỏ hàng của bạn</h1>
+        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" id="btnClearCart">
+            <i class="bi bi-trash3 me-1"></i>Xóa giỏ hàng
+        </button>
+    </div>
+
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-danger" role="status"></div>
+        <p class="text-muted mt-2">Đang tải giỏ hàng...</p>
+    </div>
+
+    <div id="emptyState" class="d-none text-center py-5">
+        <i class="bi bi-bag-x display-1 text-secondary opacity-50"></i>
+        <p class="text-muted mt-3 fs-5">Giỏ hàng của bạn đang trống</p>
+        <a href="/" class="btn btn-danger-brand rounded-pill px-4 mt-2">Khám phá món ngon</a>
+    </div>
+
+    <div id="cartGroups"></div>
+
+    <div id="summaryBar" class="d-none bg-white summary-bar border-top rounded-4 shadow-lg p-3 mt-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <div class="text-muted fs-8">Đã chọn <span id="selectedCount">0</span> món</div>
+                <div class="fs-5 fw-bold text-danger">Tạm tính: <span id="selectedTotal">0 đ</span></div>
+            </div>
+            <button type="button" class="btn btn-danger-brand rounded-pill px-4 py-2 fw-bold" id="btnGoCheckout">
+                Tiến hành đặt hàng <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    let currentCart = null;
+    const selectedMerchants = new Set();
+
+    async function loadCart() {
+        document.getElementById('loadingState').classList.remove('d-none');
+        document.getElementById('emptyState').classList.add('d-none');
+        document.getElementById('cartGroups').innerHTML = '';
+        document.getElementById('summaryBar').classList.add('d-none');
+
+        try {
+            currentCart = await apiGetCart();
+            renderCart();
+        } catch (e) {
+            document.getElementById('loadingState').innerHTML =
+                `<p class="text-danger">${escapeHtml(e.message || 'Không tải được giỏ hàng')}</p>`;
+        }
+    }
+
+    function renderCart() {
+        document.getElementById('loadingState').classList.add('d-none');
+
+        const groups = currentCart.merchantGroups || [];
+        if (groups.length === 0) {
+            document.getElementById('emptyState').classList.remove('d-none');
+            return;
+        }
+
+        // Mặc định chọn tất cả các quán còn khả dụng
+        groups.forEach(g => {
+            if (g.merchantAvailable && !selectedMerchants.has(g.merchantId) && !selectedMerchants.has('__init_' + g.merchantId)) {
+                selectedMerchants.add(g.merchantId);
+            }
+        });
+
+        const container = document.getElementById('cartGroups');
+        container.innerHTML = groups.map(group => renderMerchantGroup(group)).join('');
+
+        updateSummary();
+        document.getElementById('summaryBar').classList.remove('d-none');
+    }
+
+    function renderMerchantGroup(group) {
+        const checked = group.merchantAvailable && selectedMerchants.has(group.merchantId) ? 'checked' : '';
+        const disabled = group.merchantAvailable ? '' : 'disabled';
+
+        const itemsHtml = (group.items || []).map(item => `
+            <div class="d-flex align-items-center gap-3 py-2 border-bottom border-light-subtle ${!item.available ? 'unavailable-row' : ''}">
+                <img src="${item.foodImageUrl || 'https://via.placeholder.com/64'}" class="food-thumb" alt="">
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-dark">${escapeHtml(item.foodName)}</div>
+                    ${!item.available
+                        ? `<span class="badge bg-warning text-dark">${escapeHtml(item.unavailableReason || 'Không khả dụng')}</span>`
+                        : `<div class="fs-8 text-muted">
+                                ${item.originalPrice ? `<span class="text-decoration-line-through me-1">${formatVnd(item.originalPrice)}</span>` : ''}
+                                <span class="text-danger fw-semibold">${formatVnd(item.unitPrice)}</span>
+                           </div>`
+                    }
+                    ${item.note ? `<div class="fs-8 text-muted fst-italic">Ghi chú: ${escapeHtml(item.note)}</div>` : ''}
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle qty-btn"
+                            onclick="changeQty(${item.cartItemId}, ${item.quantity - 1})">-</button>
+                    <span class="fw-bold" style="min-width: 20px; text-align:center;">${item.quantity}</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle qty-btn"
+                            onclick="changeQty(${item.cartItemId}, ${item.quantity + 1})">+</button>
+                    <button type="button" class="btn btn-sm btn-link text-danger ms-2" title="Xóa món"
+                            onclick="removeItem(${item.cartItemId})">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </div>
+                <div class="fw-bold text-dark" style="min-width: 90px; text-align:right;">
+                    ${item.available ? formatVnd(item.subtotal) : ''}
+                </div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="card mb-3 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                    <div class="form-check d-flex align-items-center gap-2">
+                        <input class="form-check-input" type="checkbox" style="width:1.2em;height:1.2em;"
+                               id="merchant-${group.merchantId}" ${checked} ${disabled}
+                               onchange="toggleMerchant('${group.merchantId}', this.checked)">
+                        <label class="form-check-label fw-bold fs-6 text-dark" for="merchant-${group.merchantId}">
+                            <i class="bi bi-shop me-1 text-danger"></i>${escapeHtml(group.merchantName)}
+                        </label>
+                    </div>
+                    ${!group.merchantAvailable ? '<span class="badge bg-secondary">Quán hiện không khả dụng</span>' : ''}
+                </div>
+                ${itemsHtml}
+                <div class="d-flex justify-content-end gap-4 pt-2 fs-8 text-muted">
+                    <span>Tạm tính: <strong class="text-dark">${formatVnd(group.merchantSubtotal)}</strong></span>
+                    <span>Phí dịch vụ: <strong class="text-dark">${formatVnd(group.merchantServiceFee)}</strong></span>
+                </div>
+            </div>
+        `;
+    }
+
+    function toggleMerchant(merchantId, checked) {
+        if (checked) selectedMerchants.add(merchantId);
+        else selectedMerchants.delete(merchantId);
+        updateSummary();
+    }
+
+    function updateSummary() {
+        const groups = (currentCart.merchantGroups || []).filter(g => selectedMerchants.has(g.merchantId));
+        let count = 0;
+        let total = 0;
+        groups.forEach(g => {
+            (g.items || []).forEach(it => { if (it.available) { count += it.quantity; total += it.subtotal; } });
+        });
+        document.getElementById('selectedCount').innerText = count;
+        document.getElementById('selectedTotal').innerText = formatVnd(total);
+    }
+
+    async function changeQty(cartItemId, newQty) {
+        try {
+            if (newQty <= 0) {
+                currentCart = await apiRemoveCartItem(cartItemId);
+            } else {
+                currentCart = await apiUpdateCartItem(cartItemId, newQty, null);
+            }
+            renderCart();
+            if (typeof renderNavbarCart === 'function') renderNavbarCart(currentCart);
+        } catch (e) {
+            alert(e.message || 'Có lỗi xảy ra, vui lòng thử lại!');
+        }
+    }
+
+    async function removeItem(cartItemId) {
+        try {
+            currentCart = await apiRemoveCartItem(cartItemId);
+            renderCart();
+            if (typeof renderNavbarCart === 'function') renderNavbarCart(currentCart);
+        } catch (e) {
+            alert(e.message || 'Xóa món thất bại!');
+        }
+    }
+
+    document.getElementById('btnClearCart').addEventListener('click', async () => {
+        if (!confirm('Bạn chắc chắn muốn xóa toàn bộ giỏ hàng?')) return;
+        try {
+            currentCart = await apiClearCart();
+            selectedMerchants.clear();
+            renderCart();
+            if (typeof renderNavbarCart === 'function') renderNavbarCart(currentCart);
+        } catch (e) {
+            alert(e.message || 'Xóa giỏ hàng thất bại!');
+        }
+    });
+
+    document.getElementById('btnGoCheckout').addEventListener('click', () => {
+        if (selectedMerchants.size === 0) {
+            alert('Vui lòng chọn ít nhất 1 quán để đặt hàng!');
+            return;
+        }
+        sessionStorage.setItem('checkoutMerchantIds', JSON.stringify(Array.from(selectedMerchants)));
+        window.location.href = '/checkout';
+    });
+
+    loadCart();
+</script>
+
+</body>
+</html>

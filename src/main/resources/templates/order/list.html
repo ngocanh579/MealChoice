@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng của tôi - Trưa Nay Ăn Gì</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: system-ui, -apple-system, sans-serif; }
+        .card { border: none; border-radius: 1rem; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
+        .order-card { cursor: pointer; transition: transform .15s ease; }
+        .order-card:hover { transform: translateY(-2px); }
+        .status-tabs .nav-link { border-radius: 999px; margin-right: 6px; color: #495057; }
+        .status-tabs .nav-link.active { background-color: #e23744; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<main class="container py-4" style="max-width: 900px;">
+
+    <h1 class="h3 fw-bold mb-4"><i class="bi bi-receipt text-danger me-2"></i>Đơn hàng của tôi</h1>
+
+    <ul class="nav status-tabs mb-4 flex-nowrap overflow-auto" id="statusTabs">
+        <li class="nav-item"><a class="nav-link active" href="#" data-status="">Tất cả</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-status="PENDING">Chờ xác nhận</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-status="CONFIRMED">Đã xác nhận</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-status="PREPARING">Đang chuẩn bị</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-status="DELIVERING">Đang giao</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-status="COMPLETED">Hoàn thành</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-status="CANCELLED">Đã hủy</a></li>
+    </ul>
+
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-danger" role="status"></div>
+    </div>
+
+    <div id="emptyState" class="d-none text-center py-5">
+        <i class="bi bi-receipt-cutoff display-1 text-secondary opacity-50"></i>
+        <p class="text-muted mt-3 fs-5">Chưa có đơn hàng nào</p>
+        <a href="/" class="btn btn-danger rounded-pill px-4">Đặt món ngay</a>
+    </div>
+
+    <div id="orderList"></div>
+
+    <nav id="pagination" class="d-none mt-4">
+        <ul class="pagination justify-content-center" id="paginationList"></ul>
+    </nav>
+
+</main>
+
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    let currentStatus = '';
+    let currentPage = 0;
+
+    const statusLabels = {
+        PENDING: { text: 'Chờ xác nhận', cls: 'bg-warning text-dark' },
+        CONFIRMED: { text: 'Đã xác nhận', cls: 'bg-info text-dark' },
+        PREPARING: { text: 'Đang chuẩn bị', cls: 'bg-primary' },
+        DELIVERING: { text: 'Đang giao', cls: 'bg-primary' },
+        COMPLETED: { text: 'Hoàn thành', cls: 'bg-success' },
+        CANCELLED: { text: 'Đã hủy', cls: 'bg-secondary' }
+    };
+
+    function formatDate(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function loadOrders() {
+        document.getElementById('loadingState').classList.remove('d-none');
+        document.getElementById('emptyState').classList.add('d-none');
+        document.getElementById('orderList').innerHTML = '';
+        document.getElementById('pagination').classList.add('d-none');
+
+        try {
+            const params = new URLSearchParams({ page: currentPage, size: 10 });
+            if (currentStatus) params.set('status', currentStatus);
+
+            const res = await fetchWithAuth(`/api/orders?${params.toString()}`);
+            if (!res.ok) throw new Error('Không tải được danh sách đơn hàng');
+            const page = await res.json();
+
+            document.getElementById('loadingState').classList.add('d-none');
+
+            if (!page.content || page.content.length === 0) {
+                document.getElementById('emptyState').classList.remove('d-none');
+                return;
+            }
+
+            renderOrders(page.content);
+            renderPagination(page);
+        } catch (e) {
+            document.getElementById('loadingState').innerHTML = `<p class="text-danger">${escapeHtml(e.message)}</p>`;
+        }
+    }
+
+    function renderOrders(orders) {
+        document.getElementById('orderList').innerHTML = orders.map(o => {
+            const status = statusLabels[o.status] || { text: o.status, cls: 'bg-secondary' };
+            return `
+                <div class="card order-card p-3 mb-3" onclick="window.location.href='/orders/${o.id}'">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-bold text-dark">#${escapeHtml(o.orderCode)}</div>
+                            <div class="text-muted fs-8"><i class="bi bi-shop me-1"></i>${escapeHtml(o.merchantName)}</div>
+                            <div class="text-muted fs-8">${formatDate(o.createdAt)} · ${o.totalItemQuantity} món</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge ${status.cls} mb-2">${status.text}</span>
+                            <div class="fw-bold text-danger">${formatVnd(o.totalAmount)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderPagination(page) {
+        if (page.totalPages <= 1) return;
+
+        const listEl = document.getElementById('paginationList');
+        let html = '';
+
+        html += `<li class="page-item ${page.first ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="goToPage(${page.number - 1}); return false;">&laquo;</a>
+                  </li>`;
+
+        for (let i = 0; i < page.totalPages; i++) {
+            html += `<li class="page-item ${i === page.number ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i + 1}</a>
+                      </li>`;
+        }
+
+        html += `<li class="page-item ${page.last ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="goToPage(${page.number + 1}); return false;">&raquo;</a>
+                  </li>`;
+
+        listEl.innerHTML = html;
+        document.getElementById('pagination').classList.remove('d-none');
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        loadOrders();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.getElementById('statusTabs').addEventListener('click', (e) => {
+        const link = e.target.closest('.nav-link');
+        if (!link) return;
+        e.preventDefault();
+
+        document.querySelectorAll('#statusTabs .nav-link').forEach(el => el.classList.remove('active'));
+        link.classList.add('active');
+
+        currentStatus = link.dataset.status || '';
+        currentPage = 0;
+        loadOrders();
+    });
+
+    loadOrders();
+</script>
+
+</body>
+</html>

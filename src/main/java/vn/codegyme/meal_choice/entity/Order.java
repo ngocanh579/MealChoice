@@ -46,6 +46,12 @@ public class Order {
     @Column(length = 255)
     private String merchantAddressSnapshot;
 
+    @Column()
+    private Double merchantLatitude;
+
+    @Column()
+    private Double merchantLongitude;
+
     // ===== Snapshot địa chỉ giao hàng (không tham chiếu FK Address để tránh vỡ lịch sử nếu user sửa/xóa địa chỉ) =====
     @Column(nullable = false, length = 100)
     private String receiverName;
@@ -55,6 +61,12 @@ public class Order {
 
     @Column(nullable = false, length = 500)
     private String deliveryAddressSnapshot;
+
+    @Column()
+    private Double deliveryLatitude;
+
+    @Column()
+    private Double deliveryLongitude;
 
     // ===== Đối tác giao hàng =====
     @ManyToOne(fetch = FetchType.LAZY)

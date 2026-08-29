@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đơn hàng - Trưa Nay Ăn Gì</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: system-ui, -apple-system, sans-serif; }
+        .card { border: none; border-radius: 1rem; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
+        .food-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 0.75rem; background: #f1f1f1; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<main class="container py-4" style="max-width: 800px;">
+
+    <a href="/orders" class="text-decoration-none text-muted d-inline-block mb-3">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách đơn hàng
+    </a>
+
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-danger" role="status"></div>
+    </div>
+
+    <div id="errorState" class="d-none text-center py-5">
+        <p class="text-danger" id="errorMessage"></p>
+    </div>
+
+    <div id="orderDetail" class="d-none">
+
+        <div class="card p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h4 class="fw-bold mb-1">Đơn hàng #<span id="orderCode"></span></h4>
+                    <div class="text-muted fs-8" id="orderCreatedAt"></div>
+                </div>
+                <span class="badge fs-7 px-3 py-2" id="orderStatusBadge"></span>
+            </div>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <h6 class="fw-bold mb-2"><i class="bi bi-shop text-danger me-1"></i>Thông tin quán</h6>
+            <div class="fw-semibold" id="merchantName"></div>
+            <div class="text-muted fs-8" id="merchantAddress"></div>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <h6 class="fw-bold mb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Giao đến</h6>
+            <div class="fw-semibold"><span id="receiverName"></span> - <span id="receiverPhone"></span></div>
+            <div class="text-muted fs-8" id="deliveryAddress"></div>
+            <div class="text-muted fs-8" id="deliveryPartnerInfo"></div>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <h6 class="fw-bold mb-2"><i class="bi bi-bag-check text-danger me-1"></i>Món đã đặt</h6>
+            <div id="orderItems"></div>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <div class="d-flex justify-content-between mb-1"><span class="text-muted">Tạm tính</span><span id="sumSubtotal"></span></div>
+            <div class="d-flex justify-content-between mb-1"><span class="text-muted">Phí dịch vụ</span><span id="sumServiceFee"></span></div>
+            <div class="d-flex justify-content-between mb-1"><span class="text-muted">Phí giao hàng</span><span id="sumShippingFee"></span></div>
+            <div class="d-flex justify-content-between pt-2 border-top fw-bold fs-5">
+                <span>Tổng cộng</span><span class="text-danger" id="sumTotal"></span>
+            </div>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <h6 class="fw-bold mb-2"><i class="bi bi-wallet2 text-danger me-1"></i>Thanh toán</h6>
+            <div>Phương thức: <strong id="paymentMethod"></strong></div>
+            <div>Trạng thái: <strong id="paymentStatus"></strong></div>
+        </div>
+
+        <div class="card p-3 mb-3" id="noteCard" style="display:none;">
+            <h6 class="fw-bold mb-2"><i class="bi bi-chat-left-text text-danger me-1"></i>Ghi chú</h6>
+            <div id="orderNoteText"></div>
+        </div>
+
+        <div class="card p-3 mb-3 border-danger" id="cancelInfoCard" style="display:none;">
+            <h6 class="fw-bold text-danger mb-2"><i class="bi bi-x-circle me-1"></i>Đơn hàng đã bị hủy</h6>
+            <div id="cancelReasonText" class="text-muted"></div>
+            <div id="cancelledAtText" class="text-muted fs-8"></div>
+        </div>
+
+        <button type="button" class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold" id="btnCancelOrder" style="display:none;">
+            <i class="bi bi-x-circle me-1"></i>Hủy đơn hàng
+        </button>
+    </div>
+
+</main>
+
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const orderId = /*[[${orderId}]]*/ '';
+
+    const statusLabels = {
+        PENDING: { text: 'Chờ xác nhận', cls: 'bg-warning text-dark' },
+        CONFIRMED: { text: 'Đã xác nhận', cls: 'bg-info text-dark' },
+        PREPARING: { text: 'Đang chuẩn bị', cls: 'bg-primary' },
+        DELIVERING: { text: 'Đang giao', cls: 'bg-primary' },
+        COMPLETED: { text: 'Hoàn thành', cls: 'bg-success' },
+        CANCELLED: { text: 'Đã hủy', cls: 'bg-secondary' }
+    };
+
+    const paymentMethodLabels = { COD: 'Thanh toán khi nhận hàng (COD)', ONLINE: 'Thanh toán online' };
+    const paymentStatusLabels = { UNPAID: 'Chưa thanh toán', PAID: 'Đã thanh toán', REFUNDED: 'Đã hoàn tiền' };
+
+    function formatDate(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function loadOrderDetail() {
+        try {
+            const res = await fetchWithAuth(`/api/orders/${orderId}`);
+            if (!res.ok) {
+                const err = await res.json().catch(() => null);
+                throw new Error(err?.message || 'Không tìm thấy đơn hàng');
+            }
+            const order = await res.json();
+            renderOrder(order);
+
+            document.getElementById('loadingState').classList.add('d-none');
+            document.getElementById('orderDetail').classList.remove('d-none');
+        } catch (e) {
+            document.getElementById('loadingState').classList.add('d-none');
+            document.getElementById('errorState').classList.remove('d-none');
+            document.getElementById('errorMessage').innerText = e.message;
+        }
+    }
+
+    function renderOrder(order) {
+        document.getElementById('orderCode').innerText = order.orderCode;
+        document.getElementById('orderCreatedAt').innerText = 'Đặt lúc: ' + formatDate(order.createdAt);
+
+        const status = statusLabels[order.status] || { text: order.status, cls: 'bg-secondary' };
+        const badge = document.getElementById('orderStatusBadge');
+        badge.innerText = status.text;
+        badge.className = 'badge fs-7 px-3 py-2 ' + status.cls;
+
+        document.getElementById('merchantName').innerText = order.merchantName;
+        document.getElementById('merchantAddress').innerText = order.merchantAddress || '';
+
+        document.getElementById('receiverName').innerText = order.receiverName;
+        document.getElementById('receiverPhone').innerText = order.receiverPhone;
+        document.getElementById('deliveryAddress').innerText = order.deliveryAddress;
+        document.getElementById('deliveryPartnerInfo').innerText =
+            order.deliveryPartnerName
+                ? `Đối tác giao hàng: ${order.deliveryPartnerName}${order.distanceKm ? ' · ' + order.distanceKm.toFixed(1) + ' km' : ''}`
+                : '';
+
+        document.getElementById('orderItems').innerHTML = (order.items || []).map(item => `
+            <div class="d-flex align-items-center gap-3 py-2 border-bottom border-light-subtle">
+                <img src="${item.foodImageUrl || 'https://via.placeholder.com/56'}" class="food-thumb" alt="">
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">${escapeHtml(item.foodName)}</div>
+                    <div class="text-muted fs-8">${formatVnd(item.unitPrice)} x ${item.quantity}</div>
+                    ${item.note ? `<div class="text-muted fs-8 fst-italic">Ghi chú: ${escapeHtml(item.note)}</div>` : ''}
+                </div>
+                <div class="fw-bold">${formatVnd(item.subtotal)}</div>
+            </div>
+        `).join('');
+
+        document.getElementById('sumSubtotal').innerText = formatVnd(order.subtotal);
+        document.getElementById('sumServiceFee').innerText = formatVnd(order.serviceFee);
+        document.getElementById('sumShippingFee').innerText = formatVnd(order.shippingFee);
+        document.getElementById('sumTotal').innerText = formatVnd(order.totalAmount);
+
+        document.getElementById('paymentMethod').innerText = paymentMethodLabels[order.paymentMethod] || order.paymentMethod;
+        document.getElementById('paymentStatus').innerText = paymentStatusLabels[order.paymentStatus] || order.paymentStatus;
+
+        if (order.note) {
+            document.getElementById('noteCard').style.display = '';
+            document.getElementById('orderNoteText').innerText = order.note;
+        }
+
+        if (order.status === 'CANCELLED') {
+            document.getElementById('cancelInfoCard').style.display = '';
+            document.getElementById('cancelReasonText').innerText = order.cancelReason ? `Lý do: ${order.cancelReason}` : 'Không có lý do cụ thể';
+            document.getElementById('cancelledAtText').innerText = order.cancelledAt ? 'Hủy lúc: ' + formatDate(order.cancelledAt) : '';
+        }
+
+        const btnCancel = document.getElementById('btnCancelOrder');
+        if (order.cancellable) {
+            btnCancel.style.display = '';
+            btnCancel.onclick = () => cancelOrder();
+        } else {
+            btnCancel.style.display = 'none';
+        }
+    }
+
+    async function cancelOrder() {
+        const reason = prompt('Vui lòng cho biết lý do hủy đơn (không bắt buộc):', '');
+        if (reason === null) return; // người dùng bấm Cancel trên hộp thoại
+
+        if (!confirm('Bạn chắc chắn muốn hủy đơn hàng này?')) return;
+
+        try {
+            const res = await fetchWithAuth(`/api/orders/${orderId}/cancel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: reason || null })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => null);
+                throw new Error(err?.message || 'Hủy đơn hàng thất bại');
+            }
+            const order = await res.json();
+            renderOrder(order);
+        } catch (e) {
+            alert(e.message || 'Có lỗi xảy ra, vui lòng thử lại!');
+        }
+    }
+
+    loadOrderDetail();
+</script>
+
+</body>
+</html>
