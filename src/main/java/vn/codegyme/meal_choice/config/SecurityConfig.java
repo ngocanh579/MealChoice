@@ -113,7 +113,11 @@ public class SecurityConfig {
                                 "/user/**",
                                 "/api/user/**",
                                 "/api/cart/**",
-                                "/api/orders/**"
+                                "/api/orders/**",
+                                "/cart",
+                                "/checkout",
+                                "/orders",
+                                "/orders/**"
                         ).authenticated()
 
                         // Các request còn lại

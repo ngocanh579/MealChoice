@@ -602,6 +602,33 @@ public class PageController {
         return "redirect:/user/profile";
     }
 
+    // Trang giỏ hàng
+    @GetMapping("/cart")
+    public String cartPage() {
+        return "cart/cart";
+    }
+
+    // Trang thanh toán / đặt hàng
+    @GetMapping("/checkout")
+    public String checkoutPage() {
+        return "cart/checkout";
+    }
+
+    // Trang danh sách đơn hàng của tôi
+    @GetMapping("/orders")
+    public String ordersPage() {
+        return "order/list";
+    }
+
+    // Trang chi tiết đơn hàng
+    @GetMapping("/orders/{id}")
+    public String orderDetailPage(
+            @org.springframework.web.bind.annotation.PathVariable("id") String id,
+            Model model) {
+        model.addAttribute("orderId", id);
+        return "order/detail";
+    }
+
     // Trang đăng ký Merchant
     @GetMapping({
             "/merchants/register",
