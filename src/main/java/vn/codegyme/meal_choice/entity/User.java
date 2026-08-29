@@ -18,10 +18,7 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-<<<<<<< HEAD
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-=======
->>>>>>> hung
 public class User {
 
     @Id
@@ -52,14 +49,12 @@ public class User {
 
     @Column()
     private LocalDate dob;
-<<<<<<< HEAD
+
     @Column()
     private Double latitude;
 
     @Column()
     private Double longitude;
-=======
->>>>>>> hung
 
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

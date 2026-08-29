@@ -32,12 +32,9 @@ public class OrderResponseDTO {
     private String deliveryAddress;
     private String note;
 
-<<<<<<< HEAD
     private UUID deliveryPartnerId;
     private String deliveryPartnerName;
 
-=======
->>>>>>> hung
     private OrderStatus status;
     private String statusDisplayName;
     private String statusBadgeClass;
@@ -54,7 +51,6 @@ public class OrderResponseDTO {
 
     private String cancelReason;
 
-<<<<<<< HEAD
     private LocalDateTime acceptedAt;
     private String formattedAcceptedAt;
 
@@ -68,13 +64,32 @@ public class OrderResponseDTO {
     private Long remainingDeliverySeconds;
     private Boolean canComplete;
 
-=======
-    private LocalDateTime estimatedDeliveryTime;
-    private String formattedEstimatedDeliveryTime;
-
->>>>>>> hung
     private LocalDateTime createdAt;
     private String formattedCreatedAt;
 
     private List<OrderItemResponseDTO> items;
+
+    public String getContactName() {
+        return customerName;
+    }
+
+    public void setContactName(String contactName) {
+        this.customerName = contactName;
+    }
+
+    public String getContactPhone() {
+        return customerPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.customerPhone = contactPhone;
+    }
+
+    public BigDecimal getSubtotal() {
+        return subtotalPrice;
+    }
+
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotalPrice = subtotal;
+    }
 }

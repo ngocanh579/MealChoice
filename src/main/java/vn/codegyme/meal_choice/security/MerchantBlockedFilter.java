@@ -26,7 +26,7 @@ public class MerchantBlockedFilter extends OncePerRequestFilter {
 
 
     /**
-     * Chỉ kiểm tra các request đi vào kênh Merchant.
+     * Chỉ kiểm tra các request đi vào kênh quản trị Merchant.
      */
     @Override
     protected boolean shouldNotFilter(
@@ -36,23 +36,22 @@ public class MerchantBlockedFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
 
         /*
-         * User bình thường vẫn phải được vào
-         * trang đăng ký Merchant.
+         * Các endpoint đăng ký, kiểm tra trạng thái và API công khai cho khách hàng:
          */
-        if (uri.equals("/merchant/register")) {
+        if (uri.equals("/merchant/register") 
+                || uri.equals("/api/merchant/register")
+                || uri.equals("/api/merchant/my-status")
+                || uri.startsWith("/api/merchants/")) {
             return true;
         }
 
         /*
-         * Chỉ chạy Filter với:
-         *
+         * Chỉ chạy Filter với các kênh quản lý nội bộ của Merchant:
          * /merchant/**
          * /api/merchant/**
-         * /api/merchants/**
          */
         return !uri.startsWith("/merchant/")
-                && !uri.startsWith("/api/merchant/")
-                && !uri.startsWith("/api/merchants/");
+                && !uri.startsWith("/api/merchant/");
     }
 
 

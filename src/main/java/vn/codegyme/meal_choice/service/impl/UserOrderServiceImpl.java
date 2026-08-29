@@ -2,32 +2,20 @@ package vn.codegyme.meal_choice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-<<<<<<< HEAD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.codegyme.meal_choice.dto.Delivery.GeoPoint;
-=======
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
->>>>>>> hung
 import vn.codegyme.meal_choice.dto.order.CheckoutItemDTO;
 import vn.codegyme.meal_choice.dto.order.CheckoutRequestDTO;
 import vn.codegyme.meal_choice.dto.order.OrderResponseDTO;
 import vn.codegyme.meal_choice.entity.*;
 import vn.codegyme.meal_choice.mapper.OrderMapper;
-<<<<<<< HEAD
 import vn.codegyme.meal_choice.repository.*;
 import vn.codegyme.meal_choice.service.DistanceService;
 import vn.codegyme.meal_choice.service.GeocodingService;
 import vn.codegyme.meal_choice.service.ShippingFeeService;
-=======
-import vn.codegyme.meal_choice.repository.FoodRepository;
-import vn.codegyme.meal_choice.repository.MerchantRepository;
-import vn.codegyme.meal_choice.repository.OrderRepository;
-import vn.codegyme.meal_choice.repository.UserRepository;
->>>>>>> hung
 import vn.codegyme.meal_choice.service.UserOrderService;
 
 import java.math.BigDecimal;
@@ -47,7 +35,6 @@ public class UserOrderServiceImpl implements UserOrderService {
     private final MerchantRepository merchantRepository;
     private final FoodRepository foodRepository;
     private final OrderMapper orderMapper;
-<<<<<<< HEAD
     private final DeliveryPartnerRepository deliveryPartnerRepository;
     private final MerchantAddressRepository merchantAddressRepository;
     private final ShippingFeeService shippingFeeService;
@@ -55,10 +42,6 @@ public class UserOrderServiceImpl implements UserOrderService {
     private final GeocodingService geocodingService;
 
     // Phí giao hàng cố định mặc định dự phòng: 15.000 đ
-=======
-
-    // Phí giao hàng cố định mặc định: 15.000 đ
->>>>>>> hung
     private static final BigDecimal DEFAULT_SHIPPING_FEE = BigDecimal.valueOf(15000);
 
     /**
@@ -129,7 +112,6 @@ public class UserOrderServiceImpl implements UserOrderService {
             foodRepository.save(food);
         }
 
-<<<<<<< HEAD
         // BƯỚC 3: Tính toán các loại phí (Phí ship động theo đơn vị vận chuyển), phí dịch vụ & voucher
         DeliveryPartner deliveryPartner = null;
         BigDecimal shippingFee = DEFAULT_SHIPPING_FEE;
@@ -170,10 +152,6 @@ public class UserOrderServiceImpl implements UserOrderService {
             }
         }
 
-=======
-        // BƯỚC 3: Tính toán các loại phí và giảm giá voucher (giảm theo số tiền hoặc %)
-        BigDecimal shippingFee = DEFAULT_SHIPPING_FEE;
->>>>>>> hung
         BigDecimal serviceFee = maxServiceFee;
         BigDecimal discountAmount = calculateVoucherDiscount(request.getVoucherCode(), subtotal);
 
@@ -184,7 +162,6 @@ public class UserOrderServiceImpl implements UserOrderService {
 
         // BƯỚC 4: Tạo thực thể Order và lưu vào cơ sở dữ liệu
         LocalDateTime now = LocalDateTime.now();
-<<<<<<< HEAD
 
         // 1. Thời gian chuẩn bị món (lấy thời gian chuẩn bị của món lâu nhất, mặc định 10 phút, tối thiểu 5 phút)
         int prepMinutes = 10;
@@ -202,18 +179,12 @@ public class UserOrderServiceImpl implements UserOrderService {
         int deliveryTransitMinutes = (int) Math.max(4, Math.round(distanceKm * 4));
         int totalEstimatedMinutes = prepMinutes + deliveryTransitMinutes;
         LocalDateTime estimatedDelivery = now.plusMinutes(totalEstimatedMinutes);
-=======
-        LocalDateTime estimatedDelivery = now.plusMinutes(1); // Thời gian giao dự kiến: 1 phút
->>>>>>> hung
 
         Order order = Order.builder()
                 .orderCode(generateOrderCode())
                 .user(user)
                 .merchant(merchant)
-<<<<<<< HEAD
                 .deliveryPartner(deliveryPartner)
-=======
->>>>>>> hung
                 .contactName(request.getContactName())
                 .contactPhone(request.getContactPhone())
                 .deliveryAddress(request.getDeliveryAddress())
@@ -245,23 +216,16 @@ public class UserOrderServiceImpl implements UserOrderService {
      * Lấy danh sách lịch sử đơn hàng của User
      */
     @Override
-<<<<<<< HEAD
     @Transactional
     public List<OrderResponseDTO> getUserOrders(UUID userId) {
         List<Order> orders = orderRepository.findByUser_IdOrderByIdDesc(userId);
         for (Order o : orders) {
             autoSyncOrderStatus(o);
         }
-=======
-    @Transactional(readOnly = true)
-    public List<OrderResponseDTO> getUserOrders(UUID userId) {
-        List<Order> orders = orderRepository.findByUser_IdOrderByCreatedAtDesc(userId);
->>>>>>> hung
         return orderMapper.toOrderResponseDTOList(orders);
     }
 
     /**
-<<<<<<< HEAD
      * Lấy danh sách lịch sử đơn hàng của User có phân trang (mặc định mới nhất đến cũ nhất theo ID)
      */
     @Override
@@ -283,21 +247,11 @@ public class UserOrderServiceImpl implements UserOrderService {
         Order order = orderRepository.findByOrderCodeWithItems(orderCode)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã: " + orderCode));
         autoSyncOrderStatus(order);
-=======
-     * Xem chi tiết đơn hàng theo mã đơn (Dùng cho trang Đặt hàng thành công)
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public OrderResponseDTO getOrderDetailByCode(String orderCode) {
-        Order order = orderRepository.findByOrderCodeWithItems(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã: " + orderCode));
->>>>>>> hung
         return orderMapper.toOrderResponseDTO(order);
     }
 
     // ==================== HELPER METHODS ====================
 
-<<<<<<< HEAD
     private void autoSyncOrderStatus(Order order) {
         if (order == null) return;
         if (order.getStatus() == OrderStatus.PREPARING && order.getPreparingUntil() != null) {
@@ -310,8 +264,6 @@ public class UserOrderServiceImpl implements UserOrderService {
         }
     }
 
-=======
->>>>>>> hung
     /**
      * Tính toán số tiền giảm giá dựa theo mã Voucher (hỗ trợ 2 loại: giảm số tiền và giảm theo %)
      */

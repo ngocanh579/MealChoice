@@ -1,12 +1,6 @@
 package vn.codegyme.meal_choice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-<<<<<<< HEAD
-import org.springframework.stereotype.Repository;
-import vn.codegyme.meal_choice.entity.OrderItem;
-
-import java.util.List;
-=======
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,16 +9,12 @@ import vn.codegyme.meal_choice.entity.OrderItem;
 
 import java.util.List;
 import java.util.UUID;
->>>>>>> hung
 
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     List<OrderItem> findByOrder_Id(Long orderId);
-<<<<<<< HEAD
-}
-=======
 
-    // 15. Thống kê đơn hàng theo món ăn (Đã mở rộng tính cả đơn PREPARING, DELIVERING, COMPLETED)
+    // Thống kê đơn hàng theo món ăn (Đã mở rộng tính cả đơn PREPARING, DELIVERING, COMPLETED)
     @Query("""
     SELECT new vn.codegyme.meal_choice.dto.stat.FoodStatDTO(
         MIN(f.id), TRIM(oi.foodName), SUM(oi.quantity), SUM(oi.subtotal)
@@ -41,4 +31,3 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     """)
     List<FoodStatDTO> findFoodStatsByMerchant(@Param("merchantId") UUID merchantId);
 }
->>>>>>> hung

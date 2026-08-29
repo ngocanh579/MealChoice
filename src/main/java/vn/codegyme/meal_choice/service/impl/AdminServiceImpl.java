@@ -7,17 +7,14 @@ import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.MerchantStatus;
 import vn.codegyme.meal_choice.entity.Role;
 import vn.codegyme.meal_choice.entity.User;
+import vn.codegyme.meal_choice.entity.DeliveryPartner;
+import vn.codegyme.meal_choice.entity.DeliveryPartnerStatus;
+import vn.codegyme.meal_choice.repository.DeliveryPartnerRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.RoleRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
 import vn.codegyme.meal_choice.service.AdminService;
-<<<<<<< HEAD
-import vn.codegyme.meal_choice.entity.DeliveryPartner;
-import vn.codegyme.meal_choice.entity.DeliveryPartnerStatus;
-import vn.codegyme.meal_choice.repository.DeliveryPartnerRepository;
-=======
 
->>>>>>> hung
 import java.util.List;
 import java.util.UUID;
 import java.time.LocalDateTime;
@@ -30,10 +27,7 @@ public class AdminServiceImpl implements AdminService {
     private final MerchantRepository merchantRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-<<<<<<< HEAD
     private final DeliveryPartnerRepository deliveryPartnerRepository;
-=======
->>>>>>> hung
     // Xem danh sách
     @Override
     @Transactional(readOnly = true)
@@ -181,7 +175,7 @@ public class AdminServiceImpl implements AdminService {
                         )
                 );
     }
-<<<<<<< HEAD
+
     @Transactional
     public void toggleLock(
             UUID id,
@@ -470,6 +464,4 @@ public class AdminServiceImpl implements AdminService {
                 partner
         );
     }
-=======
->>>>>>> hung
 }

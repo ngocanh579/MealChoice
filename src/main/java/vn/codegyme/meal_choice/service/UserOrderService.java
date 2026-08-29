@@ -1,10 +1,7 @@
 package vn.codegyme.meal_choice.service;
 
-<<<<<<< HEAD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-=======
->>>>>>> hung
 import vn.codegyme.meal_choice.dto.order.CheckoutRequestDTO;
 import vn.codegyme.meal_choice.dto.order.OrderResponseDTO;
 
@@ -27,14 +24,11 @@ public interface UserOrderService {
     List<OrderResponseDTO> getUserOrders(UUID userId);
 
     /**
-<<<<<<< HEAD
      * Lấy danh sách lịch sử đơn hàng của User có phân trang (mặc định từ mới nhất đến cũ nhất)
      */
     Page<OrderResponseDTO> getUserOrders(UUID userId, Pageable pageable);
 
     /**
-=======
->>>>>>> hung
      * Xem chi tiết đơn hàng theo mã đơn (Phục vụ trang Đặt hàng thành công)
      */
     OrderResponseDTO getOrderDetailByCode(String orderCode);

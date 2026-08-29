@@ -18,7 +18,7 @@ import vn.codegyme.meal_choice.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
-public class EmailServiceImpl {
+public class EmailServiceImpl implements EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 

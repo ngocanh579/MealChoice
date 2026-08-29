@@ -36,11 +36,8 @@ public class CheckoutRequestDTO {
 
     private String voucherCode;
 
-<<<<<<< HEAD
     private UUID deliveryPartnerId;
 
-=======
->>>>>>> hung
     @NotEmpty(message = "Danh sách món ăn không được để trống")
     @Valid
     private List<CheckoutItemDTO> items;

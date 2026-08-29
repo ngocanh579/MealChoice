@@ -7,10 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.codegyme.meal_choice.entity.Food;
-<<<<<<< HEAD
 import vn.codegyme.meal_choice.entity.FoodCategory;
-=======
->>>>>>> hung
 
 import java.util.List;
 import java.util.Optional;
@@ -175,7 +172,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     );
 
     // Lấy ID các món user đã thích
-<<<<<<< HEAD
     @Query(value = "SELECT food_id FROM food_likes WHERE user_id = :userId", nativeQuery = true)
     List<Long> findLikedFoodIdsByUserId(
             @Param("userId") String userId
@@ -190,19 +186,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     @org.springframework.transaction.annotation.Transactional
     @Query(value = "DELETE FROM food_likes WHERE food_id = :foodId AND user_id = :userId", nativeQuery = true)
     int unlikeFood(@Param("foodId") Long foodId, @Param("userId") String userId);
-
-=======
-    @Query("""
-            SELECT f.id
-            FROM Food f
-            JOIN f.likedByUsers u
-            WHERE u.id = :userId
-            """)
-    List<Long> findLikedFoodIdsByUserId(
-            @Param("userId") UUID userId
-    );
-
->>>>>>> hung
     // Lấy món mới nhất theo danh mục
     @Query("""
             SELECT DISTINCT f
@@ -264,8 +247,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             @Param("keyword") String keyword,
             Pageable pageable
     );
-<<<<<<< HEAD
-
     // Lấy danh sách danh mục phân biệt mà quán có món đang hoạt động
     @Query("""
             SELECT DISTINCT c
@@ -334,6 +315,4 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
 
     // Đếm số món đang hoạt động của quán
     long countByMerchant_IdAndIsActiveTrueAndDeletedAtIsNull(UUID merchantId);
-=======
->>>>>>> hung
 }

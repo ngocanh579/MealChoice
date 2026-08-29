@@ -1,10 +1,8 @@
 package vn.codegyme.meal_choice.repository;
 
-<<<<<<< HEAD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-=======
->>>>>>> hung
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,52 +17,37 @@ import java.util.UUID;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-<<<<<<< HEAD
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
     List<Order> findByMerchant_IdOrderByIdDesc(UUID merchantId);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
     List<Order> findByMerchant_IdAndStatusOrderByIdDesc(UUID merchantId, OrderStatus status);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
     Page<Order> findByMerchant_IdOrderByIdDesc(UUID merchantId, Pageable pageable);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
     Page<Order> findByMerchant_IdAndStatusOrderByIdDesc(UUID merchantId, OrderStatus status, Pageable pageable);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
     Optional<Order> findByIdAndMerchant_Id(Long id, UUID merchantId);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
     Optional<Order> findByOrderCode(String orderCode);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
     List<Order> findByUser_IdOrderByIdDesc(UUID userId);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"orderItems", "merchant", "user"})
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
     Page<Order> findByUser_IdOrderByIdDesc(UUID userId, Pageable pageable);
-=======
-    List<Order> findByMerchant_IdOrderByCreatedAtDesc(UUID merchantId);
-
-    List<Order> findByMerchant_IdAndStatusOrderByCreatedAtDesc(UUID merchantId, OrderStatus status);
-
-    Optional<Order> findByIdAndMerchant_Id(Long id, UUID merchantId);
-
-    Optional<Order> findByOrderCode(String orderCode);
-
-    List<Order> findByUser_IdOrderByCreatedAtDesc(UUID userId);
->>>>>>> hung
 
     long countByMerchant_IdAndStatus(UUID merchantId, OrderStatus status);
 
-    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.food WHERE o.id = :id AND o.merchant.id = :merchantId")
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.food LEFT JOIN FETCH o.deliveryPartner WHERE o.id = :id AND o.merchant.id = :merchantId")
     Optional<Order> findByIdAndMerchantIdWithItems(@Param("id") Long id, @Param("merchantId") UUID merchantId);
 
-    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.food WHERE o.orderCode = :orderCode")
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.food LEFT JOIN FETCH o.deliveryPartner WHERE o.orderCode = :orderCode")
     Optional<Order> findByOrderCodeWithItems(@Param("orderCode") String orderCode);
-<<<<<<< HEAD
-}
-=======
 
     // 1. THỐNG KÊ DOANH THU
     @Query(value = """
@@ -145,4 +128,3 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         """, nativeQuery = true)
     List<Object[]> findFoodStatsByMerchant(@Param("merchantId") String merchantId);
 }
->>>>>>> hung

@@ -2,7 +2,6 @@ package vn.codegyme.meal_choice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-<<<<<<< HEAD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,15 +16,6 @@ import vn.codegyme.meal_choice.repository.MerchantAddressRepository;
 import vn.codegyme.meal_choice.repository.OrderRepository;
 import vn.codegyme.meal_choice.service.DistanceService;
 import vn.codegyme.meal_choice.service.GeocodingService;
-=======
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import vn.codegyme.meal_choice.dto.order.OrderResponseDTO;
-import vn.codegyme.meal_choice.entity.Order;
-import vn.codegyme.meal_choice.entity.OrderStatus;
-import vn.codegyme.meal_choice.mapper.OrderMapper;
-import vn.codegyme.meal_choice.repository.OrderRepository;
->>>>>>> hung
 import vn.codegyme.meal_choice.service.MerchantOrderService;
 
 import java.time.LocalDateTime;
@@ -39,18 +29,14 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
 
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
-<<<<<<< HEAD
     private final MerchantAddressRepository merchantAddressRepository;
     private final GeocodingService geocodingService;
     private final DistanceService distanceService;
-=======
->>>>>>> hung
 
     /**
      * TÍNH NĂNG 1: Lấy danh sách đơn hàng của Merchant (có thể lọc theo trạng thái)
      */
     @Override
-<<<<<<< HEAD
     @Transactional
     public List<OrderResponseDTO> getMerchantOrders(UUID merchantId, OrderStatus status) {
         List<Order> orders;
@@ -65,21 +51,10 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
             autoSyncOrderStatus(o);
         }
 
-=======
-    @Transactional(readOnly = true)
-    public List<OrderResponseDTO> getMerchantOrders(UUID merchantId, OrderStatus status) {
-        List<Order> orders;
-        if (status != null) {
-            orders = orderRepository.findByMerchant_IdAndStatusOrderByCreatedAtDesc(merchantId, status);
-        } else {
-            orders = orderRepository.findByMerchant_IdOrderByCreatedAtDesc(merchantId);
-        }
->>>>>>> hung
         return orderMapper.toOrderResponseDTOList(orders);
     }
 
     /**
-<<<<<<< HEAD
      * TÍNH NĂNG 1: Lấy danh sách đơn hàng của Merchant có phân trang (mặc định mới nhất đến cũ nhất theo ID)
      */
     @Override
@@ -110,25 +85,11 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng ID: " + orderId));
 
         autoSyncOrderStatus(order);
-=======
-     * TÍNH NĂNG 2: Xem chi tiết một đơn hàng của Merchant
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public OrderResponseDTO getMerchantOrderDetail(UUID merchantId, Long orderId) {
-        Order order = orderRepository.findByIdAndMerchantIdWithItems(orderId, merchantId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng ID: " + orderId));
->>>>>>> hung
         return orderMapper.toOrderResponseDTO(order);
     }
 
     /**
-<<<<<<< HEAD
-     * TÍNH NĂNG 1: Merchant bấm "Nhận đơn" (Chuyển trạng thái sang PREPARING kèm
-     * mốc thời gian)
-=======
-     * TÍNH NĂNG 1: Merchant bấm "Nhận đơn" (Chuyển trạng thái sang PREPARING)
->>>>>>> hung
+     * TÍNH NĂNG 1: Merchant bấm "Nhận đơn" (Chuyển trạng thái sang PREPARING kèm mốc thời gian)
      */
     @Override
     @Transactional
@@ -139,7 +100,6 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
             throw new IllegalStateException("Chỉ có thể nhận đơn hàng khi đơn đang ở trạng thái 'Chờ nhận hàng'");
         }
 
-<<<<<<< HEAD
         LocalDateTime now = LocalDateTime.now();
         order.setStatus(OrderStatus.PREPARING);
         order.setAcceptedAt(now);
@@ -192,12 +152,6 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
 
         Order savedOrder = orderRepository.save(order);
         log.info("Merchant {} đã bắt đầu giao đơn hàng ID {}, dự kiến giao {}", merchantId, orderId, order.getEstimatedDeliveryTime());
-=======
-        order.setStatus(OrderStatus.PREPARING);
-        order.setUpdatedAt(LocalDateTime.now());
-        Order savedOrder = orderRepository.save(order);
-        log.info("Merchant {} đã nhận đơn hàng ID {}", merchantId, orderId);
->>>>>>> hung
 
         return orderMapper.toOrderResponseDTO(savedOrder);
     }
@@ -234,10 +188,7 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
     @Transactional
     public OrderResponseDTO completeOrder(UUID merchantId, Long orderId) {
         Order order = findMerchantOrderOrThrow(orderId, merchantId);
-<<<<<<< HEAD
         autoSyncOrderStatus(order);
-=======
->>>>>>> hung
 
         if (order.getStatus() != OrderStatus.PREPARING && order.getStatus() != OrderStatus.DELIVERING) {
             throw new IllegalStateException("Chỉ có thể hoàn thành đơn hàng khi đơn đang chuẩn bị hoặc đang giao");
@@ -259,12 +210,8 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
     public OrderResponseDTO markFailedDelivery(UUID merchantId, Long orderId, String cancelReason) {
         Order order = findMerchantOrderOrThrow(orderId, merchantId);
 
-<<<<<<< HEAD
         if (order.getStatus() != OrderStatus.PREPARING && order.getStatus() != OrderStatus.DELIVERING
                 && order.getStatus() != OrderStatus.PENDING) {
-=======
-        if (order.getStatus() != OrderStatus.PREPARING && order.getStatus() != OrderStatus.DELIVERING && order.getStatus() != OrderStatus.PENDING) {
->>>>>>> hung
             throw new IllegalStateException("Không thể ghi nhận hủy đơn hàng ở trạng thái hiện tại");
         }
 
@@ -292,7 +239,6 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
 
     // ==================== HELPER METHOD ====================
 
-<<<<<<< HEAD
     private void autoSyncOrderStatus(Order order) {
         if (order == null)
             return;
@@ -306,13 +252,10 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
         }
     }
 
-=======
->>>>>>> hung
     private Order findMerchantOrderOrThrow(Long orderId, UUID merchantId) {
         return orderRepository.findByIdAndMerchant_Id(orderId, merchantId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng ID: " + orderId));
     }
-<<<<<<< HEAD
 
     /**
      * Tính thời gian vận chuyển giao hàng dự kiến = 4 phút / 1km (tối thiểu 4 phút)
@@ -347,6 +290,4 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
         // Thời gian giao hàng dự kiến: 4 phút / 1km
         return (int) Math.max(4, Math.round(distanceKm * 4));
     }
-=======
->>>>>>> hung
 }
