@@ -111,7 +111,9 @@ public class SecurityConfig {
                         // User
                         .requestMatchers(
                                 "/user/**",
-                                "/api/user/**"
+                                "/api/user/**",
+                                "/api/cart/**",
+                                "/api/orders/**"
                         ).authenticated()
 
                         // Các request còn lại
