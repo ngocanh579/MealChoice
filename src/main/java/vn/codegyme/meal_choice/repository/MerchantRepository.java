@@ -1,9 +1,11 @@
 package vn.codegyme.meal_choice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import vn.codegyme.meal_choice.entity.Merchant;
 import vn.codegyme.meal_choice.entity.MerchantStatus;
 
@@ -49,6 +51,14 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
     );
 
     @Query("""
+        SELECT DISTINCT m
+        FROM Merchant m
+        LEFT JOIN FETCH m.addresses
+        ORDER BY m.id DESC
+        """)
+    List<Merchant> findAllWithAddressesOrderByIdDesc();
+
+    @Query("""
         SELECT m.id
         FROM Merchant m
         JOIN m.likedByUsers u
@@ -57,4 +67,17 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
     List<UUID> findLikedMerchantIdsByUserId(
             @Param("userId") UUID userId
     );
+
+    @Query(value = "SELECT COUNT(*) FROM merchant_likes WHERE merchant_id = :merchantId", nativeQuery = true)
+    long countFollowersByMerchantId(@Param("merchantId") UUID merchantId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "INSERT IGNORE INTO merchant_likes (merchant_id, user_id) VALUES (:merchantId, :userId)", nativeQuery = true)
+    int followMerchant(@Param("merchantId") UUID merchantId, @Param("userId") UUID userId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM merchant_likes WHERE merchant_id = :merchantId AND user_id = :userId", nativeQuery = true)
+    int unfollowMerchant(@Param("merchantId") UUID merchantId, @Param("userId") UUID userId);
 }

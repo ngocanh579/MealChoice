@@ -115,6 +115,18 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ hoặc địa chỉ không thuộc về bạn"));
 
         // Partial update: CHỈ cập nhật các trường được gửi lên (khác null)
+        if (updateAddressDTO.getContactName() != null) {
+            if (updateAddressDTO.getContactName().trim().isEmpty()) {
+                throw new RuntimeException("Tên người nhận không được để trống");
+            }
+            address.setContactName(updateAddressDTO.getContactName().trim());
+        }
+        if (updateAddressDTO.getContactPhone() != null) {
+            if (updateAddressDTO.getContactPhone().trim().isEmpty()) {
+                throw new RuntimeException("Số điện thoại không được để trống");
+            }
+            address.setContactPhone(updateAddressDTO.getContactPhone().trim());
+        }
         if (updateAddressDTO.getCity() != null) {
             if (updateAddressDTO.getCity().trim().isEmpty()) {
                 throw new RuntimeException("Tỉnh/Thành phố không được để trống");

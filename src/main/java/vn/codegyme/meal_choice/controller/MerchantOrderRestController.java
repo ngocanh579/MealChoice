@@ -2,10 +2,6 @@ package vn.codegyme.meal_choice.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,7 +40,7 @@ public class MerchantOrderRestController {
     }
 
     /**
-     * REST API: Lấy danh sách đơn hàng của Merchant
+     * REST API: Lấy danh sách đơn hàng của Merchant (có thể lọc theo trạng thái, phân trang 50 đơn/trang)
      */
     @GetMapping
     public ResponseEntity<?> getOrders(
@@ -53,22 +49,10 @@ public class MerchantOrderRestController {
             @RequestParam(name = "size", defaultValue = "50") int size) {
         try {
             Merchant merchant = getCurrentMerchant();
-
-            Pageable pageable = PageRequest.of(
-                    Math.max(0, page),
-                    size,
-                    Sort.by(Sort.Direction.DESC, "id")
-            );
-
-            Page<OrderResponseDTO> orderPage =
-                    merchantOrderService.getMerchantOrders(
-                            merchant.getId(),
-                            status,
-                            pageable
-                    );
-
-            long pendingCount =
-                    merchantOrderService.countPendingOrders(merchant.getId());
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                    Math.max(0, page), size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+            org.springframework.data.domain.Page<OrderResponseDTO> orderPage = merchantOrderService.getMerchantOrders(merchant.getId(), status, pageable);
+            long pendingCount = merchantOrderService.countPendingOrders(merchant.getId());
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -79,8 +63,7 @@ public class MerchantOrderRestController {
                     "pendingCount", pendingCount
             ));
         } catch (Exception e) {
-            log.error("Lỗi khi tải danh sách đơn hàng API: {}", e.getMessage(), e);
-
+            log.error("Lỗi khi tải danh sách đơn hàng API: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", e.getMessage()
@@ -95,20 +78,13 @@ public class MerchantOrderRestController {
     public ResponseEntity<?> getOrderDetail(@PathVariable("id") Long id) {
         try {
             Merchant merchant = getCurrentMerchant();
-
-            OrderResponseDTO order =
-                    merchantOrderService.getMerchantOrderDetail(
-                            merchant.getId(),
-                            id
-                    );
-
+            OrderResponseDTO order = merchantOrderService.getMerchantOrderDetail(merchant.getId(), id);
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "data", order
             ));
         } catch (Exception e) {
-            log.error("Lỗi khi xem chi tiết đơn hàng API: {}", e.getMessage(), e);
-
+            log.error("Lỗi khi xem chi tiết đơn hàng API: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", e.getMessage()
@@ -117,27 +93,20 @@ public class MerchantOrderRestController {
     }
 
     /**
-     * REST API: Nhận đơn hàng
+     * REST API: Nhận đơn hàng (Chuyển trạng thái sang PREPARING)
      */
     @PostMapping("/{id}/accept")
     public ResponseEntity<?> acceptOrder(@PathVariable("id") Long id) {
         try {
             Merchant merchant = getCurrentMerchant();
-
-            OrderResponseDTO updatedOrder =
-                    merchantOrderService.acceptOrder(
-                            merchant.getId(),
-                            id
-                    );
-
+            OrderResponseDTO updatedOrder = merchantOrderService.acceptOrder(merchant.getId(), id);
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Đã nhận đơn hàng thành công!",
                     "data", updatedOrder
             ));
         } catch (Exception e) {
-            log.error("Lỗi khi nhận đơn hàng API: {}", e.getMessage(), e);
-
+            log.error("Lỗi khi nhận đơn hàng API: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", e.getMessage()
@@ -146,27 +115,20 @@ public class MerchantOrderRestController {
     }
 
     /**
-     * REST API: Bắt đầu giao hàng
+     * REST API: Bắt đầu giao hàng (Chuyển trạng thái sang DELIVERING)
      */
     @PostMapping("/{id}/start-delivery")
     public ResponseEntity<?> startDelivery(@PathVariable("id") Long id) {
         try {
             Merchant merchant = getCurrentMerchant();
-
-            OrderResponseDTO updatedOrder =
-                    merchantOrderService.startDelivery(
-                            merchant.getId(),
-                            id
-                    );
-
+            OrderResponseDTO updatedOrder = merchantOrderService.startDelivery(merchant.getId(), id);
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Đã bắt đầu giao đơn hàng!",
                     "data", updatedOrder
             ));
         } catch (Exception e) {
-            log.error("Lỗi khi bắt đầu giao hàng API: {}", e.getMessage(), e);
-
+            log.error("Lỗi khi bắt đầu giao hàng API: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", e.getMessage()
@@ -175,7 +137,7 @@ public class MerchantOrderRestController {
     }
 
     /**
-     * REST API: Hủy đơn hàng
+     * REST API: Hủy đơn hàng (Chuyển trạng thái sang CANCELLED)
      */
     @PostMapping("/{id}/cancel")
     public ResponseEntity<?> cancelOrder(
@@ -183,28 +145,17 @@ public class MerchantOrderRestController {
             @RequestBody(required = false) CancelOrderRequestDTO request) {
         try {
             Merchant merchant = getCurrentMerchant();
-
-            String reason = request != null
-                    && request.getCancelReason() != null
-                    && !request.getCancelReason().isBlank()
+            String reason = (request != null && request.getCancelReason() != null && !request.getCancelReason().isBlank())
                     ? request.getCancelReason()
                     : "Merchant hủy đơn";
-
-            OrderResponseDTO updatedOrder =
-                    merchantOrderService.cancelOrderByMerchant(
-                            merchant.getId(),
-                            id,
-                            reason
-                    );
-
+            OrderResponseDTO updatedOrder = merchantOrderService.cancelOrderByMerchant(merchant.getId(), id, reason);
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Đã hủy đơn hàng thành công!",
                     "data", updatedOrder
             ));
         } catch (Exception e) {
-            log.error("Lỗi khi hủy đơn hàng API: {}", e.getMessage(), e);
-
+            log.error("Lỗi khi hủy đơn hàng API: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", e.getMessage()
@@ -213,27 +164,20 @@ public class MerchantOrderRestController {
     }
 
     /**
-     * REST API: Xác nhận đã nhận tiền và hoàn thành đơn hàng
+     * REST API: Xác nhận đã nhận tiền & Hoàn thành đơn hàng (Chuyển sang COMPLETED)
      */
     @PostMapping("/{id}/complete")
     public ResponseEntity<?> completeOrder(@PathVariable("id") Long id) {
         try {
             Merchant merchant = getCurrentMerchant();
-
-            OrderResponseDTO updatedOrder =
-                    merchantOrderService.completeOrder(
-                            merchant.getId(),
-                            id
-                    );
-
+            OrderResponseDTO updatedOrder = merchantOrderService.completeOrder(merchant.getId(), id);
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Xác nhận đã nhận tiền và hoàn thành đơn hàng thành công!",
                     "data", updatedOrder
             ));
         } catch (Exception e) {
-            log.error("Lỗi khi hoàn thành đơn hàng API: {}", e.getMessage(), e);
-
+            log.error("Lỗi khi hoàn thành đơn hàng API: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", e.getMessage()
@@ -242,7 +186,7 @@ public class MerchantOrderRestController {
     }
 
     /**
-     * REST API: Xác nhận khách không nhận hàng
+     * REST API: Xác nhận khách không nhận hàng (Chuyển sang CANCELLED)
      */
     @PostMapping("/{id}/failed-delivery")
     public ResponseEntity<?> failedDelivery(
@@ -250,28 +194,17 @@ public class MerchantOrderRestController {
             @RequestBody(required = false) CancelOrderRequestDTO request) {
         try {
             Merchant merchant = getCurrentMerchant();
-
-            String reason = request != null
-                    && request.getCancelReason() != null
-                    && !request.getCancelReason().isBlank()
+            String reason = (request != null && request.getCancelReason() != null && !request.getCancelReason().isBlank())
                     ? request.getCancelReason()
                     : "Khách không nhận hàng";
-
-            OrderResponseDTO updatedOrder =
-                    merchantOrderService.markFailedDelivery(
-                            merchant.getId(),
-                            id,
-                            reason
-                    );
-
+            OrderResponseDTO updatedOrder = merchantOrderService.markFailedDelivery(merchant.getId(), id, reason);
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Đã ghi nhận khách không nhận hàng!",
                     "data", updatedOrder
             ));
         } catch (Exception e) {
-            log.error("Lỗi khi ghi nhận khách không nhận hàng API: {}", e.getMessage(), e);
-
+            log.error("Lỗi khi ghi nhận khách không nhận hàng API: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", e.getMessage()

@@ -9,17 +9,16 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
     <link rel="stylesheet" th:href="@{/css/merchant.css}">
 </head>
-
 <body class="merchant-page">
 <div th:replace="~{merchant/layout :: shell('Thêm món ăn', 'foods', ~{::content})}">
     <section th:fragment="content" class="d-flex flex-column gap-4">
 
+        <!-- HEADER TỐI GIẢN -->
         <div class="d-flex align-items-center justify-content-between mb-1">
             <div>
                 <h2 class="fw-bold text-dark mb-1">Thêm món ăn mới</h2>
                 <p class="text-muted mb-0 font-size-14">Nhập thông tin món ăn, ảnh và giá để đưa món lên kệ.</p>
             </div>
-
             <div>
                 <a href="/merchant/foods"
                    class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
@@ -32,16 +31,17 @@
         <form id="foodCreateForm" enctype="multipart/form-data">
             <div class="row g-4">
 
+                <!-- CỘT TRÁI: THÔNG TIN CƠ BẢN & MÔ TẢ -->
                 <div class="col-lg-7 d-flex flex-column gap-4">
+
+                    <!-- Card 1: Thông tin chung -->
                     <div class="merchant-page-card p-4">
                         <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
                             <i class="bi bi-info-circle text-danger me-2"></i>Thông tin cơ bản
                         </h5>
 
                         <div class="mb-3">
-                            <label for="foodName" class="form-label fw-semibold">
-                                Tên món ăn <span class="text-danger">*</span>
-                            </label>
+                            <label for="foodName" class="form-label fw-semibold">Tên món ăn <span class="text-danger">*</span></label>
                             <input type="text"
                                    id="foodName"
                                    name="foodName"
@@ -51,9 +51,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="merchantAddressId" class="form-label fw-semibold">
-                                Địa chỉ cửa hàng <span class="text-danger">*</span>
-                            </label>
+                            <label for="merchantAddressId" class="form-label fw-semibold">Địa chỉ cửa hàng <span class="text-danger">*</span></label>
                             <select id="merchantAddressId"
                                     name="merchantAddressId"
                                     class="form-select form-select-lg bg-light border-0"
@@ -87,6 +85,7 @@
                             </div>
                         </div>
 
+                        <!-- Tag món ăn -->
                         <div class="mb-3">
                             <label for="tagIds" class="form-label fw-semibold">
                                 Tag món ăn
@@ -141,6 +140,7 @@
                                        style="max-width: 140px; height: 42px;"
                                        placeholder="20"
                                        required>
+
                                 <span class="text-muted fw-semibold">phút</span>
                             </div>
                         </div>
@@ -156,10 +156,13 @@
                                       placeholder="Mô tả chi tiết về thành phần, hương vị..."></textarea>
                         </div>
                     </div>
+
                 </div>
 
+                <!-- CỘT PHẢI: GIÁ CẢ & TẢI ẢNH -->
                 <div class="col-lg-5 d-flex flex-column gap-4">
 
+                    <!-- Card 2: Giá & Phí -->
                     <div class="merchant-page-card p-4">
                         <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
                             <i class="bi bi-tag text-danger me-2"></i>Giá & Phí dịch vụ
@@ -273,6 +276,7 @@
                         </div>
                     </div>
 
+                    <!-- Card 3: Tải ảnh món ăn -->
                     <div class="merchant-page-card p-4">
                         <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
                             <i class="bi bi-images text-danger me-2"></i>Hình ảnh món ăn
@@ -300,9 +304,11 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
 
+            <!-- NÚT THAO TÁC CUỐI TRANG -->
             <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
                 <a href="/merchant/foods"
                    class="btn btn-light rounded-pill px-4 py-2 fw-semibold border">
@@ -433,7 +439,7 @@
 
             calculateDiscountPrice();
         }
-    }
+
 
     function calculateDiscountPrice() {
         const price = Number(priceInput.value);
@@ -681,7 +687,6 @@
             setTimeout(() => {
                 window.location.href = "/merchant/foods";
             }, 900);
-
         } catch (error) {
             console.error("Lỗi khi thêm món ăn:", error);
 
@@ -690,7 +695,6 @@
                 title: "Có lỗi xảy ra",
                 message: "Không thể thêm món ăn. Vui lòng thử lại."
             });
-
         } finally {
             submitButton.disabled = false;
             submitButton.innerHTML =

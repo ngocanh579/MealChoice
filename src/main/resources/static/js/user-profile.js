@@ -1,6 +1,6 @@
 // API Base URL
 const API_BASE = '/api/user';
-const PROVINCES_API = 'https://provinces.open-api.vn/api/';
+const PROVINCES_API = "https://provinces.open-api.vn/api/";
 
 // Global state
 let currentUser = null;
@@ -11,72 +11,49 @@ let cachedProvinces = null;
 
 // Tải danh sách tỉnh thành (có cache)
 async function getProvinces() {
-    if (cachedProvinces) {
+    if (cachedProvinces && cachedProvinces.length > 0) {
         return cachedProvinces;
     }
-
-    if (window.provincesLoadedPromise) {
-        return window.provincesLoadedPromise;
-    }
-
-    window.provincesLoadedPromise = fetch(`${PROVINCES_API}?depth=1`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Không thể tải danh sách tỉnh/thành phố');
-            }
-            return response.json();
-        })
-        .then(data => {
-            cachedProvinces = data;
-            return data;
-        })
-        .catch(error => {
-            console.error('Lỗi tải tỉnh/thành phố:', error);
-            window.provincesLoadedPromise = null;
-            return [];
-        });
-
-    return window.provincesLoadedPromise;
-}
-
-// Tải quận/huyện theo tỉnh/thành phố
-async function getDistrictsByProvinceCode(provinceCode) {
-    if (!provinceCode) {
-        return [];
-    }
-
     try {
-        const response = await fetch(`${PROVINCES_API}p/${provinceCode}?depth=2`);
-        if (!response.ok) {
-            throw new Error('Không thể tải danh sách quận/huyện');
+        const res = await fetch(`${PROVINCES_API}?depth=1`);
+        if (res.ok) {
+            cachedProvinces = await res.json();
+            return cachedProvinces;
         }
-
-        const data = await response.json();
-        return data.districts || [];
-    } catch (error) {
-        console.error('Lỗi tải quận/huyện:', error);
-        return [];
+    } catch (e) {
+        console.warn("Lỗi tải tỉnh thành từ API:", e);
     }
+    return [];
 }
 
-// Tải phường/xã theo quận/huyện
+// Tải quận huyện theo mã tỉnh
+async function getDistrictsByProvinceCode(provCode) {
+    if (!provCode) return [];
+    try {
+        const res = await fetch(`${PROVINCES_API}p/${provCode}?depth=2`);
+        if (res.ok) {
+            const data = await res.json();
+            return data.districts || [];
+        }
+    } catch (e) {
+        console.warn("Lỗi tải quận huyện từ API:", e);
+    }
+    return [];
+}
+
+// Tải phường xã theo mã quận
 async function getWardsByDistrictCode(distCode) {
-    if (!distCode) {
-        return [];
-    }
-
+    if (!distCode) return [];
     try {
-        const response = await fetch(`${PROVINCES_API}d/${distCode}?depth=2`);
-        if (!response.ok) {
-            throw new Error('Không thể tải danh sách phường/xã');
+        const res = await fetch(`${PROVINCES_API}d/${distCode}?depth=2`);
+        if (res.ok) {
+            const data = await res.json();
+            return data.wards || [];
         }
-
-        const data = await response.json();
-        return data.wards || [];
-    } catch (error) {
-        console.error('Lỗi tải phường/xã:', error);
-        return [];
+    } catch (e) {
+        console.warn("Lỗi tải phường xã từ API:", e);
     }
+    return [];
 }
 
 // Initialize
@@ -84,312 +61,297 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
     setupEventListeners();
     setupAddressSelectListeners();
-    getProvinces();
+    getProvinces(); // Tiền nạp danh sách tỉnh trong nền
 });
 
-// Helper lấy Auth Headers với JWT Bearer Token
-function getAuthHeaders() {
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-
+// Helper to get Auth Headers with JWT Bearer Token
+function getAuthHeaders(extraHeaders = {}) {
+    const token = localStorage.getItem('accessToken');
     return {
         'Content-Type': 'application/json',
-        ...(token ? {Authorization: `Bearer ${token}`} : {})
+        'Authorization': token ? `Bearer ${token}` : '',
+        ...extraHeaders
     };
 }
 
-// Kiểm tra authentication
-async function checkAuthentication() {
+// Check if user is logged in
+function checkAuthentication() {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+    loadProfile();
+}
+
+async function silentRefresh() {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) return;
+
+    try {
+        const response = await fetch('/api/auth/refresh-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.accessToken) {
+                localStorage.setItem('accessToken', data.accessToken);
+                document.cookie = `accessToken=${data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
+            }
+        } else if (response.status === 401 || response.status === 403) {
+            // Refresh token hết hạn → logout
+            console.warn('Refresh token hết hạn, đăng xuất...');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/login';
+        }
+    } catch (e) {
+        console.warn('Silent refresh tạm thời thất bại:', e);
+    }
+}
+
+// Logout function
+async function logout() {
+    if (!confirm('Bạn có chắc muốn đăng xuất?')) {
+        return;
+    }
+
+    try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (refreshToken) {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ refreshToken })
+            });
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+    } finally {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+    }
+}
+
+// Setup Event Listeners
+function setupEventListeners() {
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', handleProfileSubmit);
+    }
+}
+
+// ==================== PROFILE FUNCTIONS ====================
+
+// Load user profile
+async function loadProfile() {
+    showLoading(true);
     try {
         const response = await fetch(`${API_BASE}/profile`, {
-            method: 'GET',
             headers: getAuthHeaders()
         });
 
-        if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                window.location.href = '/login';
-                return;
-            }
-
-            throw new Error('Không thể lấy thông tin người dùng');
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/login';
+            return;
         }
 
-        currentUser = await response.json();
-        displayProfile(currentUser);
-        loadAddresses();
+        const result = await response.json();
+
+        if (result.success) {
+            currentUser = result.data;
+            displayProfile(currentUser);
+            displayAddresses(currentUser.addresses);
+        } else {
+            showAlert('error', result.message || 'Không thể tải thông tin profile');
+        }
     } catch (error) {
-        console.error('Lỗi kiểm tra đăng nhập:', error);
-        showAlert('danger', 'Không thể tải thông tin tài khoản');
+        console.error('Error loading profile:', error);
+        showAlert('error', 'Lỗi kết nối server');
+    } finally {
+        showLoading(false);
     }
 }
 
-// Hiển thị thông tin cá nhân
+// Display profile data
 function displayProfile(user) {
-    const displayName = document.getElementById('displayName');
-    const email = document.getElementById('email');
-    const phoneNumber = document.getElementById('phoneNumber');
-    const gender = document.getElementById('gender');
+    const displayNameEl = document.getElementById('displayName');
+    if (displayNameEl) displayNameEl.value = user.displayName || user.name || '';
 
-    if (displayName) {
-        displayName.value = user.displayName || '';
-    }
+    const emailEl = document.getElementById('email');
+    if (emailEl) emailEl.value = user.email || '';
 
-    if (email) {
-        email.value = user.email || '';
-    }
+    const phoneEl = document.getElementById('phoneNumber');
+    if (phoneEl) phoneEl.value = user.phoneNumber || '';
 
-    if (phoneNumber) {
-        phoneNumber.value = user.phoneNumber || '';
-    }
+    const dobEl = document.getElementById('dob');
+    if (dobEl) {
+        let dobValue = user.dob || user.dateOfBirth || '';
 
-    if (gender) {
-        gender.value = user.gender || '';
-    }
-
-    initialProfileData = {
-        displayName: user.displayName || '',
-        phoneNumber: user.phoneNumber || '',
-        gender: user.gender || ''
-    };
-
-    const profileName = document.getElementById('profileName');
-    if (profileName) {
-        profileName.textContent = user.displayName || 'Người dùng';
-    }
-
-    const profileEmail = document.getElementById('profileEmail');
-    if (profileEmail) {
-        profileEmail.textContent = user.email || '';
-    }
-}
-
-// Cài đặt event listener
-function setupEventListeners() {
-    const editProfileBtn = document.getElementById('btnEditProfile');
-    const cancelProfileBtn = document.getElementById('btnCancelProfile');
-    const profileForm = document.getElementById('profileForm');
-
-    if (editProfileBtn) {
-        editProfileBtn.addEventListener('click', enableProfileEditing);
-    }
-
-    if (cancelProfileBtn) {
-        cancelProfileBtn.addEventListener('click', disableProfileEditing);
-    }
-
-    if (profileForm) {
-        profileForm.addEventListener('submit', submitProfileForm);
-    }
-
-    const addAddressBtn = document.getElementById('btnAddAddress');
-
-    if (addAddressBtn) {
-        addAddressBtn.addEventListener('click', () => openAddressModal());
-    }
-
-    const addressForm = document.getElementById('addressForm');
-
-    if (addressForm) {
-        addressForm.addEventListener('submit', event => {
-            event.preventDefault();
-            submitAddressForm();
-        });
-    }
-
-    const closeAddressBtn = document.getElementById('btnCloseAddressModal');
-
-    if (closeAddressBtn) {
-        closeAddressBtn.addEventListener('click', closeAddressModal);
-    }
-
-    const cancelAddressBtn = document.getElementById('btnCancelAddress');
-
-    if (cancelAddressBtn) {
-        cancelAddressBtn.addEventListener('click', closeAddressModal);
-    }
-
-    const deleteAddressBtn = document.getElementById('btnDeleteAddress');
-
-    if (deleteAddressBtn) {
-        deleteAddressBtn.addEventListener('click', deleteCurrentAddress);
-    }
-}
-
-// Bật chế độ chỉnh sửa thông tin cá nhân
-function enableProfileEditing() {
-    isEditing = true;
-
-    ['displayName', 'phoneNumber', 'gender'].forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.disabled = false;
+        if (dobValue && dobValue.includes('T')) {
+            dobValue = dobValue.split('T')[0];
         }
-    });
 
-    const editProfileBtn = document.getElementById('btnEditProfile');
-    const saveProfileBtn = document.getElementById('btnSaveProfile');
-    const cancelProfileBtn = document.getElementById('btnCancelProfile');
-
-    if (editProfileBtn) {
-        editProfileBtn.classList.add('d-none');
+        dobEl.value = dobValue;
     }
 
-    if (saveProfileBtn) {
-        saveProfileBtn.classList.remove('d-none');
-    }
-
-    if (cancelProfileBtn) {
-        cancelProfileBtn.classList.remove('d-none');
-    }
+    // Gender
+    document.getElementById('genderMale').checked = user.gender === 'MALE';
+    document.getElementById('genderFemale').checked = user.gender === 'FEMALE';
+    document.getElementById('genderOther').checked = user.gender === 'OTHER';
 }
 
-// Tắt chế độ chỉnh sửa thông tin cá nhân
-function disableProfileEditing() {
-    isEditing = false;
+// Enable profile editing
+function editProfile() {
+    isEditing = true;
+    const displayNameEl = document.getElementById('displayName');
+    if (displayNameEl) displayNameEl.disabled = false;
+    const dobEl = document.getElementById('dob');
+    if (dobEl) dobEl.disabled = false;
+    document.querySelectorAll('input[name="gender"]').forEach(input => {
+    input.disabled = false;
+   });
+    document.getElementById('profileActions').style.display = 'block';
 
-    const displayName = document.getElementById('displayName');
-    const phoneNumber = document.getElementById('phoneNumber');
-    const gender = document.getElementById('gender');
-
-    if (displayName) {
-        displayName.value = initialProfileData.displayName;
-        displayName.disabled = true;
+    let dobValue = currentUser.dob || currentUser.dateOfBirth || '';
+    if (dobValue && dobValue.includes('T')) {
+        dobValue = dobValue.split('T')[0];
     }
 
-    if (phoneNumber) {
-        phoneNumber.value = initialProfileData.phoneNumber;
-        phoneNumber.disabled = true;
-    }
-
-    if (gender) {
-        gender.value = initialProfileData.gender;
-        gender.disabled = true;
-    }
-
-    const editProfileBtn = document.getElementById('btnEditProfile');
-    const saveProfileBtn = document.getElementById('btnSaveProfile');
-    const cancelProfileBtn = document.getElementById('btnCancelProfile');
-
-    if (editProfileBtn) {
-        editProfileBtn.classList.remove('d-none');
-    }
-
-    if (saveProfileBtn) {
-        saveProfileBtn.classList.add('d-none');
-    }
-
-    if (cancelProfileBtn) {
-        cancelProfileBtn.classList.add('d-none');
-    }
-}
-
-// Submit thông tin cá nhân
-async function submitProfileForm(event) {
-    event.preventDefault();
-
-    const displayName = document.getElementById('displayName')?.value.trim() || '';
-    const phoneNumber = document.getElementById('phoneNumber')?.value.trim() || '';
-    const gender = document.getElementById('gender')?.value || '';
-
-    const formData = {
-        displayName,
-        phoneNumber,
-        gender
+    // Lưu dữ liệu ban đầu để so sánh dirty fields
+    initialProfileData = {
+        displayName: displayNameEl ? displayNameEl.value : '',
+        dob: dobValue,
+        gender: document.querySelector('input[name="gender"]:checked')?.value || ''
     };
+}
 
+// Cancel profile editing
+function cancelEdit() {
+    isEditing = false;
+    const displayNameEl = document.getElementById('displayName');
+    if (displayNameEl) displayNameEl.disabled = true;
+    const dobEl = document.getElementById('dob');
+    if (dobEl) dobEl.disabled = true;
+    document.querySelectorAll('input[name="gender"]').forEach(input => {
+    input.disabled = true;
+    });
+    document.getElementById('profileActions').style.display = 'none';
+    displayProfile(currentUser); // Reset to original data
+}
+
+// Handle profile form submit (Partial Update via PATCH)
+async function handleProfileSubmit(e) {
+    e.preventDefault();
+
+    const currentDisplayName = document.getElementById('displayName').value;
+    const currentDob = document.getElementById('dob').value;
+    const currentGender = document.querySelector('input[name="gender"]:checked')?.value || '';
+
+    // Chỉ đưa vào payload các trường có sự thay đổi (dirty fields)
+    const payload = {};
+    if (currentDisplayName !== initialProfileData.displayName) {
+        payload.displayName = currentDisplayName;
+    }
+    if (currentDob !== initialProfileData.dob) {
+    payload.dob = currentDob || null;
+}
+    if (currentGender !== initialProfileData.gender) {
+        payload.gender = currentGender || null;
+    }
+
+    if (Object.keys(payload).length === 0) {
+        showAlert('info', 'Không có thông tin nào thay đổi');
+        cancelEdit();
+        return;
+    }
+
+    showLoading(true);
     try {
         const response = await fetch(`${API_BASE}/profile`, {
             method: 'PATCH',
             headers: getAuthHeaders(),
-            body: JSON.stringify(formData)
+            body: JSON.stringify(payload)
         });
 
         const result = await response.json();
 
-        if (!response.ok) {
-            throw new Error(result.message || 'Không thể cập nhật thông tin');
+        if (result.success) {
+            currentUser = result.data;
+            displayProfile(currentUser);
+            cancelEdit();
+            showAlert('success', 'Cập nhật thông tin cá nhân thành công!');
+        } else {
+            showAlert('error', result.message || 'Cập nhật thất bại');
         }
-
-        currentUser = result;
-        displayProfile(currentUser);
-        disableProfileEditing();
-
-        showAlert('success', 'Cập nhật thông tin cá nhân thành công');
     } catch (error) {
-        console.error('Lỗi cập nhật thông tin cá nhân:', error);
-        showAlert('danger', error.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+        console.error('Error updating profile:', error);
+        showAlert('error', 'Lỗi kết nối server');
+    } finally {
+        showLoading(false);
     }
 }
 
-// Tải danh sách địa chỉ
-async function loadAddresses() {
-    try {
-        const response = await fetch(`${API_BASE}/addresses`, {
-            method: 'GET',
-            headers: getAuthHeaders()
-        });
+// ==================== ADDRESS FUNCTIONS ====================
 
-        if (!response.ok) {
-            throw new Error('Không thể tải danh sách địa chỉ');
-        }
-
-        const addresses = await response.json();
-        displayAddresses(addresses);
-    } catch (error) {
-        console.error('Lỗi tải địa chỉ:', error);
-        showAlert('danger', 'Không thể tải danh sách địa chỉ');
-    }
-}
-
-// Hiển thị danh sách địa chỉ
+// Display addresses
 function displayAddresses(addresses) {
     const container = document.getElementById('addressList');
-
-    if (!container) {
-        return;
-    }
+    if (!container) return;
 
     if (!addresses || addresses.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-4 text-muted">
-                <i class="bi bi-geo-alt fs-1 d-block mb-2 opacity-50"></i>
-                <p class="mb-0">Bạn chưa có địa chỉ nhận hàng nào.</p>
+            <div class="col-12 text-center py-5 text-muted">
+                <div class="display-6 mb-2">📭</div>
+                <h6 class="fw-bold mb-1">Chưa có địa chỉ giao hàng nào</h6>
+                <p class="small text-secondary mb-0">Hãy thêm địa chỉ để đặt hàng dễ dàng hơn!</p>
             </div>
         `;
         return;
     }
 
-    container.innerHTML = addresses.map(address => `
-        <div class="address-card ${address.isDefault ? 'selected' : ''}">
-            <div class="d-flex justify-content-between align-items-start gap-3">
-                <div>
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <strong class="text-dark">${escapeHtml(address.contactName || '')}</strong>
-                        <span class="text-muted">|</span>
-                        <span class="text-danger fw-semibold">${escapeHtml(address.contactPhone || '')}</span>
-                        ${address.isDefault ? '<span class="badge bg-danger rounded-pill">Mặc định</span>' : ''}
-                    </div>
-                    <div class="text-secondary small">
-                        ${escapeHtml(formatAddress(address))}
-                    </div>
-                    ${address.note ? `
-                        <div class="text-muted font-size-12 fst-italic mt-1">
-                            <i class="bi bi-info-circle me-1"></i>
-                            ${escapeHtml(address.note)}
+    container.innerHTML = addresses.map(addr => `
+        <div class="col-md-6 col-12">
+            <div class="card h-100 p-3 rounded-4 border ${addr.isDefault ? 'border-danger border-2 bg-light-subtle shadow-sm' : 'border-light-subtle shadow-sm'}">
+                <div class="card-body p-2 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold text-dark mb-0">
+                                <i class="bi bi-person-fill text-danger me-1"></i>${addr.contactName}
+                            </h6>
+                            ${addr.isDefault ? '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Mặc định</span>' : ''}
                         </div>
-                    ` : ''}
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="button"
-                            class="btn btn-sm btn-outline-danger rounded-pill"
-                            onclick="openAddressModal('${address.id}')">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary rounded-pill"
-                            onclick="deleteAddress('${address.id}')">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                        <p class="text-secondary small mb-2">
+                            <i class="bi bi-telephone-fill me-1"></i><strong>${addr.contactPhone}</strong>
+                        </p>
+                        <p class="text-dark small mb-1">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i><strong>Địa chỉ:</strong> ${addr.street}
+                        </p>
+                        <p class="text-muted small mb-2 ms-4">
+                            ${addr.ward}, ${addr.district}, ${addr.city}
+                        </p>
+                        ${addr.note ? `<p class="text-secondary small mb-2 bg-white p-2 rounded-3 border"><i class="bi bi-sticky me-1 text-warning"></i><strong>Ghi chú:</strong> ${addr.note}</p>` : ''}
+                    </div>
+
+                    <div class="d-flex justify-content-end align-items-center gap-2 pt-3 border-top mt-2">
+                        ${!addr.isDefault ? `
+                            <button class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="setDefaultAddress(${addr.id})">
+                                <i class="bi bi-star me-1"></i> Mặc định
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="editAddress(${addr.id})">
+                            <i class="bi bi-pencil me-1"></i> Sửa
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="deleteAddress(${addr.id})">
+                            <i class="bi bi-trash me-1"></i> Xóa
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -402,495 +364,429 @@ function setupAddressSelectListeners() {
     const districtSelect = document.getElementById('district');
     const wardSelect = document.getElementById('ward');
 
-    if (!citySelect || !districtSelect || !wardSelect) {
-        return;
-    }
+    if (citySelect) {
+        citySelect.addEventListener('change', async function() {
+            const selectedOpt = citySelect.options[citySelect.selectedIndex];
+            const provCode = selectedOpt ? selectedOpt.getAttribute('data-code') : null;
 
-    citySelect.addEventListener('change', async () => {
-        districtSelect.innerHTML = '<option value="" selected disabled>Đang tải Quận/Huyện...</option>';
-        wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
-
-        districtSelect.disabled = true;
-        wardSelect.disabled = true;
-
-        const provinceCode = citySelect.value;
-
-        if (!provinceCode) {
-            districtSelect.innerHTML = '<option value="" selected disabled>Quận/Huyện</option>';
-            return;
-        }
-
-        await loadDistrictsByCity(citySelect);
-    });
-
-    districtSelect.addEventListener('change', async () => {
-        wardSelect.innerHTML = '<option value="" selected disabled>Đang tải Phường/Xã...</option>';
-        wardSelect.disabled = true;
-
-        const districtCode = districtSelect.value;
-
-        if (!districtCode) {
+            districtSelect.innerHTML = '<option value="" selected disabled>Đang tải Quận/Huyện...</option>';
             wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
-            return;
-        }
+            wardSelect.disabled = true;
 
-        await loadWardsByDistrict(districtSelect);
-    });
-}
+            if (!provCode) {
+                districtSelect.innerHTML = '<option value="" selected disabled>Quận/Huyện</option>';
+                districtSelect.disabled = true;
+                return;
+            }
 
-// Tải danh sách tỉnh vào select
-async function loadProvincesIntoSelect(selectedCity = '') {
-    const citySelect = document.getElementById('city');
-
-    if (!citySelect) {
-        return;
+            const districts = await getDistrictsByProvinceCode(provCode);
+            let distHtml = '<option value="" selected disabled>Quận/Huyện</option>';
+            districts.forEach(d => {
+                distHtml += `<option value="${d.name}" data-code="${d.code}">${d.name}</option>`;
+            });
+            districtSelect.innerHTML = distHtml;
+            districtSelect.disabled = false;
+        });
     }
 
-    citySelect.innerHTML = '<option value="" selected disabled>Đang tải Tỉnh/Thành phố...</option>';
+    if (districtSelect) {
+        districtSelect.addEventListener('change', async function() {
+            const selectedOpt = districtSelect.options[districtSelect.selectedIndex];
+            const distCode = selectedOpt ? selectedOpt.getAttribute('data-code') : null;
 
-    const provinces = await getProvinces();
+            wardSelect.innerHTML = '<option value="" selected disabled>Đang tải Phường/Xã...</option>';
 
-    if (!provinces.length) {
-        citySelect.innerHTML = '<option value="" selected disabled>Không thể tải dữ liệu</option>';
-        return;
+            if (!distCode) {
+                wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
+                wardSelect.disabled = true;
+                return;
+            }
+
+            const wards = await getWardsByDistrictCode(distCode);
+            let wardHtml = '<option value="" selected disabled>Phường/Xã</option>';
+            wards.forEach(w => {
+                wardHtml += `<option value="${w.name}" data-code="${w.code}">${w.name}</option>`;
+            });
+            wardSelect.innerHTML = wardHtml;
+            wardSelect.disabled = false;
+        });
     }
-
-    citySelect.innerHTML = `
-        <option value="" disabled ${!selectedCity ? 'selected' : ''}>Tỉnh/Thành phố</option>
-        ${provinces.map(province => `
-            <option value="${province.code}">${escapeHtml(province.name)}</option>
-        `).join('')}
-    `;
-
-    if (selectedCity) {
-        const selectedOption = Array.from(citySelect.options)
-            .find(option => option.textContent.trim() === selectedCity.trim());
-
-        if (selectedOption) {
-            citySelect.value = selectedOption.value;
-        }
-    }
-}
-
-// Tải quận/huyện theo tỉnh
-async function loadDistrictsByCity(citySelect) {
-    const districtSelect = document.getElementById('district');
-    const wardSelect = document.getElementById('ward');
-
-    if (!districtSelect || !wardSelect || !citySelect.value) {
-        return;
-    }
-
-    districtSelect.innerHTML = '<option value="" selected disabled>Đang tải Quận/Huyện...</option>';
-    districtSelect.disabled = true;
-
-    wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
-    wardSelect.disabled = true;
-
-    const districts = await getDistrictsByProvinceCode(citySelect.value);
-
-    districtSelect.innerHTML = `
-        <option value="" selected disabled>Quận/Huyện</option>
-        ${districts.map(district => `
-            <option value="${district.code}">${escapeHtml(district.name)}</option>
-        `).join('')}
-    `;
-
-    districtSelect.disabled = false;
-}
-
-// Tải phường/xã theo quận
-async function loadWardsByDistrict(districtSelect) {
-    const wardSelect = document.getElementById('ward');
-
-    if (!wardSelect || !districtSelect.value) {
-        return;
-    }
-
-    wardSelect.innerHTML = '<option value="" selected disabled>Đang tải Phường/Xã...</option>';
-    wardSelect.disabled = true;
-
-    const wards = await getWardsByDistrictCode(districtSelect.value);
-
-    wardSelect.innerHTML = `
-        <option value="" selected disabled>Phường/Xã</option>
-        ${wards.map(ward => `
-            <option value="${ward.code}">${escapeHtml(ward.name)}</option>
-        `).join('')}
-    `;
-
-    wardSelect.disabled = false;
 }
 
 // Open address modal (Tỉnh/Huyện/Xã)
 async function openAddressModal(addressId = null) {
     const modalEl = document.getElementById('addressModal');
-
-    if (!modalEl) {
-        return;
-    }
-
+    if (!modalEl) return;
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    const form = document.getElementById('addressForm');
+
+    form.reset();
+    document.getElementById('addressId').value = '';
+
+    const contactNameInput = document.getElementById('contactName');
+    const contactPhoneInput = document.getElementById('contactPhone');
+    const contactNotice = document.getElementById('contactNotice');
+
     const citySelect = document.getElementById('city');
     const districtSelect = document.getElementById('district');
     const wardSelect = document.getElementById('ward');
-    const contactNameInput = document.getElementById('contactName');
-    const contactPhoneInput = document.getElementById('contactPhone');
-
-    if (!citySelect || !districtSelect || !wardSelect) {
-        return;
-    }
-
-    isEditing = Boolean(addressId);
 
     if (addressId) {
+        const selectedAddressId = Number(addressId);
+        const address = currentUser?.addresses?.find(a => Number(a.id) === selectedAddressId);
+
+        if (!address) {
+            showAlert('error', 'Địa chỉ không hợp lệ hoặc đã bị xóa');
+            return;
+        }
+
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil me-2 text-danger"></i>Chỉnh Sửa Địa Chỉ';
+        document.getElementById('addressId').value = address.id;
+        contactNameInput.value = address.contactName || '';
+        contactPhoneInput.value = address.contactPhone || '';
+
+        contactNameInput.disabled = false;
+        contactPhoneInput.disabled = true;
+        if (contactNotice) contactNotice.classList.remove('d-none');
+
+        document.getElementById('street').value = address.street || '';
+        document.getElementById('note').value = address.note || '';
+        document.getElementById('isDefault').checked = Boolean(address.isDefault);
+
+        const oldCity = (address.city || '').trim();
+        const oldDistrict = (address.district || '').trim();
+        const oldWard = (address.ward || '').trim();
+
+        // 1. NGAY LẬP TỨC điền giá trị cũ vào 3 dropdown để người dùng nhìn thấy ngay
+        citySelect.innerHTML = `<option value="${oldCity}" selected>${oldCity || 'Tỉnh/Thành phố'}</option>`;
+        districtSelect.innerHTML = `<option value="${oldDistrict}" selected>${oldDistrict || 'Quận/Huyện'}</option>`;
+        districtSelect.disabled = false;
+        wardSelect.innerHTML = `<option value="${oldWard}" selected>${oldWard || 'Phường/Xã'}</option>`;
+        wardSelect.disabled = false;
+
+        modal.show();
+
+        // 2. Nạp toàn bộ danh mục từ API và chọn đúng mục đang có
         try {
-            const response = await fetch(`${API_BASE}/address/${addressId}`, {
-                method: 'GET',
-                headers: getAuthHeaders()
-            });
-
-            if (!response.ok) {
-                throw new Error('Không thể lấy thông tin địa chỉ');
-            }
-
-            const address = await response.json();
-
-            document.getElementById('modalTitle').innerHTML =
-                '<i class="bi bi-pencil me-2 text-danger"></i>Chỉnh Sửa Địa Chỉ';
-
-            document.getElementById('addressId').value = address.id;
-
-            contactNameInput.value = address.contactName || '';
-            contactPhoneInput.value = address.contactPhone || '';
-
-            contactNameInput.disabled = false;
-            contactPhoneInput.disabled = true;
-
-            document.getElementById('street').value = address.street || '';
-            document.getElementById('note').value = address.note || '';
-            document.getElementById('isDefault').checked = Boolean(address.isDefault);
-
-            const oldCity = (address.city || '').trim();
-            const oldDistrict = (address.district || '').trim();
-            const oldWard = (address.ward || '').trim();
-
-            citySelect.innerHTML =
-                '<option value="" selected disabled>Đang tải Tỉnh/Thành phố...</option>';
-
-            districtSelect.innerHTML =
-                '<option value="" selected disabled>Quận/Huyện</option>';
-
-            wardSelect.innerHTML =
-                '<option value="" selected disabled>Phường/Xã</option>';
-
-            districtSelect.disabled = true;
-            wardSelect.disabled = true;
-
-            initialAddressData = {
-                city: oldCity,
-                district: oldDistrict,
-                ward: oldWard,
-                street: address.street || '',
-                note: address.note || '',
-                isDefault: Boolean(address.isDefault)
-            };
-
-            modal.show();
-
             const provinces = await getProvinces();
+            if (provinces && provinces.length > 0) {
+                let cityHtml = '<option value="" disabled>Tỉnh/Thành phố</option>';
+                let matchedProvCode = null;
+                let isCityMatched = false;
 
-            citySelect.innerHTML = `
-                <option value="" disabled ${!oldCity ? 'selected' : ''}>Tỉnh/Thành phố</option>
-                ${provinces.map(province => `
-                    <option value="${province.code}">${escapeHtml(province.name)}</option>
-                `).join('')}
-            `;
+                const targetCity = oldCity.toLowerCase();
+                provinces.forEach(p => {
+                    const pName = p.name.trim();
+                    const pLower = pName.toLowerCase();
+                    const isSelected = targetCity && (pLower === targetCity || pLower.includes(targetCity) || targetCity.includes(pLower));
+                    if (isSelected && !isCityMatched) {
+                        cityHtml += `<option value="${pName}" data-code="${p.code}" selected>${pName}</option>`;
+                        matchedProvCode = p.code;
+                        isCityMatched = true;
+                    } else {
+                        cityHtml += `<option value="${pName}" data-code="${p.code}">${pName}</option>`;
+                    }
+                });
 
-            const selectedCity = provinces.find(
-                province => province.name.trim() === oldCity
-            );
+                if (!isCityMatched && oldCity) {
+                    cityHtml = `<option value="${oldCity}" selected>${oldCity}</option>` + cityHtml;
+                }
+                citySelect.innerHTML = cityHtml;
 
-            if (selectedCity) {
-                citySelect.value = selectedCity.code;
+                // Nếu khớp được mã Tỉnh -> nạp Quận/Huyện
+                if (matchedProvCode) {
+                    const districts = await getDistrictsByProvinceCode(matchedProvCode);
+                    let distHtml = '<option value="" disabled>Quận/Huyện</option>';
+                    let matchedDistCode = null;
+                    let isDistMatched = false;
 
-                await loadDistrictsByCity(citySelect);
+                    const targetDist = oldDistrict.toLowerCase();
+                    districts.forEach(d => {
+                        const dName = d.name.trim();
+                        const dLower = dName.toLowerCase();
+                        const isSelected = targetDist && (dLower === targetDist || dLower.includes(targetDist) || targetDist.includes(dLower));
+                        if (isSelected && !isDistMatched) {
+                            distHtml += `<option value="${dName}" data-code="${d.code}" selected>${dName}</option>`;
+                            matchedDistCode = d.code;
+                            isDistMatched = true;
+                        } else {
+                            distHtml += `<option value="${dName}" data-code="${d.code}">${dName}</option>`;
+                        }
+                    });
 
-                const selectedDistrict = Array.from(districtSelect.options).find(
-                    option => option.textContent.trim() === oldDistrict
-                );
+                    if (!isDistMatched && oldDistrict) {
+                        distHtml = `<option value="${oldDistrict}" selected>${oldDistrict}</option>` + distHtml;
+                    }
+                    districtSelect.innerHTML = distHtml;
+                    districtSelect.disabled = false;
 
-                if (selectedDistrict) {
-                    districtSelect.value = selectedDistrict.value;
+                    // Nếu khớp được mã Quận -> nạp Phường/Xã
+                    if (matchedDistCode) {
+                        const wards = await getWardsByDistrictCode(matchedDistCode);
+                        let wardHtml = '<option value="" disabled>Phường/Xã</option>';
+                        let isWardMatched = false;
 
-                    await loadWardsByDistrict(districtSelect);
+                        const targetWard = oldWard.toLowerCase();
+                        wards.forEach(w => {
+                            const wName = w.name.trim();
+                            const wLower = wName.toLowerCase();
+                            const isSelected = targetWard && (wLower === targetWard || wLower.includes(targetWard) || targetWard.includes(wLower));
+                            if (isSelected && !isWardMatched) {
+                                wardHtml += `<option value="${wName}" data-code="${w.code}" selected>${wName}</option>`;
+                                isWardMatched = true;
+                            } else {
+                                wardHtml += `<option value="${wName}" data-code="${w.code}">${wName}</option>`;
+                            }
+                        });
 
-                    const selectedWard = Array.from(wardSelect.options).find(
-                        option => option.textContent.trim() === oldWard
-                    );
-
-                    if (selectedWard) {
-                        wardSelect.value = selectedWard.value;
+                        if (!isWardMatched && oldWard) {
+                            wardHtml = `<option value="${oldWard}" selected>${oldWard}</option>` + wardHtml;
+                        }
+                        wardSelect.innerHTML = wardHtml;
+                        wardSelect.disabled = false;
                     }
                 }
             }
-        } catch (error) {
-            console.error('Lỗi nạp địa chỉ cũ:', error);
-            showAlert('danger', 'Không thể tải thông tin địa chỉ');
+        } catch (err) {
+            console.warn('Lỗi nạp danh mục hành chính đầy đủ:', err);
         }
 
-        return;
+        initialAddressData = {
+            city: oldCity,
+            district: oldDistrict,
+            ward: oldWard,
+            street: address.street || '',
+            note: address.note || '',
+            isDefault: Boolean(address.isDefault)
+        };
+    } else {
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-house-add me-2 text-danger"></i>Thêm Địa Chỉ Mới';
+        contactNameInput.disabled = false;
+        contactPhoneInput.disabled = false;
+        if (contactNotice) contactNotice.classList.add('d-none');
+
+        citySelect.innerHTML = '<option value="" selected disabled>Đang tải Tỉnh/Thành phố...</option>';
+        districtSelect.innerHTML = '<option value="" selected disabled>Quận/Huyện</option>';
+        wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
+        districtSelect.disabled = true;
+        wardSelect.disabled = true;
+
+        initialAddressData = {};
+        modal.show();
+
+        const provinces = await getProvinces();
+        let cityHtml = '<option value="" selected disabled>Tỉnh/Thành phố</option>';
+        provinces.forEach(p => {
+            cityHtml += `<option value="${p.name}" data-code="${p.code}">${p.name}</option>`;
+        });
+        citySelect.innerHTML = cityHtml;
     }
-
-    document.getElementById('modalTitle').innerHTML =
-        '<i class="bi bi-plus-circle me-2 text-danger"></i>Thêm Địa Chỉ';
-
-    document.getElementById('addressId').value = '';
-
-    contactNameInput.value = '';
-    contactPhoneInput.value = '';
-    contactNameInput.disabled = false;
-    contactPhoneInput.disabled = false;
-
-    document.getElementById('street').value = '';
-    document.getElementById('note').value = '';
-    document.getElementById('isDefault').checked = false;
-
-    citySelect.innerHTML =
-        '<option value="" selected disabled>Đang tải Tỉnh/Thành phố...</option>';
-
-    districtSelect.innerHTML =
-        '<option value="" selected disabled>Quận/Huyện</option>';
-
-    wardSelect.innerHTML =
-        '<option value="" selected disabled>Phường/Xã</option>';
-
-    districtSelect.disabled = true;
-    wardSelect.disabled = true;
-
-    initialAddressData = {};
-
-    modal.show();
-
-    const provinces = await getProvinces();
-
-    citySelect.innerHTML = `
-        <option value="" selected disabled>Tỉnh/Thành phố</option>
-        ${provinces.map(province => `
-            <option value="${province.code}">${escapeHtml(province.name)}</option>
-        `).join('')}
-    `;
 }
 
 // Close address modal
 function closeAddressModal() {
     const modalEl = document.getElementById('addressModal');
-
-    if (!modalEl) {
-        return;
-    }
-
+    if (!modalEl) return;
     const modal = bootstrap.Modal.getInstance(modalEl);
-
     if (modal) {
         modal.hide();
     }
-
-    isEditing = false;
-    initialAddressData = {};
 }
 
-// Submit address form
+// Edit address
+function editAddress(addressId) {
+    const target = currentUser?.addresses?.find(a => Number(a.id) === Number(addressId));
+
+    if (!target) {
+        showAlert('error', 'Không tìm thấy địa chỉ để sửa');
+        return;
+    }
+
+    openAddressModal(Number(addressId));
+}
+
+// lưu địa chỉ
 async function submitAddressForm() {
     const addressId = document.getElementById('addressId').value;
     const isEdit = Boolean(addressId);
 
     const contactName = document.getElementById('contactName').value.trim();
     const contactPhone = document.getElementById('contactPhone').value.trim();
-    const citySelect = document.getElementById('city');
-    const districtSelect = document.getElementById('district');
-    const wardSelect = document.getElementById('ward');
-
-    const city = citySelect.options[citySelect.selectedIndex]?.textContent.trim() || '';
-    const district = districtSelect.options[districtSelect.selectedIndex]?.textContent.trim() || '';
-    const ward = wardSelect.options[wardSelect.selectedIndex]?.textContent.trim() || '';
-
+    const city = document.getElementById('city').value;
+    const district = document.getElementById('district').value;
+    const ward = document.getElementById('ward').value;
     const street = document.getElementById('street').value.trim();
-    const note = document.getElementById('note').value.trim();
+    const note = document.getElementById('note').value.trim() || null;
     const isDefault = document.getElementById('isDefault').checked;
 
-    if (!contactName || !contactPhone || !city || !district || !ward || !street) {
-        showAlert('warning', 'Vui lòng nhập đầy đủ thông tin bắt buộc');
+    if (!isEdit && (!contactName || !contactPhone)) {
+        showAlert('error', 'Vui lòng nhập tên người nhận và số điện thoại');
+        return;
+    }
+
+    if (!city || !district || !ward || !street) {
+        showAlert('error', 'Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện, Phường/Xã và nhập địa chỉ chi tiết');
         return;
     }
 
     let url;
     let method;
-    let formData;
 
     if (isEdit) {
         url = `${API_BASE}/address/${addressId}`;
         method = 'PATCH';
-
-        formData = {};
-
-        if (city !== initialAddressData.city) {
-            formData.city = city;
-        }
-
-        if (district !== initialAddressData.district) {
-            formData.district = district;
-        }
-
-        if (ward !== initialAddressData.ward) {
-            formData.ward = ward;
-        }
-
-        if (street !== initialAddressData.street) {
-            formData.street = street;
-        }
-
-        if (note !== initialAddressData.note) {
-            formData.note = note;
-        }
-
-        if (isDefault !== initialAddressData.isDefault) {
-            formData.isDefault = isDefault;
-        }
-
-        if (Object.keys(formData).length === 0) {
-            showAlert('info', 'Bạn chưa thay đổi thông tin nào để sửa');
-            closeAddressModal();
-            return;
-        }
+        formData = {
+            contactName: contactName,
+            contactPhone: contactPhone,
+            city: city,
+            district: district,
+            ward: ward,
+            street: street,
+            note: note,
+            isDefault: isDefault
+        };
     } else {
         url = `${API_BASE}/address`;
         method = 'POST';
-
         formData = {
-            contactName,
-            contactPhone,
-            city,
-            district,
-            ward,
-            street,
-            note: note || null,
-            isDefault
+            contactName: contactName,
+            contactPhone: contactPhone,
+            city: city,
+            district: district,
+            ward: ward,
+            street: street,
+            note: note,
+            isDefault: isDefault
         };
     }
 
+    showLoading(true);
     try {
         const response = await fetch(url, {
-            method,
+            method: method,
             headers: getAuthHeaders(),
             body: JSON.stringify(formData)
         });
 
         const result = await response.json();
 
-        if (!response.ok) {
-            throw new Error(result.message || 'Không thể lưu địa chỉ');
+        if (result.success) {
+            currentUser = result.data;
+            displayAddresses(currentUser.addresses);
+            closeAddressModal();
+
+            if (isEdit) {
+                showAlert('success', 'Sửa địa chỉ thành công!');
+            } else {
+                showAlert('success', 'Thêm địa chỉ thành công!');
+            }
+        } else {
+            showAlert('error', result.message || 'Lưu địa chỉ thất bại');
         }
-
-        showAlert(
-            'success',
-            isEdit
-                ? 'Cập nhật địa chỉ thành công'
-                : 'Thêm địa chỉ thành công'
-        );
-
-        closeAddressModal();
-        await loadAddresses();
     } catch (error) {
-        console.error('Lỗi lưu địa chỉ:', error);
-        showAlert('danger', error.message || 'Có lỗi xảy ra khi lưu địa chỉ');
+        console.error('Error saving address:', error);
+        showAlert('error', 'Lỗi kết nối server');
+    } finally {
+        showLoading(false);
     }
 }
 
-// Xóa địa chỉ hiện tại
-async function deleteCurrentAddress() {
-    const addressId = document.getElementById('addressId')?.value;
-
-    if (!addressId) {
-        return;
-    }
-
-    await deleteAddress(addressId);
-}
-
-// Xóa địa chỉ
+// Delete address
 async function deleteAddress(addressId) {
-    if (!confirm('Bạn có chắc chắn muốn xóa địa chỉ này không?')) {
+    if (!confirm('⚠️ Bạn có chắc muốn xóa địa chỉ này?')) {
         return;
     }
 
+    showLoading(true);
     try {
         const response = await fetch(`${API_BASE}/address/${addressId}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
         });
 
-        if (!response.ok) {
-            const result = await response.json().catch(() => null);
-            throw new Error(result?.message || 'Không thể xóa địa chỉ');
+        const result = await response.json();
+
+        if (result.success) {
+            currentUser = result.data;
+            displayAddresses(currentUser.addresses);
+            showAlert('success', 'Xóa địa chỉ thành công!');
+        } else {
+            showAlert('error', result.message || 'Xóa địa chỉ thất bại');
         }
-
-        showAlert('success', 'Xóa địa chỉ thành công');
-
-        closeAddressModal();
-        await loadAddresses();
     } catch (error) {
-        console.error('Lỗi xóa địa chỉ:', error);
-        showAlert('danger', error.message || 'Có lỗi xảy ra khi xóa địa chỉ');
+        console.error('Error deleting address:', error);
+        showAlert('error', 'Lỗi kết nối server');
+    } finally {
+        showLoading(false);
     }
 }
 
-// Định dạng địa chỉ
-function formatAddress(address) {
-    return [
-        address.street,
-        address.ward,
-        address.district,
-        address.city
-    ].filter(Boolean).join(', ');
-}
+// Set default address
+async function setDefaultAddress(addressId) {
+    showLoading(true);
+    try {
+        const response = await fetch(`${API_BASE}/address/${addressId}/set-default`, {
+            method: 'PATCH',
+            headers: getAuthHeaders()
+        });
 
-// Escape HTML
-function escapeHtml(value) {
-    if (value === null || value === undefined) {
-        return '';
+        const result = await response.json();
+
+        if (result.success) {
+            currentUser = result.data;
+            displayAddresses(currentUser.addresses);
+            showAlert('success', 'Đã đặt địa chỉ mặc định!');
+        } else {
+            showAlert('error', result.message || 'Thất bại');
+        }
+    } catch (error) {
+        console.error('Error setting default address:', error);
+        showAlert('error', 'Lỗi kết nối server');
+    } finally {
+        showLoading(false);
     }
-
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
 }
 
-// Hiển thị thông báo
+// ==================== UTILITY FUNCTIONS ====================
+
+// Show alert
 function showAlert(type, message) {
     const container = document.getElementById('alertContainer');
+    if (!container) return;
+    let alertClass = 'alert-danger';
+    let icon = 'bi-exclamation-triangle-fill';
 
-    if (!container) {
-        alert(message);
-        return;
+    if (type === 'success') {
+        alertClass = 'alert-success';
+        icon = 'bi-check-circle-fill';
+    } else if (type === 'info') {
+        alertClass = 'alert-info';
+        icon = 'bi-info-circle-fill';
     }
 
-    const alertElement = document.createElement('div');
-
-    alertElement.className =
-        `alert alert-${type} alert-dismissible fade show shadow-sm rounded-3`;
-
-    alertElement.innerHTML = `
-        ${escapeHtml(message)}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    container.innerHTML = `
+        <div class="alert ${alertClass} alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center mb-4" role="alert">
+            <i class="bi ${icon} fs-5 me-2"></i>
+            <div>${message}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     `;
 
-    container.appendChild(alertElement);
-
     setTimeout(() => {
-        alertElement.remove();
-    }, 4000);
+        container.innerHTML = '';
+    }, 5000);
+}
+
+// Show/hide loading
+function showLoading(show) {
+    const loading = document.getElementById('loading');
+    if (loading) {
+        if (show) {
+            loading.classList.remove('d-none');
+            loading.classList.add('d-flex');
+        } else {
+            loading.classList.remove('d-flex');
+            loading.classList.add('d-none');
+        }
+    }
 }

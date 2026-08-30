@@ -42,6 +42,7 @@ public class MerchantAddress {
     )
     private String merchantAddress;
 
+    // Địa chỉ hành chính mới
     @Column(
             name = "province_code",
             nullable = false,
@@ -81,10 +82,11 @@ public class MerchantAddress {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "latitude")
+    //Tọa độ để tính khoảng cach
+    @Column (name = "latitude")
     private Double latitude;
 
-    @Column(name = "longitude")
+    @Column (name = "longitude")
     private Double longitude;
 
     @PrePersist

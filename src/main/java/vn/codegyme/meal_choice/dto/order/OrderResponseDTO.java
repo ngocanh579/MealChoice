@@ -68,4 +68,28 @@ public class OrderResponseDTO {
     private String formattedCreatedAt;
 
     private List<OrderItemResponseDTO> items;
+
+    public String getContactName() {
+        return customerName;
+    }
+
+    public void setContactName(String contactName) {
+        this.customerName = contactName;
+    }
+
+    public String getContactPhone() {
+        return customerPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.customerPhone = contactPhone;
+    }
+
+    public BigDecimal getSubtotal() {
+        return subtotalPrice;
+    }
+
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotalPrice = subtotal;
+    }
 }

@@ -29,6 +29,13 @@
                 <i class="bi bi-speedometer2 merchant-sidebar-icon fs-5"></i>
                 <span class="merchant-sidebar-label">Tổng quan</span>
             </a>
+            <!-- Thống kê & Báo cáo -->
+            <a href="/merchant/stats"
+               class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center gap-3"
+               th:classappend="${activeMenu == 'stats'} ? ' active bg-danger text-white fw-bold' : ' hover-bg-light'">
+                <i class="bi bi-graph-up-arrow merchant-sidebar-icon fs-5"></i>
+                <span class="merchant-sidebar-label">Thống kê & Báo cáo</span>
+            </a>
 
             <a th:href="@{/merchant/stats}"
                class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center gap-3"

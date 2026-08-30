@@ -114,7 +114,7 @@ public class PageController {
         boolean isMerchant = false;
 
         List<Long> likedFoodIds = Collections.emptyList();
-        List<String> likedMerchantIds = Collections.emptyList();
+        List<UUID> likedMerchantIds = Collections.emptyList();
 
         if (authentication != null
                 && authentication.isAuthenticated()
@@ -149,7 +149,7 @@ public class PageController {
                         foodRepository.findLikedFoodIdsByUserId(userId.toString());
 
                 likedMerchantIds =
-                        merchantRepository.findLikedMerchantIdsByUserId(userId.toString());
+                        merchantRepository.findLikedMerchantIdsByUserId(userId);
             }
         }
 
@@ -746,7 +746,30 @@ public class PageController {
         return "user/orders";
     }
 
-    // ==================== MERCHANT ORDERS ====================
+    // ==================== MERCHANT ORDERS & STATS ====================
+
+    // Chuyển hướng /merchant sang /merchant/dashboard
+    @GetMapping("/merchant")
+    public String merchantRootPage() {
+        return "redirect:/merchant/dashboard";
+    }
+
+    // Trang thống kê của Merchant
+    @GetMapping("/merchant/stats")
+    public String merchantStatsPage(Authentication authentication, Model model) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            return "redirect:/login";
+        }
+
+        Merchant merchant = merchantRepository.findByUser_Id(userDetails.getId()).orElse(null);
+        if (merchant == null) {
+            return "redirect:/merchant/register";
+        }
+
+        model.addAttribute("merchant", merchant);
+        return "merchant/stats";
+    }
 
     // Trang danh sách đơn hàng của Merchant
     @GetMapping("/merchant/orders")
@@ -774,6 +797,7 @@ public class PageController {
         model.addAttribute("merchant", merchant);
         model.addAttribute("orders", orderPage.getContent());
         model.addAttribute("orderPage", orderPage);
+        model.addAttribute("totalPages", orderPage.getTotalPages());
         model.addAttribute("currentPage", page);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("pendingCount", pendingCount);
@@ -870,7 +894,7 @@ public class PageController {
 
             // Tổng số món & Lượt theo dõi
             long totalFoods = foodRepository.countByMerchant_IdAndIsActiveTrueAndDeletedAtIsNull(id);
-            long followerCount = merchantRepository.countFollowersByMerchantId(id.toString());
+            long followerCount = merchantRepository.countFollowersByMerchantId(id);
 
             model.addAttribute("merchant", merchant);
             model.addAttribute("defaultAddress", defaultAddress);

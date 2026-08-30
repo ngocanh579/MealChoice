@@ -12,6 +12,10 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UpdateAddressDTO {
 
+    private String contactName;
+
+    private String contactPhone;
+
     private String city;
 
     private String district;

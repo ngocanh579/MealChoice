@@ -86,7 +86,6 @@ public class Order {
 
     @Column(name = "preparing_until")
     private LocalDateTime preparingUntil;
-
     @Column(name = "estimated_delivery_time")
     private LocalDateTime estimatedDeliveryTime;
 
