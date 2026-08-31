@@ -508,3 +508,40 @@ function showToast(title, message, type = 'info') {
         alert(message);
     }
 }
+
+// 8. Là merchant tôi muốn tìm kiếm đơn hàng: theo mã, theo số điện thoại khách hàng, theo tên khách hàng
+document.addEventListener('DOMContentLoaded', () => {
+    const searchForm = document.querySelector('form[action="/merchant/orders"]');
+
+    searchForm?.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const keyword = this.querySelector('input[name="keyword"]')?.value.trim() || '';
+        const params = new URLSearchParams(window.location.search);
+
+        if (keyword) {
+            params.set('keyword', keyword);
+        } else {
+            params.delete('keyword');
+        }
+
+        params.set('page', '0');
+        window.location.href = `/merchant/orders?${params.toString()}`;
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const url = new URL(this.href, window.location.origin);
+            const keyword = searchForm?.querySelector('input[name="keyword"]')?.value.trim() || '';
+
+            if (keyword) {
+                url.searchParams.set('keyword', keyword);
+            }
+
+            url.searchParams.set('page', '0');
+            window.location.href = url.toString();
+        });
+    });
+});
