@@ -1,19 +1,11 @@
-// ==================== MEALCHOICE NAVBAR & GLOBAL UTILITIES ====================
-
 (function () {
-    if (window.__MEALCHOICE_NAVBAR_INITIALIZED__) {
-        return;
-    }
+    if (window.__MEALCHOICE_NAVBAR_INITIALIZED__) return;
     window.__MEALCHOICE_NAVBAR_INITIALIZED__ = true;
 
-    // ==================== AUTH & SESSION ====================
-
-    // Hàm xóa sạch Session và Cookie khi đăng xuất/hết hạn phiên
     function clearAuthSession() {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("displayName");
-        localStorage.removeItem("userRoles");
+        ["accessToken", "refreshToken", "displayName", "userRoles"]
+            .forEach(key => localStorage.removeItem(key));
+
         document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     }
 
@@ -39,26 +31,19 @@
         }
     }
 
-    // ==================== NAVBAR & AUTH FETCH WRAPPER ====================
-
     function getAuthHeaders() {
         const token = localStorage.getItem("accessToken");
-        return token
-            ? { Authorization: `Bearer ${token}` }
-            : {};
+        return token ? { Authorization: `Bearer ${token}` } : {};
     }
 
-    // Biến Lock (Promise Singleton) tránh Race Condition khi nhiều request 401 cùng lúc
     let refreshTokenPromise = null;
 
-    // Hàm thực hiện Refresh Token đơn nhiệm (Single-flight)
     async function doRefreshToken() {
-        if (refreshTokenPromise) {
-            return refreshTokenPromise;
-        }
+        if (refreshTokenPromise) return refreshTokenPromise;
 
         refreshTokenPromise = (async () => {
             const refreshToken = localStorage.getItem("refreshToken");
+
             if (!refreshToken) {
                 clearAuthSession();
                 window.location.href = "/login";
@@ -68,7 +53,7 @@
             try {
                 const response = await fetch("/api/auth/refresh-token", {
                     method: "POST",
-                    headers: { 
+                    headers: {
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
@@ -77,23 +62,26 @@
 
                 if (response.ok) {
                     const data = await response.json();
+
                     if (data.accessToken) {
                         localStorage.setItem("accessToken", data.accessToken);
-                        document.cookie = `accessToken=${data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
+
+                        document.cookie =
+                            `accessToken=${data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
+
                         if (data.refreshToken) {
                             localStorage.setItem("refreshToken", data.refreshToken);
                         }
+
                         return data.accessToken;
                     }
                 }
 
-                // Refresh Token hết hạn hoặc không hợp lệ -> Đăng xuất người dùng
-                console.warn("Refresh Token đã hết hạn hoặc không hợp lệ. Đăng xuất...");
                 clearAuthSession();
                 window.location.href = "/login";
                 return null;
-            } catch (e) {
-                console.error("Lỗi kết nối khi làm mới token:", e);
+            } catch (error) {
+                console.error("Lỗi kết nối khi làm mới token:", error);
                 return null;
             } finally {
                 refreshTokenPromise = null;
@@ -103,42 +91,69 @@
         return refreshTokenPromise;
     }
 
-    // Wrapper fetch thông minh: Tự động refresh token và retry request khi dính HTTP 401 hoặc redirect
     async function fetchWithAuth(url, options = {}) {
         options.headers = {
-            "Accept": "application/json",
+            Accept: "application/json",
             ...options.headers,
             ...getAuthHeaders()
         };
 
         let response = await fetch(url, options);
 
-        // Khi bị 401 hoặc chuyển hướng về /login
-        const isUnauthorized = response.status === 401 || (response.redirected && response.url.includes("/login"));
+        const isUnauthorized =
+            response.status === 401 ||
+            (response.redirected && response.url.includes("/login"));
+
         if (isUnauthorized) {
-            console.log("Phiên đăng nhập hết hạn hoặc chưa xác thực (401/redirect), đang tự động cấp lại token...");
+            console.log("Token hết hạn, đang refresh...");
+
             const newToken = await doRefreshToken();
+
             if (newToken) {
                 options.headers = {
-                    "Accept": "application/json",
+                    Accept: "application/json",
                     ...options.headers,
                     ...getAuthHeaders()
                 };
+
                 response = await fetch(url, options);
             }
         }
+
         return response;
     }
 
     function getUserRoles() {
         try {
-            return JSON.parse(
-                localStorage.getItem("userRoles") || "[]"
-            );
+            return JSON.parse(localStorage.getItem("userRoles") || "[]");
         } catch (error) {
             console.error("Không đọc được userRoles:", error);
             return [];
         }
+    }
+
+    function hideMerchantNavigation() {
+        document.getElementById("registerMerchantNav")?.classList.add("d-none");
+        document.getElementById("merchantPendingNav")?.classList.add("d-none");
+        document.getElementById("merchantRoleNav")?.classList.add("d-none");
+    }
+
+    function showMerchantRegister() {
+        document.getElementById("registerMerchantNav")?.classList.remove("d-none");
+        document.getElementById("merchantPendingNav")?.classList.add("d-none");
+        document.getElementById("merchantRoleNav")?.classList.add("d-none");
+    }
+
+    function showMerchantPending() {
+        document.getElementById("registerMerchantNav")?.classList.add("d-none");
+        document.getElementById("merchantPendingNav")?.classList.remove("d-none");
+        document.getElementById("merchantRoleNav")?.classList.add("d-none");
+    }
+
+    function showMerchantChannel() {
+        document.getElementById("registerMerchantNav")?.classList.add("d-none");
+        document.getElementById("merchantPendingNav")?.classList.add("d-none");
+        document.getElementById("merchantRoleNav")?.classList.remove("d-none");
     }
 
     function initNavbar() {
@@ -146,57 +161,49 @@
         const accessToken = localStorage.getItem("accessToken");
         const roles = getUserRoles();
 
-        const guestNav = document.getElementById("guestNav");
-        const userProfileNav = document.getElementById("userProfileNav");
-        const registerMerchantNav = document.getElementById("registerMerchantNav");
-        const merchantPendingNav = document.getElementById("merchantPendingNav");
-        const merchantRoleNav = document.getElementById("merchantRoleNav");
+        const guestAuthNav = document.getElementById("guestAuthNav");
+        const userDropdownNav = document.getElementById("userDropdownNav");
         const adminRoleNav = document.getElementById("adminRoleNav");
+        const deliveryPartnerAdminNav = document.getElementById("deliveryPartnerAdminNav");
 
         const isLoggedIn = !!(displayName || accessToken);
 
-        // User / Guest
-        if (isLoggedIn) {
-            guestNav?.classList.add("d-none");
-            userProfileNav?.classList.remove("d-none");
-
-            if (displayName) {
-                document.getElementById("userDisplayName")?.replaceChildren(
-                    document.createTextNode(displayName)
-                );
-            }
-        } else if (userProfileNav?.classList.contains("d-none")) {
-            guestNav?.classList.remove("d-none");
-        }
-
-        // Admin
         const isAdmin =
             displayName === "Admin" ||
             roles.includes("ROLE_ADMIN") ||
             roles.includes("ADMIN");
 
-        if (isAdmin) {
-            adminRoleNav?.classList.remove("d-none");
+        if (!isLoggedIn) {
+            guestAuthNav?.classList.remove("d-none");
+            userDropdownNav?.classList.add("d-none");
+            adminRoleNav?.classList.add("d-none");
+            deliveryPartnerAdminNav?.classList.add("d-none");
+            hideMerchantNavigation();
+            return;
         }
 
-        // Merchant
-        const isMerchant =
-            roles.includes("ROLE_MERCHANT") ||
-            roles.includes("MERCHANT");
+        guestAuthNav?.classList.add("d-none");
+        userDropdownNav?.classList.remove("d-none");
 
-        if (isMerchant) {
-            merchantRoleNav?.classList.remove("d-none");
-            registerMerchantNav?.classList.add("d-none");
-            merchantPendingNav?.classList.add("d-none");
-        } else if (isLoggedIn && !isAdmin) {
+        const userName = document.getElementById("navbarUserName");
+
+        if (userName && displayName) {
+            userName.replaceChildren(document.createTextNode(displayName));
+        }
+
+        if (isAdmin) {
+            adminRoleNav?.classList.remove("d-none");
+            deliveryPartnerAdminNav?.classList.remove("d-none");
+            hideMerchantNavigation();
+        } else {
+            adminRoleNav?.classList.add("d-none");
+            deliveryPartnerAdminNav?.classList.add("d-none");
             checkMerchantStatus();
         }
 
-        // Redirect sau login
-        const redirectUrl =
-            sessionStorage.getItem("redirectAfterLogin");
+        const redirectUrl = sessionStorage.getItem("redirectAfterLogin");
 
-        if (redirectUrl && isLoggedIn) {
+        if (redirectUrl) {
             sessionStorage.removeItem("redirectAfterLogin");
             window.location.href = redirectUrl;
         }
@@ -204,52 +211,90 @@
 
     async function checkMerchantStatus() {
         const token = localStorage.getItem("accessToken");
-        if (!token) return;
+
+        if (!token) {
+            console.log("[Merchant] Không có accessToken");
+            return;
+        }
 
         try {
+            console.log("[Merchant] Đang kiểm tra /api/merchant/my-status...");
+
             const response = await fetchWithAuth("/api/merchant/my-status");
 
-            if (!response.ok) return;
+            console.log("[Merchant] Response status:", response.status);
+            console.log("[Merchant] Response URL:", response.url);
+
+            if (!response.ok) {
+                console.error("[Merchant] API lỗi:", response.status);
+                return;
+            }
 
             const contentType = response.headers.get("content-type");
-            if (!contentType || !contentType.includes("application/json")) {
+            console.log("[Merchant] Content-Type:", contentType);
+
+            if (!contentType?.includes("application/json")) {
+                console.error("[Merchant] Response không phải JSON");
                 return;
             }
 
             const data = await response.json();
 
-            const registerNav =
-                document.getElementById("registerMerchantNav");
+            console.log("[Merchant] API my-status trả về:", data);
+            console.log("[Merchant] registered:", data.registered);
+            console.log("[Merchant] status:", data.status);
 
-            const pendingNav =
-                document.getElementById("merchantPendingNav");
+            hideMerchantNavigation();
 
-            const merchantNav =
-                document.getElementById("merchantRoleNav");
-
-            registerNav?.classList.add("d-none");
-            pendingNav?.classList.add("d-none");
-            merchantNav?.classList.add("d-none");
-
-            if (!data.registered || data.status === "REJECTED") {
-                registerNav?.classList.remove("d-none");
-            } else if (data.status === "PENDING") {
-                pendingNav?.classList.remove("d-none");
-            } else if (data.status === "APPROVED") {
-                merchantNav?.classList.remove("d-none");
+            if (!data.registered) {
+                console.log("[Merchant] Chưa đăng ký → hiện Đăng ký Merchant");
+                showMerchantRegister();
+                return;
             }
+
+            if (data.status === "PENDING") {
+                console.log("[Merchant] PENDING → hiện Chờ duyệt");
+                showMerchantPending();
+                return;
+            }
+
+            if (data.status === "REJECTED") {
+                console.log("[Merchant] REJECTED → hiện Đăng ký Merchant");
+                showMerchantRegister();
+                return;
+            }
+
+            if (data.status === "APPROVED") {
+                console.log("[Merchant] APPROVED → hiện Kênh Merchant");
+                showMerchantChannel();
+                return;
+            }
+
+            console.warn("[Merchant] Status không xác định:", data.status);
         } catch (error) {
-            console.warn("Lỗi kiểm tra trạng thái Merchant:", error);
+            console.error("[Merchant] Lỗi kiểm tra trạng thái:", error);
         }
     }
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initNavbar);
-    } else {
-        initNavbar();
-    }
+    function initMerchantBlockedModal() {
+        const button = document.getElementById("merchantChannelBtn");
 
-    // ==================== WISHLIST ====================
+        if (!button) return;
+
+        button.addEventListener("click", function (e) {
+            if (this.dataset.blocked !== "true") return;
+
+            e.preventDefault();
+
+            const modalElement = document.getElementById("merchantBlockedModal");
+
+            if (modalElement && typeof bootstrap !== "undefined") {
+                bootstrap.Modal
+                    .getOrCreateInstance(modalElement)
+                    .show();
+            }
+        });
+    }
 
     document.addEventListener("click", async e => {
         const button = e.target.closest(".btn-wishlist");
@@ -264,10 +309,12 @@
 
         if (!isLoggedIn) {
             alert("Vui lòng đăng nhập để thực hiện chức năng này!");
+
             sessionStorage.setItem(
                 "redirectAfterLogin",
                 window.location.href
             );
+
             window.location.href = "/login";
             return;
         }
@@ -291,19 +338,18 @@
                 }
             });
 
-            if (!response.ok) throw new Error("Wishlist request failed");
+            if (!response.ok) {
+                throw new Error("Wishlist request failed");
+            }
 
             icon.classList.toggle("bi-heart-fill", !isLiked);
             icon.classList.toggle("bi-heart", isLiked);
             button.title = isLiked ? "Yêu thích" : "Bỏ yêu thích";
-
         } catch (error) {
             console.error("Lỗi Wishlist:", error);
             alert("Có lỗi xảy ra, vui lòng thử lại sau!");
         }
     });
-
-    // ==================== FOLLOW MERCHANT ====================
 
     document.addEventListener("click", async e => {
         const button = e.target.closest(".btn-follow-merchant");
@@ -318,10 +364,12 @@
 
         if (!isLoggedIn) {
             alert("Vui lòng đăng nhập để thực hiện chức năng này!");
+
             sessionStorage.setItem(
                 "redirectAfterLogin",
                 window.location.href
             );
+
             window.location.href = "/login";
             return;
         }
@@ -329,15 +377,11 @@
         const merchantId = button.dataset.merchantId;
         if (!merchantId) return;
 
-        const isFollowed =
-            button.classList.contains("btn-danger");
+        const isFollowed = button.classList.contains("btn-danger");
 
         const url = isFollowed
             ? `/api/merchants/${merchantId}/unfollow`
             : `/api/merchants/${merchantId}/follow`;
-
-        console.log("=== FOLLOW DEBUG === url:", url, "merchantId:", merchantId, "isFollowed:", isFollowed);
-        console.log("=== FOLLOW DEBUG === accessToken:", localStorage.getItem("accessToken") ? "EXISTS" : "MISSING");
 
         try {
             const response = await fetchWithAuth(url, {
@@ -348,52 +392,60 @@
                 }
             });
 
-            console.log("=== FOLLOW DEBUG === response status:", response.status, response.statusText);
-
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error("=== FOLLOW DEBUG === error response body:", errorText);
                 throw new Error("Follow request failed: " + response.status);
             }
 
             let data = {};
             const contentType = response.headers.get("content-type");
-            if (contentType && contentType.includes("application/json")) {
+
+            if (contentType?.includes("application/json")) {
                 data = await response.json();
-                console.log("=== FOLLOW DEBUG === response data:", JSON.stringify(data));
             }
 
-            const newFollowed = typeof data.followed !== 'undefined' ? data.followed : !isFollowed;
+            const newFollowed =
+                typeof data.followed !== "undefined"
+                    ? data.followed
+                    : !isFollowed;
 
-            // Cập nhật tất cả các nút follow của merchant này trên trang
-            document.querySelectorAll(`.btn-follow-merchant[data-merchant-id="${merchantId}"]`).forEach(btn => {
-                btn.classList.toggle("btn-danger", newFollowed);
-                btn.classList.toggle("btn-outline-danger", !newFollowed);
+            document
+                .querySelectorAll(
+                    `.btn-follow-merchant[data-merchant-id="${merchantId}"]`
+                )
+                .forEach(btn => {
+                    btn.classList.toggle("btn-danger", newFollowed);
+                    btn.classList.toggle("btn-outline-danger", !newFollowed);
 
-                const btnIcon = btn.querySelector("i");
-                const btnText = btn.querySelector("span");
+                    const icon = btn.querySelector("i");
+                    const text = btn.querySelector("span");
 
-                if (btnIcon) {
-                    btnIcon.className = newFollowed ? "bi bi-check-lg me-1" : "bi bi-plus-lg me-1";
-                }
-                if (btnText) {
-                    btnText.innerText = newFollowed ? "Đang theo dõi" : "Theo dõi";
-                }
-            });
+                    if (icon) {
+                        icon.className = newFollowed
+                            ? "bi bi-check-lg me-1"
+                            : "bi bi-plus-lg me-1";
+                    }
 
-            // Cập nhật số lượng người theo dõi trên trang Cửa hàng nếu có
-            const followerCountEl = document.getElementById("storeFollowerCount");
-            if (followerCountEl && typeof data.followerCount !== 'undefined') {
+                    if (text) {
+                        text.innerText = newFollowed
+                            ? "Đang theo dõi"
+                            : "Theo dõi";
+                    }
+                });
+
+            const followerCountEl =
+                document.getElementById("storeFollowerCount");
+
+            if (
+                followerCountEl &&
+                typeof data.followerCount !== "undefined"
+            ) {
                 followerCountEl.innerText = data.followerCount;
             }
-
         } catch (error) {
             console.error("Lỗi Follow Merchant:", error);
             alert("Có lỗi xảy ra, vui lòng thử lại sau!");
         }
     });
-
-    // ==================== CART ====================
 
     function getGlobalCart() {
         try {
@@ -429,44 +481,50 @@
         merchantName = null,
         image = null
     ) {
-        let itemToAdd;
-        if (typeof idOrItem === "object" && idOrItem !== null) {
-            itemToAdd = {
-                id: idOrItem.id,
-                name: idOrItem.name || idOrItem.foodName || "Món ăn",
-                price: Number(idOrItem.price || 0),
-                discountPrice: idOrItem.discountPrice !== null && idOrItem.discountPrice !== undefined
-                    ? Number(idOrItem.discountPrice)
-                    : Number(idOrItem.price || 0),
-                serviceFee: Number(idOrItem.serviceFee || 0),
-                merchantId: idOrItem.merchantId || null,
-                merchantName: idOrItem.merchantName || null,
-                image: idOrItem.image || null,
-                quantity: Number(idOrItem.quantity || 1)
-            };
-        } else {
-            itemToAdd = {
-                id: idOrItem,
-                name: name || "Món ăn",
-                price: Number(price || 0),
-                discountPrice: discountPrice !== null && discountPrice !== undefined
-                    ? Number(discountPrice)
-                    : Number(price || 0),
-                serviceFee: Number(serviceFee || 0),
-                merchantId: merchantId || null,
-                merchantName: merchantName || null,
-                image: image || null,
-                quantity: 1
-            };
-        }
+        const itemToAdd =
+            typeof idOrItem === "object" && idOrItem !== null
+                ? {
+                    id: idOrItem.id,
+                    name: idOrItem.name || idOrItem.foodName || "Món ăn",
+                    price: Number(idOrItem.price || 0),
+                    discountPrice:
+                        idOrItem.discountPrice != null
+                            ? Number(idOrItem.discountPrice)
+                            : Number(idOrItem.price || 0),
+                    serviceFee: Number(idOrItem.serviceFee || 0),
+                    merchantId: idOrItem.merchantId || null,
+                    merchantName: idOrItem.merchantName || null,
+                    image: idOrItem.image || null,
+                    quantity: Number(idOrItem.quantity || 1)
+                }
+                : {
+                    id: idOrItem,
+                    name: name || "Món ăn",
+                    price: Number(price || 0),
+                    discountPrice:
+                        discountPrice != null
+                            ? Number(discountPrice)
+                            : Number(price || 0),
+                    serviceFee: Number(serviceFee || 0),
+                    merchantId: merchantId || null,
+                    merchantName: merchantName || null,
+                    image: image || null,
+                    quantity: 1
+                };
 
         const cart = getGlobalCart();
 
-        // Kiểm tra nếu giỏ hàng đã có món của quán khác
-        if (cart.length > 0 && itemToAdd.merchantId) {
+        if (cart.length && itemToAdd.merchantId) {
             const existingMerchantId = cart[0].merchantId;
-            if (existingMerchantId && existingMerchantId !== itemToAdd.merchantId) {
-                const confirmClear = confirm("Giỏ hàng của bạn đang có món của cửa hàng khác. Bạn có muốn xóa giỏ hàng cũ để thêm món của quán này không?");
+
+            if (
+                existingMerchantId &&
+                existingMerchantId !== itemToAdd.merchantId
+            ) {
+                const confirmClear = confirm(
+                    "Giỏ hàng của bạn đang có món của cửa hàng khác. Bạn có muốn xóa giỏ hàng cũ để thêm món của quán này không?"
+                );
+
                 if (confirmClear) {
                     cart.length = 0;
                 } else {
@@ -479,9 +537,18 @@
 
         if (existing) {
             existing.quantity += itemToAdd.quantity;
-            if (itemToAdd.merchantId && !existing.merchantId) existing.merchantId = itemToAdd.merchantId;
-            if (itemToAdd.merchantName && !existing.merchantName) existing.merchantName = itemToAdd.merchantName;
-            if (itemToAdd.image && !existing.image) existing.image = itemToAdd.image;
+
+            if (itemToAdd.merchantId && !existing.merchantId) {
+                existing.merchantId = itemToAdd.merchantId;
+            }
+
+            if (itemToAdd.merchantName && !existing.merchantName) {
+                existing.merchantName = itemToAdd.merchantName;
+            }
+
+            if (itemToAdd.image && !existing.image) {
+                existing.image = itemToAdd.image;
+            }
         } else {
             cart.push(itemToAdd);
         }
@@ -520,13 +587,10 @@
         if (!countEl) return;
 
         const cart = getGlobalCart();
-
         let totalItems = 0;
         let totalPrice = 0;
 
-        if (itemsEl) {
-            itemsEl.innerHTML = "";
-        }
+        if (itemsEl) itemsEl.innerHTML = "";
 
         if (!cart.length) {
             countEl.innerText = "0";
@@ -542,14 +606,12 @@
 
             checkoutBtn?.setAttribute("disabled", "true");
             checkoutBtn?.classList.add("opacity-50");
-
         } else {
             checkoutBtn?.removeAttribute("disabled");
             checkoutBtn?.classList.remove("opacity-50");
 
             cart.forEach(item => {
-                const price =
-                    item.discountPrice ?? item.price;
+                const price = item.discountPrice ?? item.price;
 
                 totalItems += item.quantity;
                 totalPrice += price * item.quantity;
@@ -562,17 +624,14 @@
                     "d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom border-light-subtle fs-8";
 
                 div.innerHTML = `
-                    <div class="pe-2 overflow-hidden flex-grow-1"
-                         style="max-width: 180px;">
-                        <span class="d-block fw-semibold text-dark text-truncate"
-                              title="${item.name}">
+                    <div class="pe-2 overflow-hidden flex-grow-1" style="max-width:180px;">
+                        <span class="d-block fw-semibold text-dark text-truncate" title="${item.name}">
                             ${item.name}
                         </span>
                         <span class="text-danger fw-bold">
                             ${formatCurrencyGlobal(price)}
                         </span>
                     </div>
-
                     <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
                         <button type="button"
                                 class="btn btn-xs btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center"
@@ -580,12 +639,9 @@
                                 onclick="changeQuantityGlobal(${item.id}, -1); event.stopPropagation();">
                             -
                         </button>
-
-                        <span class="fw-bold"
-                              style="min-width:12px;text-align:center;">
+                        <span class="fw-bold" style="min-width:12px;text-align:center;">
                             ${item.quantity}
                         </span>
-
                         <button type="button"
                                 class="btn btn-xs btn-outline-danger rounded-circle d-flex align-items-center justify-content-center"
                                 style="width:18px;height:18px;padding:0;"
@@ -602,14 +658,13 @@
         }
 
         if (totalEl) {
-            totalEl.innerText =
-                formatCurrencyGlobal(totalPrice);
+            totalEl.innerText = formatCurrencyGlobal(totalPrice);
         }
     }
 
-    // ==================== CART EVENTS ====================
-
     document.addEventListener("DOMContentLoaded", () => {
+        initNavbar();
+        initMerchantBlockedModal();
         updateNavbarCartUI();
 
         document
@@ -632,7 +687,6 @@
         }
     });
 
-    // Expose global methods
     window.clearAuthSession = clearAuthSession;
     window.handleLogout = handleLogout;
     window.fetchWithAuth = fetchWithAuth;
@@ -643,6 +697,4 @@
     window.updateNavbarCartUI = updateNavbarCartUI;
     window.changeQuantityGlobal = changeQuantityGlobal;
     window.formatCurrencyGlobal = formatCurrencyGlobal;
-
 })();
-
