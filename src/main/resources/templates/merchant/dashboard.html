@@ -9,26 +9,26 @@
     <link rel="stylesheet" th:href="@{/css/merchant.css}">
 </head>
 <body class="merchant-page">
+
 <div th:replace="~{merchant/layout :: shell('Trang chủ Merchant', 'dashboard', ~{::content})}">
     <section th:fragment="content" class="d-flex flex-column gap-4">
+
+        <!-- Tiêu đề và nút xem báo cáo -->
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
                 <h4 class="fw-bold text-dark mb-0">Tổng quan cửa hàng</h4>
             </div>
-            <a href="/merchant/stats" class="btn btn-danger rounded-pill px-3 fw-bold shadow-sm">
-                <i class="bi bi-bar-chart-line me-1"></i> Xem Báo Cáo Doanh Thu
+            <a href="/merchant/stats"
+               class="btn btn-danger rounded-pill px-3 fw-bold shadow-sm">
+                <i class="bi bi-bar-chart-line me-1"></i>
+                Xem Báo Cáo Doanh Thu
             </a>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <div>
-                <h4 class="fw-bold text-dark mb-0">Tổng quan cửa hàng</h4>
-            </div>
-            <a href="/merchant/stats" class="btn btn-danger rounded-pill px-3 fw-bold shadow-sm">
-                <i class="bi bi-bar-chart-line me-1"></i> Xem Báo Cáo Doanh Thu
-            </a>
-        </div>
+        <!-- Thống kê tổng quan -->
         <div class="merchant-stats-grid" id="overview">
+
+            <!-- Tổng số món ăn -->
             <div class="merchant-stat merchant-stat--red">
                 <div class="label">Tổng số món ăn</div>
                 <div class="value"
@@ -37,6 +37,7 @@
                 </div>
             </div>
 
+            <!-- Doanh thu hôm nay -->
             <div class="merchant-stat merchant-stat--orange">
                 <div class="label">Doanh thu hôm nay</div>
                 <div class="value"
@@ -45,6 +46,7 @@
                 </div>
             </div>
 
+            <!-- Lượt xem quán -->
             <div class="merchant-stat merchant-stat--blue">
                 <div class="label">Lượt xem quán</div>
                 <div class="value"
@@ -52,8 +54,10 @@
                     0 lượt
                 </div>
             </div>
+
         </div>
     </section>
 </div>
+
 </body>
 </html>
