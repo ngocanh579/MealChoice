@@ -45,6 +45,44 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     long countByMerchant_IdAndStatus(UUID merchantId, OrderStatus status);
 
+    // Tìm kiếm đơn hàng theo mã đơn, tên khách hàng hoặc số điện thoại
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
+    @Query("""
+        SELECT o FROM Order o
+        WHERE o.merchant.id = :merchantId
+        AND (
+            LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(o.contactName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR o.contactPhone LIKE CONCAT('%', :keyword, '%')
+        )
+        ORDER BY o.id DESC
+        """)
+    Page<Order> searchOrders(
+            @Param("merchantId") UUID merchantId,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+    // Tìm kiếm đơn hàng theo từ khóa và trạng thái
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
+    @Query("""
+        SELECT o FROM Order o
+        WHERE o.merchant.id = :merchantId
+        AND o.status = :status
+        AND (
+            LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(o.contactName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR o.contactPhone LIKE CONCAT('%', :keyword, '%')
+        )
+        ORDER BY o.id DESC
+        """)
+    Page<Order> searchOrdersByStatus(
+            @Param("merchantId") UUID merchantId,
+            @Param("status") OrderStatus status,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.food LEFT JOIN FETCH o.deliveryPartner WHERE o.id = :id AND o.merchant.id = :merchantId")
     Optional<Order> findByIdAndMerchantIdWithItems(@Param("id") Long id, @Param("merchantId") UUID merchantId);
 
