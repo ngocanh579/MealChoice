@@ -35,6 +35,11 @@ public class UserOrderServiceImpl implements UserOrderService {
     private final MerchantRepository merchantRepository;
     private final FoodRepository foodRepository;
     private final OrderMapper orderMapper;
+    private final DeliveryPartnerRepository deliveryPartnerRepository;
+    private final MerchantAddressRepository merchantAddressRepository;
+    private final ShippingFeeService shippingFeeService;
+    private final DistanceService distanceService;
+    private final GeocodingService geocodingService;
 
     // Phí giao hàng cố định mặc định dự phòng: 15.000 đ
     private static final BigDecimal DEFAULT_SHIPPING_FEE = BigDecimal.valueOf(15000);
