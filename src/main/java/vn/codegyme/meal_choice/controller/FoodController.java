@@ -18,10 +18,7 @@ import org.springframework.ui.Model;
 import vn.codegyme.meal_choice.dto.food.FoodCreateRequest;
 import vn.codegyme.meal_choice.dto.food.FoodResponse;
 import vn.codegyme.meal_choice.dto.food.FoodUpdateRequest;
-import vn.codegyme.meal_choice.entity.Food;
-import vn.codegyme.meal_choice.entity.FoodCategory;
-import vn.codegyme.meal_choice.entity.Merchant;
-import vn.codegyme.meal_choice.entity.User;
+import vn.codegyme.meal_choice.entity.*;
 import vn.codegyme.meal_choice.repository.FoodRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
@@ -149,7 +146,7 @@ public class FoodController {
         );
     }
 
-    // Xóa mềm
+    // Xóa
     @DeleteMapping("/api/merchant/foods/{foodId}")
     @ResponseBody
     public ResponseEntity<String> deleteFood(
@@ -716,5 +713,35 @@ public class FoodController {
                 "followed", false,
                 "followerCount", followerCount
         ));
+    }
+
+    @ResponseBody
+    @GetMapping("/api/foods/{id}/coupons")
+    public ResponseEntity<?> getFoodCoupons(@PathVariable("id") Long id) {
+        Food food = foodRepository.findById(id).orElse(null);
+
+        if (food == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        List<Coupon> coupons = food.getCoupons();
+
+        if (coupons == null || coupons.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        List<Map<String, Object>> result = coupons.stream()
+                .map(coupon -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("id", coupon.getId());
+                    data.put("couponCode", coupon.getCouponCode());
+                    data.put("discountType", coupon.getDiscountType());
+                    data.put("discountValue", coupon.getDiscountValue());
+                    data.put("startAt", coupon.getStartAt());
+                    return data;
+                })
+                .toList();
+
+        return ResponseEntity.ok(result);
     }
 }
