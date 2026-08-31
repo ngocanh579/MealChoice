@@ -2,6 +2,10 @@ package vn.codegyme.meal_choice.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,13 +49,24 @@ public class MerchantOrderRestController {
     @GetMapping
     public ResponseEntity<?> getOrders(
             @RequestParam(name = "status", required = false) OrderStatus status,
+            @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "50") int size) {
         try {
             Merchant merchant = getCurrentMerchant();
-            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
-                    Math.max(0, page), size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
-            org.springframework.data.domain.Page<OrderResponseDTO> orderPage = merchantOrderService.getMerchantOrders(merchant.getId(), status, pageable);
+            Pageable pageable = PageRequest.of(
+                    Math.max(0, page),
+                    size,
+                    Sort.by(Sort.Direction.DESC, "id")
+            );
+
+            Page<OrderResponseDTO> orderPage = merchantOrderService.getMerchantOrders(
+                    merchant.getId(),
+                    status,
+                    keyword,
+                    pageable
+            );
+
             long pendingCount = merchantOrderService.countPendingOrders(merchant.getId());
 
             return ResponseEntity.ok(Map.of(
