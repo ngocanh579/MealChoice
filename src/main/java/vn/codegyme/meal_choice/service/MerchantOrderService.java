@@ -23,6 +23,9 @@ public interface MerchantOrderService {
      */
     Page<OrderResponseDTO> getMerchantOrders(UUID merchantId, OrderStatus status, Pageable pageable);
 
+    // Tìm kiếm đơn hàng theo mã, tên khách hàng hoặc số điện thoại
+    Page<OrderResponseDTO> getMerchantOrders(UUID merchantId, OrderStatus status, String keyword, Pageable pageable);
+
     /**
      * TÍNH NĂNG 2: Xem chi tiết một đơn hàng của quán
      */
