@@ -21,6 +21,12 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             UUID merchantId
     );
 
+    // Lấy danh sách món của Merchant có phân trang
+    Page<Food> findByMerchant_IdAndDeletedAtIsNullOrderByCreatedAtDesc(
+            UUID merchantId,
+            Pageable pageable
+    );
+
     // Lấy một món thuộc Merchant
     Optional<Food> findByIdAndMerchant_IdAndDeletedAtIsNull(
             Long foodId,
