@@ -23,16 +23,15 @@
 
                         <!-- Hiển thị mức giảm theo loại coupon -->
                         <span class="fw-bold fs-5"
-                              th:classappend="${coupon.discountType != null and coupon.discountType.name() == 'PERCENTAGE'} ? ' text-warning' : ' text-danger'"
-                              th:text="${coupon.discountType != null and coupon.discountType.name() == 'PERCENTAGE'
+                              th:classappend="${coupon.discountType != null and coupon.discountType.name() == 'PERCENT'} ? ' text-warning' : ' text-danger'"
+                              th:text="${coupon.discountType != null and coupon.discountType.name() == 'PERCENT'
                                   ? #numbers.formatDecimal(coupon.discountValue, 0, 0) + '%'
                                   : #numbers.formatDecimal(coupon.discountValue / 1000, 0, 0) + 'k'}">
                             10k
                         </span>
 
                         <!-- Nhãn loại ưu đãi -->
-                        <span class="text-muted fs-9 fw-semibold"
-                              th:text="${coupon.discountType != null and coupon.discountType.name() == 'PERCENTAGE' ? 'GIẢM' : 'GIẢM'}">
+                        <span class="text-muted fs-9 fw-semibold">
                             GIẢM
                         </span>
                     </div>
@@ -48,7 +47,7 @@
 
                         <!-- Mô tả coupon -->
                         <p class="text-muted fs-8 mb-1 text-truncate"
-                           th:text="${coupon.discountType != null and coupon.discountType.name() == 'PERCENTAGE'
+                           th:text="${coupon.discountType != null and coupon.discountType.name() == 'PERCENT'
                                ? 'Giảm ' + #numbers.formatDecimal(coupon.discountValue, 0, 0) + '% trên đơn hàng'
                                : 'Giảm ' + #numbers.formatDecimal(coupon.discountValue / 1000, 0, 0) + 'k trên đơn hàng'}">
                             Giảm 10k trên đơn hàng
