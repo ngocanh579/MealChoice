@@ -14,7 +14,10 @@ import vn.codegyme.meal_choice.repository.*;
 import vn.codegyme.meal_choice.security.CustomUserDetails;
 import vn.codegyme.meal_choice.service.FoodService;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.RequestParam;
 import java.util.UUID;
 
 @Controller
@@ -49,14 +52,25 @@ public class FoodViewController {
 
     // GET /merchant/foods
     @GetMapping
-    public String list(Model model) {
+    public String list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
 
         Merchant merchant = getCurrentMerchant();
 
-        List<FoodResponse> foods =
-                foodService.getFoods(merchant.getId());
+        Pageable pageable = PageRequest.of(page, size);
 
-        model.addAttribute("foods", foods);
+        Page<FoodResponse> foodPage =
+                foodService.getFoods(
+                        merchant.getId(),
+                        pageable
+                );
+
+        model.addAttribute("foods", foodPage.getContent());
+        model.addAttribute("currentPage", foodPage.getNumber());
+        model.addAttribute("totalPages", foodPage.getTotalPages());
+        model.addAttribute("pageSize", foodPage.getSize());
 
         return "food/list";
     }
