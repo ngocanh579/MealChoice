@@ -639,7 +639,10 @@ public class PageController {
                 model.addAttribute("merchant", merchant);
                 model.addAttribute(
                         "foodCount",
-                        foodService.getFoods(merchant.getId()).size()
+                        foodService.getFoods(
+                                merchant.getId(),
+                                org.springframework.data.domain.PageRequest.of(0, 1)
+                        ).getTotalElements()
                 );
                 return "merchant/dashboard";
             }
