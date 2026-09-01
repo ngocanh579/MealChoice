@@ -166,18 +166,17 @@ public class FoodServiceImpl implements FoodService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FoodResponse> getFoods(UUID merchantId) {
+    public Page<FoodResponse> getFoods(UUID merchantId, Pageable pageable) {
         if (!merchantRepository.existsById(merchantId)) {
             throw new RuntimeException("Không tìm thấy Merchant");
         }
 
         return foodRepository
                 .findByMerchant_IdAndDeletedAtIsNullOrderByCreatedAtDesc(
-                        merchantId
+                        merchantId,
+                        pageable
                 )
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+                .map(this::mapToResponse);
     }
 
     @Override
