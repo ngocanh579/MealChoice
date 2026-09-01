@@ -37,6 +37,14 @@
                 <span class="merchant-sidebar-label">Thống kê & Báo cáo</span>
             </a>
 
+            <!-- Đối soát doanh thu -->
+            <a th:href="@{/merchant/settlement}"
+               class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center gap-3"
+               th:classappend="${activeMenu == 'settlement'} ? ' active bg-danger text-white fw-bold' : ' hover-bg-light'">
+                <i class="bi bi-calculator merchant-sidebar-icon fs-5"></i>
+                <span class="merchant-sidebar-label">Đối soát doanh thu</span>
+            </a>
+
             <a th:href="@{/merchant/foods}"
                class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center gap-3"
                th:classappend="${activeMenu == 'foods'} ? ' active bg-danger text-white fw-bold' : ' hover-bg-light'">

@@ -6,6 +6,12 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS settlement_claims;
+
+DROP TABLE IF EXISTS merchant_settlements;
+
+DROP TABLE IF EXISTS food_vouchers;
+
 DROP TABLE IF EXISTS order_items;
 
 DROP TABLE IF EXISTS orders;
@@ -369,3 +375,45 @@ CREATE TABLE food_vouchers (
                                    FOREIGN KEY (voucher_id) REFERENCES vouchers(id)
                                        ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================================
+-- 22. BẢNG MERCHANT_SETTLEMENTS (Kỳ đối soát doanh thu & quyết toán của Merchant)
+-- =============================================================================
+CREATE TABLE merchant_settlements (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    merchant_id VARCHAR(36) NOT NULL,
+    period_key VARCHAR(50) NOT NULL,
+    period_type VARCHAR(20) NOT NULL DEFAULT 'MONTH',
+    start_date DATETIME NOT NULL,
+    end_date DATETIME NOT NULL,
+    total_gross_revenue DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
+    total_discount DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
+    commission_rate DECIMAL(8, 6) NOT NULL DEFAULT 0.000000,
+    total_commission_fee DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
+    net_revenue DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
+    total_orders BIGINT NOT NULL DEFAULT 0,
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING_CONFIRMATION',
+    confirmed_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uk_merchant_period UNIQUE (merchant_id, period_key),
+    CONSTRAINT fk_settlements_merchant FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+-- =============================================================================
+-- 23. BẢNG SETTLEMENT_CLAIMS (Khiếu nại đối soát doanh thu của Merchant)
+-- =============================================================================
+CREATE TABLE settlement_claims (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    settlement_id BIGINT NOT NULL,
+    merchant_id VARCHAR(36) NOT NULL,
+    reason VARCHAR(50) NOT NULL,
+    description TEXT NOT NULL,
+    evidence_image_url VARCHAR(500) NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    admin_note TEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_claims_settlement FOREIGN KEY (settlement_id) REFERENCES merchant_settlements (id) ON DELETE CASCADE,
+    CONSTRAINT fk_claims_merchant FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
