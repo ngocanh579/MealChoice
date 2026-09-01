@@ -2,7 +2,7 @@ package vn.codegyme.meal_choice.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.codegyme.meal_choice.service.impl.MerchantStatService;
+import vn.codegyme.meal_choice.service.MerchantStatService;
 
 import java.util.UUID;
 

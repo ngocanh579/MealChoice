@@ -183,4 +183,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+    // Tổng doanh thu tích lũy của Merchant từ các đơn đã dù hoàn thành hay chưa hoàn thành
+    @Query("""
+    SELECT COALESCE(SUM(o.totalAmount), 0)
+    FROM Order o
+    WHERE o.merchant.id = :merchantId
+    """)
+    BigDecimal calculateTotalRevenue(
+            @Param("merchantId") UUID merchantId
+    );
 }

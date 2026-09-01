@@ -67,6 +67,29 @@
                 <i class="bi bi-star-fill merchant-sidebar-icon fs-5"></i>
                 <span class="merchant-sidebar-label">Đối tác thân thiết</span>
             </a>
+<!--            rút tiền-->
+            <a th:href="@{/merchant/payout/withdraw}"
+               class="nav-link"
+               th:classappend="${activeMenu == 'withdraw'} ? ' active' : ''">
+
+                <i class="bi bi-wallet2"></i>
+
+                <span>
+                    Rút tiền
+                </span>
+
+            </a>
+<!--            Thanh lý hợp đồng-->
+            <a th:href="@{/merchant/payout/liquidation}"
+               class="nav-link text-danger"
+               th:classappend="${activeMenu == 'liquidation'} ? ' active' : ''">
+
+                <i class="bi bi-file-earmark-x"></i>
+
+                <span>
+                    Thanh lý hợp đồng
+                </span>
+            </a>
 
             <a th:href="@{/merchant/profile}"
                class="nav-link rounded-3 px-3 py-2 text-dark d-flex align-items-center gap-3"
