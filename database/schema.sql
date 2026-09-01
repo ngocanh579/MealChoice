@@ -369,3 +369,11 @@ CREATE TABLE food_vouchers (
                                    FOREIGN KEY (voucher_id) REFERENCES vouchers(id)
                                        ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+USE meal_choice;
+
+ALTER TABLE merchant_payout_requests
+    MODIFY COLUMN merchant_id VARCHAR(36)
+        CHARACTER SET utf8mb4
+        COLLATE utf8mb4_unicode_ci
+        NOT NULL;
