@@ -768,42 +768,44 @@
                     districtCode = selectedDistOption.value;
                     await loadWards("edit", districtCode);
 
-            if (wardCode) {
-                document.getElementById("editWardSelect").value =
-                    wardCode;
-                    const wardSelect = document.getElementById("editWardSelect");
-                    // 3. Tìm Phường/Xã
-                    let selectedWardOption = null;
                     if (wardCode) {
-                        selectedWardOption = Array.from(wardSelect.options).find(opt => opt.value == wardCode);
-                    }
-                    if (!selectedWardOption && addressFull) {
-                        selectedWardOption = Array.from(wardSelect.options).find(opt => {
-                            const txt = opt.text.toLowerCase();
-                            return addressFull.toLowerCase().includes(txt) || (addressParts.length >= 3 && txt.includes(addressParts[addressParts.length - 3]?.toLowerCase() || ""));
-                        });
-                    }
+                        document.getElementById("editWardSelect").value =
+                            wardCode;
+                        const wardSelect = document.getElementById("editWardSelect");
+                        // 3. Tìm Phường/Xã
+                        let selectedWardOption = null;
+                        if (wardCode) {
+                            selectedWardOption = Array.from(wardSelect.options).find(opt => opt.value == wardCode);
+                        }
+                        if (!selectedWardOption && addressFull) {
+                            selectedWardOption = Array.from(wardSelect.options).find(opt => {
+                                const txt = opt.text.toLowerCase();
+                                return addressFull.toLowerCase().includes(txt) || (addressParts.length >= 3 && txt.includes(addressParts[addressParts.length - 3]?.toLowerCase() || ""));
+                            });
+                        }
 
-                    if (selectedWardOption) {
-                        wardSelect.value = selectedWardOption.value;
+                        if (selectedWardOption) {
+                            wardSelect.value = selectedWardOption.value;
+                        }
                     }
+                } else if (addressParts.length >= 3) {
+                    // Fallback nếu không khớp API tỉnh
+                    const pName = addressParts[addressParts.length - 1];
+                    const dName = addressParts[addressParts.length - 2];
+                    const wName = addressParts[addressParts.length - 3];
+                    provSelect.innerHTML = `<option value="${pName}" selected>${pName}</option>`;
+                    document.getElementById("editDistrictSelect").innerHTML = `<option value="${dName}" selected>${dName}</option>`;
+                    document.getElementById("editDistrictSelect").disabled = false;
+                    document.getElementById("editWardSelect").innerHTML = `<option value="${wName}" selected>${wName}</option>`;
+                    document.getElementById("editWardSelect").disabled = false;
                 }
-            } else if (addressParts.length >= 3) {
-                // Fallback nếu không khớp API tỉnh
-                const pName = addressParts[addressParts.length - 1];
-                const dName = addressParts[addressParts.length - 2];
-                const wName = addressParts[addressParts.length - 3];
-                provSelect.innerHTML = `<option value="${pName}" selected>${pName}</option>`;
-                document.getElementById("editDistrictSelect").innerHTML = `<option value="${dName}" selected>${dName}</option>`;
-                document.getElementById("editDistrictSelect").disabled = false;
-                document.getElementById("editWardSelect").innerHTML = `<option value="${wName}" selected>${wName}</option>`;
-                document.getElementById("editWardSelect").disabled = false;
-            }
 
-            new bootstrap.Modal(
-                document.getElementById("editAddressModal")
-            ).show();
-        } catch (error) {
+                new bootstrap.Modal(
+                    document.getElementById("editAddressModal")
+                ).show();
+            }
+        } catch
+            (error) {
             console.error("Lỗi khi nạp địa chỉ sửa:", error);
             showNotice(
                 "danger",
@@ -811,6 +813,7 @@
                 error.message || "Lỗi nạp dữ liệu"
             );
         }
+
     }
 
     async function deleteAddress(btn) {
