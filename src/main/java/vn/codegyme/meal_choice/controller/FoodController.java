@@ -77,15 +77,22 @@ public class FoodController {
         return ResponseEntity.ok(response);
     }
 
-    // Lấy danh sách món
+    // Lấy danh sách món có phân trang
     @GetMapping("/api/merchant/foods")
     @ResponseBody
-    public ResponseEntity<List<FoodResponse>> getFoods() {
+    public ResponseEntity<Page<FoodResponse>> getFoods(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
         Merchant merchant = getCurrentMerchant();
 
+        Pageable pageable = PageRequest.of(page, size);
+
         return ResponseEntity.ok(
-                foodService.getFoods(merchant.getId())
+                foodService.getFoods(
+                        merchant.getId(),
+                        pageable
+                )
         );
     }
 
