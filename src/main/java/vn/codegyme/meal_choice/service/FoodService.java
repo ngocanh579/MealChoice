@@ -21,7 +21,7 @@ public interface FoodService {
     );
 
     // Lấy danh sách món ăn của Merchant
-    List<FoodResponse> getFoods(UUID merchantId);
+    Page<FoodResponse> getFoods(UUID merchantId, Pageable pageable);
 
     // Lấy chi tiết món ăn
     FoodResponse getFood(UUID merchantId, Long foodId);
