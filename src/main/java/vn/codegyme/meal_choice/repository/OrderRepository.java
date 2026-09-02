@@ -41,13 +41,51 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
     Page<Order> findByUser_IdOrderByIdDesc(UUID userId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
+    Page<Order> findByUser_IdAndStatusOrderByIdDesc(UUID userId, OrderStatus status, Pageable pageable);
+
     long countByMerchant_IdAndStatus(UUID merchantId, OrderStatus status);
+
+    long countByUser_IdAndStatus(UUID userId, OrderStatus status);
 
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.food LEFT JOIN FETCH o.deliveryPartner WHERE o.id = :id AND o.merchant.id = :merchantId")
     Optional<Order> findByIdAndMerchantIdWithItems(@Param("id") Long id, @Param("merchantId") UUID merchantId);
 
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.food LEFT JOIN FETCH o.deliveryPartner WHERE o.orderCode = :orderCode")
     Optional<Order> findByOrderCodeWithItems(@Param("orderCode") String orderCode);
+
+    // ==================== TRUY VẤN THEO KHÁCH HÀNG ====================
+
+    /**
+     * Chi tiết một đơn hàng CỦA CHÍNH khách hàng đang đăng nhập.
+     * Điều kiện user.id nằm ngay trong câu truy vấn nên không thể xem đơn của người khác.
+     */
+    @Query("""
+            SELECT o FROM Order o
+            LEFT JOIN FETCH o.orderItems oi
+            LEFT JOIN FETCH oi.food
+            LEFT JOIN FETCH o.merchant
+            LEFT JOIN FETCH o.deliveryPartner
+            WHERE o.id = :id AND o.user.id = :userId
+            """)
+    Optional<Order> findByIdAndUserIdWithItems(@Param("id") Long id, @Param("userId") UUID userId);
+
+    /**
+     * Chi tiết theo mã đơn, có kiểm tra chủ sở hữu.
+     */
+    @Query("""
+            SELECT o FROM Order o
+            LEFT JOIN FETCH o.orderItems oi
+            LEFT JOIN FETCH oi.food
+            LEFT JOIN FETCH o.merchant
+            LEFT JOIN FETCH o.deliveryPartner
+            WHERE o.orderCode = :orderCode AND o.user.id = :userId
+            """)
+    Optional<Order> findByOrderCodeAndUserIdWithItems(@Param("orderCode") String orderCode,
+                                                      @Param("userId") UUID userId);
+
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
+    Optional<Order> findByIdAndUser_Id(Long id, UUID userId);
 
     // 1. THỐNG KÊ DOANH THU
     @Query(value = """
