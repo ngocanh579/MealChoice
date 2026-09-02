@@ -84,6 +84,21 @@
                 </div>
             </div>
 
+            <!--     tìm kiếm        -->
+            <form method="get" action="/merchant/orders" class="d-flex gap-2 mb-3">
+                <div class="input-group">
+                    <input type="text"
+                           name="keyword"
+                           class="form-control"
+                           placeholder="Tìm mã đơn, tên khách hàng, số điện thoại..."
+                           th:value="${keyword}">
+                </div>
+                <input type="hidden" name="status" th:value="${selectedStatus}">
+                <button type="submit" class="btn btn-danger rounded-pill px-4">
+                    <i class="bi bi-search me-1"></i>Tìm kiếm
+                </button>
+            </form>
+
             <div class="merchant-page-card p-4">
 
                 <!-- BỘ LỌC TRẠNG THÁI -->
@@ -94,27 +109,27 @@
                     </a>
                     <a href="/merchant/orders?status=PENDING"
                         class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold filter-btn"
-                        th:classappend="${selectedStatus == 'PENDING'} ? 'active' : 'btn-outline-secondary'">
+                        th:classappend="${selectedStatus != null and selectedStatus.name() == 'PENDING'} ? 'active' : 'btn-outline-secondary'">
                         Chờ nhận đơn
                     </a>
                     <a href="/merchant/orders?status=PREPARING"
                         class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold filter-btn"
-                        th:classappend="${selectedStatus == 'PREPARING'} ? 'active' : 'btn-outline-secondary'">
+                        th:classappend="${selectedStatus != null and selectedStatus.name() == 'PREPARING'} ? 'active' : 'btn-outline-secondary'">
                         Đang chuẩn bị
                     </a>
                     <a href="/merchant/orders?status=DELIVERING"
                         class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold filter-btn"
-                        th:classappend="${selectedStatus == 'DELIVERING'} ? 'active' : 'btn-outline-secondary'">
+                        th:classappend="${selectedStatus != null and selectedStatus.name() == 'DELIVERING'} ? 'active' : 'btn-outline-secondary'">
                         Đang giao
                     </a>
                     <a href="/merchant/orders?status=COMPLETED"
                         class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold filter-btn"
-                        th:classappend="${selectedStatus == 'COMPLETED'} ? 'active' : 'btn-outline-secondary'">
+                        th:classappend="${selectedStatus != null and selectedStatus.name() == 'COMPLETED'} ? 'active' : 'btn-outline-secondary'">
                         Hoàn thành
                     </a>
                     <a href="/merchant/orders?status=CANCELLED"
                         class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold filter-btn"
-                        th:classappend="${selectedStatus == 'CANCELLED'} ? 'active' : 'btn-outline-secondary'">
+                        th:classappend="${selectedStatus != null and selectedStatus.name() == 'CANCELLED'} ? 'active' : 'btn-outline-secondary'">
                         Đã hủy
                     </a>
                 </div>
@@ -183,11 +198,11 @@
                                 <td>
                                     <!-- BADGE TRẠNG THÁI & TIMER -->
                                     <div th:id="'status-container-' + ${order.id}">
-                                        <span th:if="${order.status == 'PENDING'}"
+                                        <span th:if="${order.status != null and order.status.name() == 'PENDING'}"
                                             class="badge badge-status bg-warning bg-opacity-25 text-dark border border-warning">
                                             Chờ nhận đơn
                                         </span>
-                                        <div th:if="${order.status == 'PREPARING'}" class="d-flex flex-column gap-1">
+                                        <div th:if="${order.status != null and order.status.name() == 'PREPARING'}" class="d-flex flex-column gap-1">
                                             <span class="badge badge-status bg-primary text-white">
                                                 Đang chuẩn bị
                                             </span>
@@ -197,7 +212,7 @@
                                                 <i class="bi bi-clock me-1"></i><span class="timer-display">--:--</span>
                                             </small>
                                         </div>
-                                        <div th:if="${order.status == 'DELIVERING'}" class="d-flex flex-column gap-1">
+                                        <div th:if="${order.status != null and order.status.name() == 'DELIVERING'}" class="d-flex flex-column gap-1">
                                             <span class="badge badge-status bg-info text-white">
                                                 Đang giao
                                             </span>
@@ -207,11 +222,11 @@
                                                 <i class="bi bi-truck me-1"></i><span class="timer-display">--:--</span>
                                             </small>
                                         </div>
-                                        <span th:if="${order.status == 'COMPLETED'}"
+                                        <span th:if="${order.status != null and order.status.name() == 'COMPLETED'}"
                                             class="badge badge-status bg-success text-white">
                                             Hoàn thành
                                         </span>
-                                        <span th:if="${order.status == 'CANCELLED'}"
+                                        <span th:if="${order.status != null and order.status.name() == 'CANCELLED'}"
                                             class="badge badge-status bg-danger bg-opacity-10 text-danger border border-danger">
                                             Đã hủy
                                         </span>
@@ -229,7 +244,7 @@
                                     <div class="d-flex justify-content-end gap-1"
                                         th:id="'action-container-' + ${order.id}">
                                         <!-- Thao tác PENDING -->
-                                        <th:block th:if="${order.status == 'PENDING'}">
+                                        <th:block th:if="${order.status != null and order.status.name() == 'PENDING'}">
                                             <button type="button"
                                                 class="btn btn-sm btn-action-accept rounded-pill px-3 fw-semibold font-size-12 shadow-sm"
                                                 th:onclick="'handleAcceptOrder(' + ${order.id} + ')'">
@@ -237,13 +252,15 @@
                                             </button>
                                             <button type="button"
                                                 class="btn btn-sm btn-action-cancel rounded-pill px-2.5 font-size-12"
-                                                th:onclick="'openCancelModal(' + ${order.id} + ', \'' + ${order.orderCode} + '\')'">
+                                                th:data-order-id="${order.id}"
+                                                th:data-order-code="${order.orderCode}"
+                                                onclick="openCancelModal(this.getAttribute('data-order-id'), this.getAttribute('data-order-code'))">
                                                 <i class="bi bi-x-lg"></i>
                                             </button>
                                         </th:block>
 
                                         <!-- Thao tác PREPARING -->
-                                        <th:block th:if="${order.status == 'PREPARING'}">
+                                        <th:block th:if="${order.status != null and order.status.name() == 'PREPARING'}">
                                             <button type="button"
                                                 class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold font-size-12 shadow-sm"
                                                 th:onclick="'handleStartDelivery(' + ${order.id} + ')'">
@@ -252,7 +269,7 @@
                                         </th:block>
 
                                         <!-- Thao tác DELIVERING -->
-                                        <th:block th:if="${order.status == 'DELIVERING'}">
+                                        <th:block th:if="${order.status != null and order.status.name() == 'DELIVERING'}">
                                             <button type="button"
                                                 class="btn btn-sm btn-success rounded-pill px-3 fw-semibold font-size-12 shadow-sm btn-complete-order"
                                                 th:id="'btn-complete-' + ${order.id}"
@@ -262,7 +279,9 @@
                                             </button>
                                             <button type="button"
                                                 class="btn btn-sm btn-outline-danger rounded-pill px-2.5 font-size-12"
-                                                th:onclick="'openRejectDeliveryModal(' + ${order.id} + ', \'' + ${order.orderCode} + '\')'">
+                                                th:data-order-id="${order.id}"
+                                                th:data-order-code="${order.orderCode}"
+                                                onclick="openRejectDeliveryModal(this.getAttribute('data-order-id'), this.getAttribute('data-order-code'))">
                                                 <i class="bi bi-person-x"></i>
                                             </button>
                                         </th:block>

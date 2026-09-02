@@ -14,6 +14,8 @@ import java.util.UUID;
 public class FileStorageService {
 
     private final Path uploadRoot = Paths.get("uploads", "foods");
+    private final Path settlementUploadRoot = Paths.get("uploads", "settlements");
+    private final Path payoutUploadRoot = Paths.get("uploads", "payouts");
 
     // Lưu ảnh món ăn
     public String saveFoodImage(Long foodId, MultipartFile image) {
@@ -52,6 +54,74 @@ public class FileStorageService {
         }
     }
 
+    // Lưu ảnh bằng chứng khiếu nại đối soát
+    public String saveSettlementEvidenceImage(MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            return null;
+        }
+
+        String originalFileName = image.getOriginalFilename();
+        if (originalFileName == null || originalFileName.isBlank()) {
+            throw new RuntimeException("Tên file ảnh không hợp lệ");
+        }
+
+        String extension = getFileExtension(originalFileName);
+        if (!isImageExtension(extension)) {
+            throw new RuntimeException("File tải lên phải là ảnh (jpg, jpeg, jfif, png, webp, gif, bmp)");
+        }
+
+        String fileName = UUID.randomUUID() + extension;
+        Path targetFile = settlementUploadRoot.resolve(fileName);
+
+        try {
+            Files.createDirectories(settlementUploadRoot);
+
+            Files.copy(
+                    image.getInputStream(),
+                    targetFile,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+
+            return "/uploads/settlements/" + fileName;
+        } catch (IOException e) {
+            throw new RuntimeException("Không thể lưu ảnh bằng chứng khiếu nại", e);
+        }
+    }
+
+    // Lưu ảnh ủy nhiệm chi / chứng từ chuyển khoản Payout
+    public String savePayoutProofImage(MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new RuntimeException("Vui lòng tải lên ảnh chứng từ chuyển khoản");
+        }
+
+        String originalFileName = image.getOriginalFilename();
+        if (originalFileName == null || originalFileName.isBlank()) {
+            throw new RuntimeException("Tên file ảnh không hợp lệ");
+        }
+
+        String extension = getFileExtension(originalFileName);
+        if (!isImageExtension(extension)) {
+            throw new RuntimeException("File tải lên phải là ảnh (jpg, jpeg, jfif, png, webp, gif, bmp)");
+        }
+
+        String fileName = UUID.randomUUID() + extension;
+        Path targetFile = payoutUploadRoot.resolve(fileName);
+
+        try {
+            Files.createDirectories(payoutUploadRoot);
+
+            Files.copy(
+                    image.getInputStream(),
+                    targetFile,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+
+            return "/uploads/payouts/" + fileName;
+        } catch (IOException e) {
+            throw new RuntimeException("Không thể lưu ảnh chứng từ chuyển khoản", e);
+        }
+    }
+
     // Xóa ảnh
     public void deleteFoodImage(String imageUrl) {
         if (imageUrl == null || imageUrl.isBlank()) {
@@ -84,9 +154,14 @@ public class FileStorageService {
 
     // Kiểm tra định dạng ảnh
     private boolean isImageExtension(String extension) {
-        return extension.equals(".jpg")
-                || extension.equals(".jpeg")
-                || extension.equals(".png")
-                || extension.equals(".webp");
+        String ext = extension.toLowerCase();
+        return ext.equals(".jpg")
+                || ext.equals(".jpeg")
+                || ext.equals(".jfif")
+                || ext.equals(".png")
+                || ext.equals(".webp")
+                || ext.equals(".gif")
+                || ext.equals(".bmp")
+                || ext.equals(".svg");
     }
 }

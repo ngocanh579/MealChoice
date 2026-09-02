@@ -75,6 +75,55 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
         return orderMapper.toOrderResponseDTOPage(orderPage);
     }
 
+    // Tìm kiếm đơn hàng theo mã, tên khách hàng hoặc số điện thoại
+    @Override
+    @Transactional
+    public Page<OrderResponseDTO> getMerchantOrders(
+            UUID merchantId,
+            OrderStatus status,
+            String keyword,
+            Pageable pageable) {
+
+        String searchKeyword = keyword == null ? "" : keyword.trim();
+        Page<Order> orderPage;
+
+        if (searchKeyword.isBlank()) {
+            if (status != null) {
+                orderPage = orderRepository.findByMerchant_IdAndStatusOrderByIdDesc(
+                        merchantId,
+                        status,
+                        pageable
+                );
+            } else {
+                orderPage = orderRepository.findByMerchant_IdOrderByIdDesc(
+                        merchantId,
+                        pageable
+                );
+            }
+        } else {
+            if (status != null) {
+                orderPage = orderRepository.searchOrdersByStatus(
+                        merchantId,
+                        status,
+                        searchKeyword,
+                        pageable
+                );
+            } else {
+                orderPage = orderRepository.searchOrders(
+                        merchantId,
+                        searchKeyword,
+                        pageable
+                );
+            }
+        }
+
+        for (Order order : orderPage.getContent()) {
+            autoSyncOrderStatus(order);
+        }
+
+        return orderMapper.toOrderResponseDTOPage(orderPage);
+    }
+
     /**
      * TÍNH NĂNG 2: Xem chi tiết một đơn hàng của Merchant
      */
@@ -110,8 +159,8 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
             int maxPrep = order.getOrderItems().stream()
                     .mapToInt(item -> (item.getFood() != null && item.getFood().getPreparationTime() != null
                             && item.getFood().getPreparationTime() > 0)
-                                    ? item.getFood().getPreparationTime()
-                                    : 10)
+                            ? item.getFood().getPreparationTime()
+                            : 10)
                     .max()
                     .orElse(10);
             prepMinutes = Math.max(5, maxPrep);
@@ -195,6 +244,7 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
         }
 
         order.setStatus(OrderStatus.COMPLETED);
+        order.setCompletedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
         Order savedOrder = orderRepository.save(order);
         log.info("Merchant {} đã xác nhận hoàn thành đơn hàng ID {}", merchantId, orderId);

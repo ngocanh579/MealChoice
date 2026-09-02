@@ -1,69 +1,104 @@
-<!-- Fragment Danh sách Coupon -->
+<!-- Fragment hiển thị danh sách coupon áp dụng cho món ăn -->
 <div th:fragment="couponList" class="py-3" xmlns:th="http://www.thymeleaf.org">
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white p-4">
+
+        <!-- Tiêu đề khu vực coupon -->
         <h5 class="fw-bold text-dark mb-3">
-            <i class="bi bi-ticket-perforated me-2 text-danger"></i>Mã giảm giá & Ưu đãi khả dụng
+            <i class="bi bi-ticket-perforated me-2 text-danger"></i>
+            Mã giảm giá & Ưu đãi khả dụng
         </h5>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-            <!-- Coupon 1 -->
-            <div class="col">
-                <div class="d-flex align-items-center bg-light border border-light-subtle rounded-3 p-3 position-relative overflow-hidden shadow-xs hover-shadow transition-hover" style="border-left: 5px solid #ff4b2b !important;">
-                    <div class="pe-3 border-end border-dashed border-secondary border-opacity-25 text-center d-flex flex-column justify-content-center" style="min-width: 80px;">
-                        <span class="fw-bold text-danger fs-5">20k</span>
-                        <span class="text-muted fs-9 fw-semibold">GIẢM</span>
-                    </div>
-                    <div class="ps-3 flex-grow-1 overflow-hidden">
-                        <h6 class="fw-bold text-dark mb-0 fs-7 text-truncate">Mã: MEALCHOICE20</h6>
-                        <p class="text-muted fs-8 mb-1 text-truncate">Giảm 20k cho đơn từ 100k</p>
-                        <button class="btn btn-outline-danger btn-xs rounded-pill px-2 py-0.5 fw-semibold fs-9" onclick="navigator.clipboard.writeText('MEALCHOICE20'); alert('Đã sao chép mã MEALCHOICE20!');">Lấy Mã</button>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Coupon 2 -->
-            <div class="col">
-                <div class="d-flex align-items-center bg-light border border-light-subtle rounded-3 p-3 position-relative overflow-hidden shadow-xs hover-shadow transition-hover" style="border-left: 5px solid #10b981 !important;">
-                    <div class="pe-3 border-end border-dashed border-secondary border-opacity-25 text-center d-flex flex-column justify-content-center" style="min-width: 80px;">
-                        <span class="fw-bold text-success fs-5">FREE</span>
-                        <span class="text-muted fs-9 fw-semibold">SHIP</span>
-                    </div>
-                    <div class="ps-3 flex-grow-1 overflow-hidden">
-                        <h6 class="fw-bold text-dark mb-0 fs-7 text-truncate">Mã: FREESHIPMAX</h6>
-                        <p class="text-muted fs-8 mb-1 text-truncate">Miễn phí giao hàng toàn thành phố</p>
-                        <button class="btn btn-outline-success btn-xs rounded-pill px-2 py-0.5 fw-semibold fs-9" onclick="navigator.clipboard.writeText('FREESHIPMAX'); alert('Đã sao chép mã FREESHIPMAX!');">Lấy Mã</button>
-                    </div>
-                </div>
-            </div>
+        <!-- Hiển thị danh sách coupon của món ăn -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3"
+             th:if="${food.coupons != null and !#lists.isEmpty(food.coupons)}">
 
-            <!-- Coupon 3 (nếu có giảm giá) -->
-            <div class="col" th:if="${food.discountPrice != null and food.price != null and food.price > 0}">
-                <div class="d-flex align-items-center bg-light border border-light-subtle rounded-3 p-3 position-relative overflow-hidden shadow-xs hover-shadow transition-hover" style="border-left: 5px solid #f59e0b !important;">
-                    <div class="pe-3 border-end border-dashed border-secondary border-opacity-25 text-center d-flex flex-column justify-content-center" style="min-width: 80px;">
-                        <span class="fw-bold text-warning fs-5" th:text="${#numbers.formatDecimal((food.price - food.discountPrice) / food.price * 100, 0, 0)} + '%'">20%</span>
-                        <span class="text-muted fs-9 fw-semibold">HOT</span>
+            <!-- Duyệt qua từng coupon được gắn với món ăn -->
+            <div class="col" th:each="coupon, iterStat : ${food.coupons}">
+                <div class="d-flex align-items-center bg-light border border-light-subtle rounded-3 p-3 position-relative overflow-hidden shadow-xs transition-hover"
+                     th:style="'border-left: 5px solid ' + (${iterStat.index % 3 == 0} ? '#ff4b2b' : (${iterStat.index % 3 == 1} ? '#10b981' : '#f59e0b')) + ' !important;'">
+
+                    <!-- Khu vực hiển thị giá trị giảm -->
+                    <div class="pe-3 border-end border-dashed border-secondary border-opacity-25 text-center d-flex flex-column justify-content-center"
+                         style="min-width: 80px;">
+
+                        <!-- Hiển thị mức giảm theo loại coupon -->
+                        <span class="fw-bold fs-5"
+                              th:classappend="${coupon.discountType != null and coupon.discountType.name() == 'PERCENT'} ? ' text-warning' : ' text-danger'"
+                              th:text="${coupon.discountType != null and coupon.discountType.name() == 'PERCENT'
+                                  ? #numbers.formatDecimal(coupon.discountValue, 0, 0) + '%'
+                                  : #numbers.formatDecimal(coupon.discountValue / 1000, 0, 0) + 'k'}">
+                            10k
+                        </span>
+
+                        <!-- Nhãn loại ưu đãi -->
+                        <span class="text-muted fs-9 fw-semibold">
+                            GIẢM
+                        </span>
                     </div>
+
+                    <!-- Khu vực thông tin chi tiết coupon -->
                     <div class="ps-3 flex-grow-1 overflow-hidden">
-                        <h6 class="fw-bold text-dark mb-0 fs-7 text-truncate">Mã: FOODHOT</h6>
-                        <p class="text-muted fs-8 mb-1 text-truncate">Ưu đãi giảm trực tiếp theo món</p>
-                        <button class="btn btn-outline-warning btn-xs rounded-pill px-2 py-0.5 fw-semibold fs-9" onclick="navigator.clipboard.writeText('FOODHOT'); alert('Đã sao chép mã FOODHOT!');">Lấy Mã</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Default Coupon 3 fallback if no discount -->
-            <div class="col" th:unless="${food.discountPrice != null and food.price != null and food.price > 0}">
-                <div class="d-flex align-items-center bg-light border border-light-subtle rounded-3 p-3 position-relative overflow-hidden shadow-xs hover-shadow transition-hover" style="border-left: 5px solid #3b82f6 !important;">
-                    <div class="pe-3 border-end border-dashed border-secondary border-opacity-25 text-center d-flex flex-column justify-content-center" style="min-width: 80px;">
-                        <span class="fw-bold text-primary fs-5">10%</span>
-                        <span class="text-muted fs-9 fw-semibold">GIẢM</span>
-                    </div>
-                    <div class="ps-3 flex-grow-1 overflow-hidden">
-                        <h6 class="fw-bold text-dark mb-0 fs-7 text-truncate">Mã: NEWUSER</h6>
-                        <p class="text-muted fs-8 mb-1 text-truncate">Giảm 10% cho thành viên mới</p>
-                        <button class="btn btn-outline-primary btn-xs rounded-pill px-2 py-0.5 fw-semibold fs-9" onclick="navigator.clipboard.writeText('NEWUSER'); alert('Đã sao chép mã NEWUSER!');">Lấy Mã</button>
+
+                        <!-- Mã coupon -->
+                        <h6 class="fw-bold text-dark mb-0 fs-7 text-truncate"
+                            th:text="'Mã: ' + ${coupon.couponCode}">
+                            Mã: MEALCHOICE20
+                        </h6>
+
+                        <!-- Mô tả coupon -->
+                        <p class="text-muted fs-8 mb-1 text-truncate"
+                           th:text="${coupon.discountType != null and coupon.discountType.name() == 'PERCENT'
+                               ? 'Giảm ' + #numbers.formatDecimal(coupon.discountValue, 0, 0) + '% trên đơn hàng'
+                               : 'Giảm ' + #numbers.formatDecimal(coupon.discountValue / 1000, 0, 0) + 'k trên đơn hàng'}">
+                            Giảm 10k trên đơn hàng
+                        </p>
+
+                        <!-- Nút sao chép mã coupon -->
+                        <button type="button"
+                                class="btn btn-outline-danger btn-xs rounded-pill px-2 py-0.5 fw-semibold fs-9"
+                                th:attr="data-coupon-code=${coupon.couponCode}"
+                                onclick="copyCouponCode(this)">
+                            Lấy Mã
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Thông báo khi món ăn chưa có coupon -->
+        <div class="text-center py-4"
+             th:if="${food.coupons == null or #lists.isEmpty(food.coupons)}">
+            <i class="bi bi-ticket-perforated text-muted fs-2 d-block mb-2"></i>
+            <p class="text-muted fs-8 mb-0">
+                Món ăn hiện chưa có mã giảm giá khả dụng.
+            </p>
+        </div>
     </div>
 </div>
+
+<!-- Script xử lý sao chép mã coupon -->
+<script>
+    function copyCouponCode(button) {
+        const couponCode = button.dataset.couponCode;
+
+        if (!couponCode) {
+            return;
+        }
+
+        navigator.clipboard.writeText(couponCode).then(() => {
+            const originalText = button.textContent;
+
+            button.textContent = 'Đã sao chép';
+            button.classList.remove('btn-outline-danger');
+            button.classList.add('btn-success');
+
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-danger');
+            }, 1500);
+        }).catch(() => {
+            alert('Không thể sao chép mã ' + couponCode);
+        });
+    }
+</script>

@@ -8,18 +8,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/merchant.css}">
 </head>
-<body class="merchant-page">
+<body class="merchant-page" data-food-mode="create">
 <div th:replace="~{merchant/layout :: shell('Thêm món ăn', 'foods', ~{::content})}">
     <section th:fragment="content" class="d-flex flex-column gap-4">
-
-        <!-- HEADER TỐI GIẢN -->
+        <!-- Header -->
         <div class="d-flex align-items-center justify-content-between mb-1">
             <div>
                 <h2 class="fw-bold text-dark mb-1">Thêm món ăn mới</h2>
                 <p class="text-muted mb-0 font-size-14">Nhập thông tin món ăn, ảnh và giá để đưa món lên kệ.</p>
             </div>
             <div>
-                <a href="/merchant/foods" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                <a href="/merchant/foods"
+                   class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
                     <i class="bi bi-arrow-left"></i>
                     <span>Hủy</span>
                 </a>
@@ -28,18 +28,17 @@
 
         <form id="foodCreateForm" enctype="multipart/form-data">
             <div class="row g-4">
-
-                <!-- CỘT TRÁI: THÔNG TIN CƠ BẢN & MÔ TẢ -->
+                <!-- Cột trái -->
                 <div class="col-lg-7 d-flex flex-column gap-4">
-
-                    <!-- Card 1: Thông tin chung -->
                     <div class="merchant-page-card p-4">
                         <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
                             <i class="bi bi-info-circle text-danger me-2"></i>Thông tin cơ bản
                         </h5>
 
                         <div class="mb-3">
-                            <label for="foodName" class="form-label fw-semibold">Tên món ăn <span class="text-danger">*</span></label>
+                            <label for="foodName" class="form-label fw-semibold">
+                                Tên món ăn <span class="text-danger">*</span>
+                            </label>
                             <input type="text"
                                    id="foodName"
                                    name="foodName"
@@ -49,7 +48,9 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="merchantAddressId" class="form-label fw-semibold">Địa chỉ cửa hàng <span class="text-danger">*</span></label>
+                            <label for="merchantAddressId" class="form-label fw-semibold">
+                                Địa chỉ cửa hàng <span class="text-danger">*</span>
+                            </label>
                             <select id="merchantAddressId"
                                     name="merchantAddressId"
                                     class="form-select form-select-lg bg-light border-0"
@@ -62,68 +63,168 @@
                             </select>
                         </div>
 
+                        <!-- Danh mục -->
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Danh mục món ăn <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">
+                                Danh mục món ăn <span class="text-danger">*</span>
+                            </label>
 
-                            <div class="p-3 bg-light rounded-3 border-0">
-                                <div th:if="${categories == null or #lists.isEmpty(categories)}"
-                                     class="text-muted small">
-                                    Chưa có danh mục nào.
-                                </div>
+                            <div class="multi-select" id="categorySelector">
+                                <button type="button"
+                                        class="multi-select-toggle"
+                                        aria-expanded="false">
+                                    <span class="multi-select-selected">
+                                        Chọn danh mục món ăn
+                                    </span>
+                                    <i class="bi bi-chevron-down arrow"></i>
+                                </button>
 
-                                <div th:each="category : ${categories}"
-                                     class="form-check form-check-inline me-4 mb-2">
+                                <div class="multi-select-menu">
+                                    <input type="text"
+                                           class="form-control multi-select-search"
+                                           placeholder="Tìm danh mục..."
+                                           autocomplete="off">
 
-                                    <input class="form-check-input category-checkbox"
-                                           type="checkbox"
-                                           name="categoryIds"
-                                           th:id="'category-' + ${category.id}"
-                                           th:value="${category.id}">
+                                    <div class="multi-select-list">
+                                        <div th:each="category : ${categories}"
+                                             class="multi-select-item"
+                                             th:attr="data-label=${category.categoryName}">
+                                            <div class="form-check">
+                                                <input class="form-check-input multi-select-checkbox"
+                                                       type="checkbox"
+                                                       name="categoryIds"
+                                                       th:value="${category.id}"
+                                                       th:id="'category_' + ${category.id}">
+                                                <label class="form-check-label w-100"
+                                                       th:for="'category_' + ${category.id}"
+                                                       th:text="${category.categoryName}">
+                                                </label>
+                                            </div>
+                                        </div>
 
-                                    <label class="form-check-label fw-medium"
-                                           th:for="'category-' + ${category.id}"
-                                           th:text="${category.categoryName}">
-                                    </label>
+                                        <div class="multi-select-empty d-none">
+                                            Không tìm thấy danh mục.
+                                        </div>
+                                    </div>
 
+                                    <div class="multi-select-footer">
+                                        Đã chọn: <strong class="selected-count">0</strong>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="form-text font-size-12 mt-1">
-                                Có thể chọn nhiều danh mục cho cùng một món ăn.
+                                Có thể tìm kiếm, kéo xuống và chọn nhiều danh mục.
                             </div>
                         </div>
 
-                        <!-- Tag món ăn -->
+                        <!-- Tag -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">
                                 Tag món ăn
                             </label>
 
-                            <div class="p-3 bg-light rounded-3 border-0">
-                                <div th:if="${tags == null or #lists.isEmpty(tags)}"
-                                     class="text-muted small">
-                                    Chưa có tag nào.
-                                </div>
+                            <div class="multi-select" id="tagSelector">
+                                <button type="button"
+                                        class="multi-select-toggle"
+                                        aria-expanded="false">
+                                    <span class="multi-select-selected">
+                                        Chọn tag
+                                    </span>
+                                    <i class="bi bi-chevron-down arrow"></i>
+                                </button>
 
-                                <div th:each="tag : ${tags}"
-                                     class="form-check form-check-inline me-4 mb-2">
+                                <div class="multi-select-menu">
+                                    <input type="text"
+                                           class="form-control multi-select-search"
+                                           placeholder="Tìm tag..."
+                                           autocomplete="off">
 
-                                    <input class="form-check-input tag-checkbox"
-                                           type="checkbox"
-                                           name="tagIds"
-                                           th:id="'tag-' + ${tag.id}"
-                                           th:value="${tag.id}">
+                                    <div class="multi-select-list">
+                                        <div th:each="tag : ${tags}"
+                                             class="multi-select-item"
+                                             th:attr="data-label=${tag.tagName}">
+                                            <div class="form-check">
+                                                <input class="form-check-input multi-select-checkbox"
+                                                       type="checkbox"
+                                                       name="tagIds"
+                                                       th:value="${tag.id}"
+                                                       th:id="'tag_' + ${tag.id}">
+                                                <label class="form-check-label w-100"
+                                                       th:for="'tag_' + ${tag.id}"
+                                                       th:text="${tag.tagName}">
+                                                </label>
+                                            </div>
+                                        </div>
 
-                                    <label class="form-check-label fw-medium"
-                                           th:for="'tag-' + ${tag.id}"
-                                           th:text="${tag.tagName}">
-                                    </label>
+                                        <div class="multi-select-empty d-none">
+                                            Không tìm thấy tag.
+                                        </div>
+                                    </div>
 
+                                    <div class="multi-select-footer">
+                                        Đã chọn: <strong class="selected-count">0</strong>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="form-text font-size-12 mt-1">
-                                Có thể chọn nhiều tag cho món ăn. Không bắt buộc.
+                                Có thể tìm kiếm, kéo xuống và chọn nhiều tag. Không bắt buộc.
+                            </div>
+                        </div>
+
+                        <!-- Coupon -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Coupon áp dụng cho món ăn
+                            </label>
+
+                            <div class="multi-select" id="couponSelector">
+                                <button type="button"
+                                        class="multi-select-toggle"
+                                        aria-expanded="false">
+                                    <span class="multi-select-selected">
+                                        Chọn coupon áp dụng
+                                    </span>
+                                    <i class="bi bi-chevron-down arrow"></i>
+                                </button>
+
+                                <div class="multi-select-menu">
+                                    <input type="text"
+                                           class="form-control multi-select-search"
+                                           placeholder="Tìm coupon..."
+                                           autocomplete="off">
+
+                                    <div class="multi-select-list">
+                                        <div th:each="coupon : ${coupons}"
+                                             class="multi-select-item"
+                                             th:attr="data-label=${coupon.couponCode}">
+                                            <div class="form-check">
+                                                <input class="form-check-input multi-select-checkbox"
+                                                       type="checkbox"
+                                                       name="couponIds"
+                                                       th:value="${coupon.id}"
+                                                       th:id="'coupon_' + ${coupon.id}">
+                                                <label class="form-check-label w-100"
+                                                       th:for="'coupon_' + ${coupon.id}"
+                                                       th:text="${coupon.couponCode}">
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="multi-select-empty d-none">
+                                            Không tìm thấy coupon.
+                                        </div>
+                                    </div>
+
+                                    <div class="multi-select-footer">
+                                        Đã chọn: <strong class="selected-count">0</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-text font-size-12 mt-1">
+                                Có thể tìm kiếm, kéo xuống và chọn nhiều coupon. Không bắt buộc.
                             </div>
                         </div>
 
@@ -131,7 +232,6 @@
                             <label for="preparationTime" class="form-label fw-semibold">
                                 Thời gian chuẩn bị <span class="text-danger">*</span>
                             </label>
-
                             <div class="d-flex align-items-center gap-2">
                                 <input type="number"
                                        id="preparationTime"
@@ -141,13 +241,14 @@
                                        style="max-width: 140px; height: 42px;"
                                        placeholder="20"
                                        required>
-
                                 <span class="text-muted fw-semibold">phút</span>
                             </div>
                         </div>
 
                         <div class="mb-0">
-                            <label for="foodNote" class="form-label fw-semibold">Mô tả / Ghi chú món ăn</label>
+                            <label for="foodNote" class="form-label fw-semibold">
+                                Mô tả / Ghi chú món ăn
+                            </label>
                             <textarea id="foodNote"
                                       name="foodNote"
                                       class="form-control bg-light border-0"
@@ -155,20 +256,20 @@
                                       placeholder="Mô tả chi tiết về thành phần, hương vị..."></textarea>
                         </div>
                     </div>
-
                 </div>
 
-                <!-- CỘT PHẢI: GIÁ CẢ & TẢI ẢNH -->
+                <!-- Cột phải -->
                 <div class="col-lg-5 d-flex flex-column gap-4">
-
-                    <!-- Card 2: Giá & Phí -->
+                    <!-- Giá -->
                     <div class="merchant-page-card p-4">
                         <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
                             <i class="bi bi-tag text-danger me-2"></i>Giá & Phí dịch vụ
                         </h5>
 
                         <div class="mb-3">
-                            <label for="price" class="form-label fw-semibold">Giá bán chính thức <span class="text-danger">*</span></label>
+                            <label for="price" class="form-label fw-semibold">
+                                Giá bán chính thức <span class="text-danger">*</span>
+                            </label>
                             <div class="input-group">
                                 <input type="number"
                                        id="price"
@@ -178,27 +279,69 @@
                                        step="0.01"
                                        placeholder="50000"
                                        required>
-                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">
+                                    vnđ
+                                </span>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="discountPrice" class="form-label fw-semibold">Giá khuyến mãi <span class="text-danger">*</span></label>
+                            <label for="discountType" class="form-label fw-semibold">
+                                Hình thức giảm giá <span class="text-danger">*</span>
+                            </label>
+                            <select id="discountType"
+                                    name="discountType"
+                                    class="form-select bg-light border-0"
+                                    required>
+                                <option value="NONE" selected>Không giảm giá</option>
+                                <option value="FIXED_PRICE">Giá sau giảm</option>
+                                <option value="PERCENT">Phần trăm (%)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3 d-none" id="discountValueGroup">
+                            <label for="discountValue"
+                                   id="discountValueLabel"
+                                   class="form-label fw-semibold">
+                                Mức giảm
+                            </label>
+                            <div class="input-group">
+                                <input type="number"
+                                       id="discountValue"
+                                       name="discountValue"
+                                       class="form-control bg-light border-0"
+                                       min="0"
+                                       step="0.01">
+                                <span id="discountUnit"
+                                      class="input-group-text bg-light border-0 text-muted fw-semibold">
+                                    %
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="discountPrice"
+                                   id="discountPriceLabel"
+                                   class="form-label fw-semibold">
+                                Giá sau khuyến mãi
+                            </label>
                             <div class="input-group">
                                 <input type="number"
                                        id="discountPrice"
                                        name="discountPrice"
                                        class="form-control bg-light border-0"
                                        min="0"
-                                       step="0.01"
-                                       placeholder="45000"
-                                       required>
-                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                                       step="0.01">
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">
+                                    vnđ
+                                </span>
                             </div>
                         </div>
 
                         <div class="mb-0">
-                            <label for="serviceFee" class="form-label fw-semibold">Phí dịch vụ</label>
+                            <label for="serviceFee" class="form-label fw-semibold">
+                                Phí dịch vụ
+                            </label>
                             <div class="input-group">
                                 <input type="number"
                                        id="serviceFee"
@@ -208,23 +351,31 @@
                                        step="0.01"
                                        value="0"
                                        placeholder="0">
-                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">
+                                    vnđ
+                                </span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Card 3: Tải ảnh món ăn -->
+                    <!-- Ảnh -->
                     <div class="merchant-page-card p-4">
                         <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
                             <i class="bi bi-images text-danger me-2"></i>Hình ảnh món ăn
                         </h5>
 
                         <div>
-                            <label for="images" class="form-label fw-semibold">Ảnh món ăn <span class="text-danger">*</span></label>
-                            <div class="border border-2 border-dashed rounded-3 p-4 text-center bg-light bg-opacity-50">
+                            <label for="images" class="form-label fw-semibold">
+                                Ảnh món ăn <span class="text-danger">*</span>
+                            </label>
+
+                            <div id="imageDropZone"
+                                 class="border border-2 border-dashed rounded-3 p-4 text-center bg-light bg-opacity-50">
                                 <i class="bi bi-cloud-arrow-up fs-1 text-danger d-block mb-2"></i>
-                                <p class="fw-semibold mb-1">Chọn hoặc kéo thả ảnh vào đây</p>
-                                <p class="text-muted small mb-3">Hỗ trợ định dạng JPG, JPEG, PNG hoặc WEBP</p>
+                                <p class="fw-semibold mb-1">Chọn ảnh vào đây</p>
+                                <p class="text-muted small mb-3">
+                                    Hỗ trợ định dạng JPG, JPEG, PNG hoặc WEBP
+                                </p>
 
                                 <input type="file"
                                        id="images"
@@ -234,18 +385,25 @@
                                        multiple
                                        required>
                             </div>
+
+                            <div id="imagePreview"
+                                 class="d-flex flex-wrap gap-2 mt-3">
+                            </div>
                         </div>
                     </div>
-
                 </div>
             </div>
 
-            <!-- NÚT THAO TÁC CUỐI TRANG -->
+            <!-- Nút submit -->
             <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
-                <a href="/merchant/foods" class="btn btn-light rounded-pill px-4 py-2 fw-semibold border">
+                <a href="/merchant/foods"
+                   class="btn btn-light rounded-pill px-4 py-2 fw-semibold border">
                     Hủy
                 </a>
-                <button type="submit" id="submitButton" class="btn btn-danger rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+
+                <button type="submit"
+                        id="submitButton"
+                        class="btn btn-danger rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
                     <i class="bi bi-check-lg"></i>
                     <span>Thêm món ăn</span>
                 </button>
@@ -254,148 +412,6 @@
     </section>
 </div>
 
-<script>
-    const form = document.getElementById("foodCreateForm");
-    const submitButton = document.getElementById("submitButton");
-
-    function buildAuthHeaders() {
-        const token = localStorage.getItem("accessToken");
-        const headers = {};
-
-        if (token) {
-            headers.Authorization = `Bearer ${token}`;
-        }
-
-        return headers;
-    }
-
-    form.addEventListener("submit", async function (event) {
-        event.preventDefault();
-
-        const checkedCategories = document.querySelectorAll(
-            ".category-checkbox:checked"
-        );
-
-        if (checkedCategories.length === 0) {
-            window.showMerchantNotice?.({
-                variant: "danger",
-                title: "Thiếu thông tin",
-                message: "Vui lòng chọn ít nhất một danh mục."
-            });
-            return;
-        }
-
-        const price = Number(document.getElementById("price").value);
-        const discountPriceVal = document.getElementById("discountPrice").value.trim();
-        const discountPrice = discountPriceVal !== "" ? Number(discountPriceVal) : null;
-        const serviceFee = Number(
-            document.getElementById("serviceFee").value || 0
-        );
-
-        if (price <= 0) {
-            window.showMerchantNotice?.({
-                variant: "danger",
-                title: "Giá tiền không hợp lệ",
-                message: "Giá tiền phải lớn hơn 0."
-            });
-            return;
-        }
-
-        if (discountPrice !== null && discountPrice <= 0) {
-            window.showMerchantNotice?.({
-                variant: "danger",
-                title: "Giá KM không hợp lệ",
-                message: "Giá KM phải lớn hơn 0."
-            });
-            return;
-        }
-
-        if (discountPrice !== null && discountPrice >= price) {
-            window.showMerchantNotice?.({
-                variant: "danger",
-                title: "Giá KM không hợp lệ",
-                message: "Giá khuyến mãi phải nhỏ hơn giá bán gốc."
-            });
-            return;
-        }
-
-        if (serviceFee < 0) {
-            window.showMerchantNotice?.({
-                variant: "danger",
-                title: "Phí dịch vụ không hợp lệ",
-                message: "Phí dịch vụ không được nhỏ hơn 0."
-            });
-            return;
-        }
-
-        const formData = new FormData(form);
-
-        submitButton.disabled = true;
-        submitButton.innerHTML =
-            '<span class="spinner-border spinner-border-sm me-1"></span>Đang thêm...';
-
-        try {
-            const response = await fetch("/api/merchant/foods", {
-                method: "POST",
-                credentials: "include",
-                headers: buildAuthHeaders(),
-                body: formData
-            });
-
-            if (response.status === 401 || response.status === 403) {
-                window.showMerchantNotice?.({
-                    variant: "danger",
-                    title: "Phiên đăng nhập",
-                    message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
-                });
-                window.location.href = "/login";
-                return;
-            }
-
-            if (!response.ok) {
-                let message = "Không thể thêm món ăn.";
-
-                try {
-                    const errorData = await response.json();
-
-                    if (errorData.message) {
-                        message = errorData.message;
-                    }
-                } catch (error) {
-                    console.error(error);
-                }
-
-                window.showMerchantNotice?.({
-                    variant: "danger",
-                    title: "Không thể thêm món ăn",
-                    message
-                });
-                return;
-            }
-
-            window.showMerchantNotice?.({
-                variant: "success",
-                title: "Thêm món ăn thành công",
-                message: "Món ăn đã được lưu. Đang quay về danh sách..."
-            });
-
-            setTimeout(() => {
-                window.location.href = "/merchant/foods";
-            }, 900);
-        } catch (error) {
-            console.error("Lỗi khi thêm món ăn:", error);
-
-            window.showMerchantNotice?.({
-                variant: "danger",
-                title: "Có lỗi xảy ra",
-                message: "Không thể thêm món ăn. Vui lòng thử lại."
-            });
-        } finally {
-            submitButton.disabled = false;
-            submitButton.innerHTML =
-                '<i class="bi bi-check-lg me-1"></i>Thêm món ăn';
-        }
-    });
-</script>
+<script th:src="@{/js/merchant-food.js}"></script>
 </body>
 </html>

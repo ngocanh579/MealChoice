@@ -10,6 +10,8 @@ import org.springframework.stereotype.Repository;
 import vn.codegyme.meal_choice.entity.Order;
 import vn.codegyme.meal_choice.entity.OrderStatus;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +47,44 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByUser_IdAndStatusOrderByIdDesc(UUID userId, OrderStatus status, Pageable pageable);
 
     long countByMerchant_IdAndStatus(UUID merchantId, OrderStatus status);
+
+    // Tìm kiếm đơn hàng theo mã đơn, tên khách hàng hoặc số điện thoại
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
+    @Query("""
+        SELECT o FROM Order o
+        WHERE o.merchant.id = :merchantId
+        AND (
+            LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(o.contactName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR o.contactPhone LIKE CONCAT('%', :keyword, '%')
+        )
+        ORDER BY o.id DESC
+        """)
+    Page<Order> searchOrders(
+            @Param("merchantId") UUID merchantId,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+    // Tìm kiếm đơn hàng theo từ khóa và trạng thái
+    @EntityGraph(attributePaths = {"orderItems", "merchant", "user", "deliveryPartner"})
+    @Query("""
+        SELECT o FROM Order o
+        WHERE o.merchant.id = :merchantId
+        AND o.status = :status
+        AND (
+            LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(o.contactName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR o.contactPhone LIKE CONCAT('%', :keyword, '%')
+        )
+        ORDER BY o.id DESC
+        """)
+    Page<Order> searchOrdersByStatus(
+            @Param("merchantId") UUID merchantId,
+            @Param("status") OrderStatus status,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
 
     long countByUser_IdAndStatus(UUID userId, OrderStatus status);
 
@@ -165,4 +205,45 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         ORDER BY totalQuantity DESC
         """, nativeQuery = true)
     List<Object[]> findFoodStatsByMerchant(@Param("merchantId") String merchantId);
+
+    // đăng ký thân thiết yêu cầu tính doanh thu tháng hiện tại
+    @Query("""
+        SELECT COALESCE(SUM(o.totalAmount), 0)
+        FROM Order o
+        WHERE o.merchant.id = :merchantId
+          AND o.status = :status
+          AND o.createdAt >= :startDate
+          AND o.createdAt < :endDate
+        """)
+    BigDecimal calculateRevenue(
+            @Param("merchantId") UUID merchantId,
+            @Param("status") OrderStatus status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+    // Tổng doanh thu tích lũy của Merchant từ các đơn đã dù hoàn thành hay chưa hoàn thành
+    @Query("""
+    SELECT COALESCE(SUM(o.totalAmount), 0)
+    FROM Order o
+    WHERE o.merchant.id = :merchantId
+    """)
+    BigDecimal calculateTotalRevenue(
+            @Param("merchantId") UUID merchantId
+    );
+
+    // Lấy danh sách đơn hoàn thành trong kỳ đối soát (theo thời điểm hoàn thành đơn)
+    @Query("""
+        SELECT o FROM Order o
+        WHERE o.merchant.id = :merchantId
+          AND o.status = vn.codegyme.meal_choice.entity.OrderStatus.COMPLETED
+          AND COALESCE(o.completedAt, o.updatedAt, o.createdAt) >= :startDate
+          AND COALESCE(o.completedAt, o.updatedAt, o.createdAt) < :endDate
+        ORDER BY COALESCE(o.completedAt, o.updatedAt, o.createdAt) DESC
+        """)
+    List<Order> findCompletedOrdersInPeriod(
+            @Param("merchantId") UUID merchantId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }

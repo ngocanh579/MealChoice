@@ -13,13 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.handleAuthError = handleAuthError;
 
-
-    // Tìm kiếm món ăn
+    // Tìm kiếm và làm mới danh sách món ăn
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
 
     if (searchInput && searchBtn) {
 
+        // Gọi API tìm kiếm món ăn
         async function searchFoods() {
             const keyword = searchInput.value.trim();
             const token = localStorage.getItem('accessToken');
@@ -72,7 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Hiển thị kết quả tìm kiếm
         function renderSearchResult(foods) {
-
             const tbody = document.querySelector('table tbody');
 
             if (!tbody) {
@@ -99,13 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             foods.forEach(food => {
                 const row = document.getElementById(`food-row-${food.id}`);
+
                 if (row) {
                     row.style.display = '';
                 }
             });
         }
 
-        // Tìm kiếm khi bấm nút
+        // Tìm kiếm khi bấm nút kính lúp
         searchBtn.addEventListener('click', searchFoods);
 
         // Tìm kiếm khi nhấn Enter
@@ -116,6 +117,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Làm mới danh sách sau khi tìm kiếm
+    refreshBtn?.addEventListener('click', () => {
+        if (searchInput) {
+            searchInput.value = '';
+        }
+
+        document.querySelectorAll('.food-row').forEach(row => {
+            row.style.display = '';
+        });
+
+        document.getElementById('noSearchResultRow')?.classList.add('d-none');
+    });
 
     // Xử lý đề cử món ăn
     document.querySelectorAll('.recommend-food-btn').forEach(button => {
@@ -184,7 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         title: 'Đề cử món ăn thành công',
                         message: 'Món ăn đã được đánh dấu là món đề cử.'
                     });
-
                 } else {
                     this.classList.remove('btn-warning');
                     this.classList.add('btn-outline-secondary');
@@ -214,8 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-
-    // Xử lý xóa món ăn
+    // Lưu món ăn đang được chọn để xóa
     let foodIdToDelete = null;
     let buttonElementToDelete = null;
 
@@ -232,7 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const confirmDeleteFoodBtn =
         document.getElementById('confirmDeleteFoodBtn');
-
 
     // Mở modal xác nhận xóa
     document.querySelectorAll('.delete-food-btn').forEach(button => {
@@ -263,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-
 
     // Xác nhận xóa món ăn
     confirmDeleteFoodBtn?.addEventListener(
@@ -296,10 +305,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     );
 
-
     // Gọi API xóa món ăn
     async function executeDeleteFood(foodId, buttonEl) {
-
         const token = localStorage.getItem('accessToken');
 
         if (buttonEl) {

@@ -81,6 +81,23 @@ public class UserServiceImpl implements UserService {
     public UserResponseDTO addAddress(CreateAddressDTO createAddressDTO) {
         User user = getCurrentUser();
 
+        // Chặn trùng lặp: nếu request bị gửi nhiều lần (double-click, hoặc
+        // request tự động gửi lại sau khi refresh token) với cùng nội dung địa
+        // chỉ, không tạo thêm dòng mới mà dùng lại địa chỉ đã có.
+        Address existing = findMatchingAddress(user, createAddressDTO);
+
+        if (existing != null) {
+            boolean wantsDefault = createAddressDTO.getIsDefault() != null && createAddressDTO.getIsDefault();
+
+            if (wantsDefault && !Boolean.TRUE.equals(existing.getIsDefault())) {
+                user.getAddresses().forEach(a -> a.setIsDefault(false));
+                existing.setIsDefault(true);
+            }
+
+            User unchangedUser = userRepository.save(user);
+            return convertToDTO(unchangedUser);
+        }
+
         Address address = new Address();
         address.setContactName(createAddressDTO.getContactName());
         address.setContactPhone(createAddressDTO.getContactPhone());
@@ -204,6 +221,29 @@ public class UserServiceImpl implements UserService {
     }
 
     // === Helper Methods ===
+
+    /**
+     * Tìm địa chỉ đã tồn tại của user có nội dung giống hệt request (so sánh
+     * không phân biệt hoa/thường và khoảng trắng thừa). Dùng để chặn tạo
+     * trùng lặp khi client gửi cùng một request lưu địa chỉ nhiều lần.
+     */
+    private Address findMatchingAddress(User user, CreateAddressDTO dto) {
+        return user.getAddresses().stream()
+                .filter(a -> sameText(a.getContactName(), dto.getContactName())
+                        && sameText(a.getContactPhone(), dto.getContactPhone())
+                        && sameText(a.getCity(), dto.getCity())
+                        && sameText(a.getDistrict(), dto.getDistrict())
+                        && sameText(a.getWard(), dto.getWard())
+                        && sameText(a.getStreet(), dto.getStreet()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean sameText(String a, String b) {
+        String x = a == null ? "" : a.trim();
+        String y = b == null ? "" : b.trim();
+        return x.equalsIgnoreCase(y);
+    }
 
     private User getCurrentUser() {
         org.springframework.security.core.Authentication auth =

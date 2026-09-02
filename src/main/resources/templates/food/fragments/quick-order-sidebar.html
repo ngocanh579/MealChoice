@@ -66,10 +66,7 @@
             name: /*[[${food.foodName}]]*/ "",
             price: /*[[${food.price}]]*/ 0,
             discountPrice: /*[[${food.discountPrice != null ? food.discountPrice : food.price}]]*/ 0,
-            serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0,
-            merchantId: /*[[${food.merchant != null ? food.merchant.id : ''}]]*/ "",
-            merchantName: /*[[${food.merchant != null ? food.merchant.merchantRestaurantName : ''}]]*/ "",
-            image: /*[[${foodImagesList != null && !foodImagesList.isEmpty() ? foodImagesList[0] : ''}]]*/ ""
+            serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0
         };
 
         // Trạng thái giỏ hàng cục bộ của Drawer
@@ -103,9 +100,6 @@
                         price: sidebarFood.price,
                         discountPrice: sidebarFood.discountPrice,
                         serviceFee: sidebarFood.serviceFee,
-                        merchantId: sidebarFood.merchantId,
-                        merchantName: sidebarFood.merchantName,
-                        image: sidebarFood.image,
                         quantity: 1,
                         isTemporary: true // Đánh dấu là sản phẩm tạm thời, không lưu vào localStorage
                     });

@@ -13,7 +13,6 @@ import java.util.UUID;
 
 @Data
 public class FoodUpdateRequest {
-
     @NotBlank(message = "Tên món ăn không được để trống")
     private String foodName;
 
@@ -25,6 +24,8 @@ public class FoodUpdateRequest {
 
     private List<Long> tagIds = new ArrayList<>();
 
+    private List<Long> couponIds = new ArrayList<>();
+
     @NotNull(message = "Thời gian chuẩn bị không được để trống")
     private Integer preparationTime;
 
@@ -33,15 +34,27 @@ public class FoodUpdateRequest {
     @NotNull(message = "Giá món ăn không được để trống")
     @DecimalMin(
             value = "0.0",
-            inclusive = true,
-            message = "Giá món ăn không được nhỏ hơn 0"
+            inclusive = false,
+            message = "Giá món ăn phải lớn hơn 0"
     )
     private BigDecimal price;
 
+    // Loại khuyến mãi
+    private String discountType;
+
+    // Mức giảm khi chọn phần trăm
+    @DecimalMin(
+            value = "0.0",
+            inclusive = false,
+            message = "Giá trị khuyến mãi phải lớn hơn 0"
+    )
+    private BigDecimal discountValue;
+
+    // Giá sau khuyến mãi
     @DecimalMin(
             value = "0.0",
             inclusive = true,
-            message = "Giá khuyến mãi không được nhỏ hơn 0"
+            message = "Giá sau khuyến mãi không được nhỏ hơn 0"
     )
     private BigDecimal discountPrice;
 

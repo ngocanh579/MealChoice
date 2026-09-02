@@ -89,6 +89,9 @@ public class Order {
     @Column(name = "estimated_delivery_time")
     private LocalDateTime estimatedDeliveryTime;
 
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();

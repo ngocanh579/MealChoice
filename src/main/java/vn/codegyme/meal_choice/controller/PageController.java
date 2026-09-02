@@ -631,16 +631,19 @@ public class PageController {
         if (authentication != null
                 && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
-            // Tìm merchant theo userId (ĐÚNG), không dùng merchantEmail
+            String email = userDetails.getUsername();
             Optional<Merchant> merchantOpt =
-                    merchantRepository.findByUserIdWithAddresses(userDetails.getId());
+                    merchantRepository.findByUser_Id(userDetails.getId());
 
             if (merchantOpt.isPresent()) {
                 Merchant merchant = merchantOpt.get();
                 model.addAttribute("merchant", merchant);
                 model.addAttribute(
                         "foodCount",
-                        foodService.getFoods(merchant.getId()).size()
+                        foodService.getFoods(
+                                merchant.getId(),
+                                org.springframework.data.domain.PageRequest.of(0, 1)
+                        ).getTotalElements()
                 );
                 return "merchant/dashboard";
             }
@@ -663,9 +666,8 @@ public class PageController {
         if (authentication != null
                 && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
-            // Tìm merchant theo userId (ĐÚNG), không dùng merchantEmail
             Optional<Merchant> merchantOpt =
-                    merchantRepository.findByUserIdWithAddresses(userDetails.getId());
+                    merchantRepository.findByUser_Id(userDetails.getId());
 
             if (merchantOpt.isPresent()) {
                 model.addAttribute("merchant", merchantOpt.get());
@@ -813,6 +815,7 @@ public class PageController {
     @GetMapping("/merchant/orders")
     public String merchantOrdersPage(
             @RequestParam(name = "status", required = false) OrderStatus status,
+            @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "page", defaultValue = "0") int page,
             Authentication authentication,
             Model model) {
@@ -827,17 +830,39 @@ public class PageController {
             return "redirect:/merchant/register";
         }
 
+        String cleanKeyword = keyword != null && !keyword.trim().isEmpty()
+                ? keyword.trim()
+                : null;
+
+        int currentPage = Math.max(0, page);
         int pageSize = 50;
-        Pageable pageable = PageRequest.of(Math.max(0, page), pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
-        Page<OrderResponseDTO> orderPage = merchantOrderService.getMerchantOrders(merchant.getId(), status, pageable);
+
+        Pageable pageable = PageRequest.of(
+                currentPage,
+                pageSize,
+                org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC,
+                        "id"
+                )
+        );
+
+        Page<OrderResponseDTO> orderPage =
+                merchantOrderService.getMerchantOrders(
+                        merchant.getId(),
+                        status,
+                        cleanKeyword,
+                        pageable
+                );
+
         long pendingCount = merchantOrderService.countPendingOrders(merchant.getId());
 
         model.addAttribute("merchant", merchant);
         model.addAttribute("orders", orderPage.getContent());
         model.addAttribute("orderPage", orderPage);
         model.addAttribute("totalPages", orderPage.getTotalPages());
-        model.addAttribute("currentPage", page);
+        model.addAttribute("currentPage", currentPage);
         model.addAttribute("selectedStatus", status);
+        model.addAttribute("keyword", cleanKeyword);
         model.addAttribute("pendingCount", pendingCount);
         model.addAttribute("orderStatuses", OrderStatus.values());
 
@@ -953,4 +978,3 @@ public class PageController {
         }
     }
 }
-

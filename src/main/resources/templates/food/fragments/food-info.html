@@ -78,7 +78,7 @@
                                     <span th:text="${food.merchant.merchantRestaurantName}">Tên nhà hàng</span>
                                     <i class="bi bi-arrow-right-short fs-5 text-danger"></i>
                                 </a>
-                                <span th:if="${food.merchant != null and food.merchant.trustedPartner}" 
+                                <span th:if="${food.merchant != null and food.merchant.trustedPartner}"
                                       class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-0.5 fs-9 fw-semibold ms-1">
                                     <i class="bi bi-patch-check-fill me-0.5"></i>Đối tác uy tín
                                 </span>
@@ -86,7 +86,7 @@
                         </div>
 
                         <button th:if="${food.merchant != null}"
-                                type="button" 
+                                type="button"
                                 th:class="${likedMerchantIds != null and likedMerchantIds.contains(food.merchant.id.toString())} ? 'btn btn-danger btn-sm rounded-pill px-3 py-1 fw-semibold fs-8 transition-hover btn-follow-merchant shadow-xs' : 'btn btn-outline-danger btn-sm rounded-pill px-3 py-1 fw-semibold fs-8 transition-hover btn-follow-merchant'"
                                 th:data-merchant-id="${food.merchant.id.toString()}"
                                 id="btnFollowMerchant">
@@ -102,7 +102,7 @@
                     </p>
 
                     <!-- Tag thế mạnh / Dòng món chủ đạo của quán -->
-                    <div class="d-flex flex-wrap align-items-center gap-1.5 pt-2 border-top border-light-subtle" 
+                    <div class="d-flex flex-wrap align-items-center gap-1.5 pt-2 border-top border-light-subtle"
                          th:if="${storeSpecialties != null and !#lists.isEmpty(storeSpecialties)}">
                         <span class="fs-9 text-muted fw-bold text-uppercase me-1"><i class="bi bi-fire text-danger me-1"></i>Thế mạnh quán:</span>
                         <a th:each="spec : ${storeSpecialties}"

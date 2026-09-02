@@ -17,9 +17,14 @@ import java.util.UUID;
 public interface FoodRepository extends JpaRepository<Food, Long> {
     boolean existsByMerchantAddress_Id(UUID merchantAddressId);
 
-    // Lấy danh sách món của Merchant
     List<Food> findByMerchant_IdAndDeletedAtIsNullOrderByCreatedAtDesc(
             UUID merchantId
+    );
+
+    // Lấy danh sách món của Merchant có phân trang
+    Page<Food> findByMerchant_IdAndDeletedAtIsNullOrderByCreatedAtDesc(
+            UUID merchantId,
+            Pageable pageable
     );
 
     // Lấy một món thuộc Merchant
@@ -39,7 +44,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             Pageable pageable
     );
 
-    // Lấy món theo danh mục
     @Query("""
             SELECT DISTINCT f
             FROM Food f
@@ -234,7 +238,8 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
 
     // Tìm kiếm gộp Tên món hoặc Địa chỉ dành riêng cho Merchant
     @Query("""
-            SELECT DISTINCT f FROM Food f
+            SELECT DISTINCT f
+            FROM Food f
             LEFT JOIN f.merchantAddress ma
             WHERE f.merchant.id = :merchantId
               AND f.deletedAt IS NULL

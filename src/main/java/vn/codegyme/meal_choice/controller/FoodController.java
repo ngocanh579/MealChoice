@@ -18,10 +18,7 @@ import org.springframework.ui.Model;
 import vn.codegyme.meal_choice.dto.food.FoodCreateRequest;
 import vn.codegyme.meal_choice.dto.food.FoodResponse;
 import vn.codegyme.meal_choice.dto.food.FoodUpdateRequest;
-import vn.codegyme.meal_choice.entity.Food;
-import vn.codegyme.meal_choice.entity.FoodCategory;
-import vn.codegyme.meal_choice.entity.Merchant;
-import vn.codegyme.meal_choice.entity.User;
+import vn.codegyme.meal_choice.entity.*;
 import vn.codegyme.meal_choice.repository.FoodRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
 import vn.codegyme.meal_choice.repository.UserRepository;
@@ -57,7 +54,7 @@ public class FoodController {
                         new RuntimeException("Không tìm thấy Merchant"));
     }
 
-    // ==================== MERCHANT FOOD API ====================
+    // MERCHANT FOOD API
 
     // Thêm món
     @PostMapping(
@@ -80,15 +77,22 @@ public class FoodController {
         return ResponseEntity.ok(response);
     }
 
-    // Lấy danh sách món
+    // Lấy danh sách món có phân trang
     @GetMapping("/api/merchant/foods")
     @ResponseBody
-    public ResponseEntity<List<FoodResponse>> getFoods() {
+    public ResponseEntity<Page<FoodResponse>> getFoods(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
         Merchant merchant = getCurrentMerchant();
 
+        Pageable pageable = PageRequest.of(page, size);
+
         return ResponseEntity.ok(
-                foodService.getFoods(merchant.getId())
+                foodService.getFoods(
+                        merchant.getId(),
+                        pageable
+                )
         );
     }
 
@@ -125,7 +129,6 @@ public class FoodController {
         );
     }
 
-    // Cập nhật món
     @PutMapping(
             value = "/api/merchant/foods/{foodId}",
             consumes = "multipart/form-data"
@@ -134,10 +137,8 @@ public class FoodController {
     public ResponseEntity<FoodResponse> updateFood(
             @PathVariable("foodId") Long foodId,
             @Valid @ModelAttribute FoodUpdateRequest request,
-            @RequestParam(
-                    value = "images",
-                    required = false
-            ) List<MultipartFile> images) {
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @RequestParam(value = "deletedImages", required = false) List<String> deletedImages) {
 
         Merchant merchant = getCurrentMerchant();
 
@@ -146,12 +147,13 @@ public class FoodController {
                         merchant.getId(),
                         foodId,
                         request,
-                        images
+                        images,
+                        deletedImages
                 )
         );
     }
 
-    // Xóa mềm
+    // Xóa
     @DeleteMapping("/api/merchant/foods/{foodId}")
     @ResponseBody
     public ResponseEntity<String> deleteFood(
@@ -183,8 +185,7 @@ public class FoodController {
         return ResponseEntity.ok().build();
     }
 
-    // ==================== FOOD DETAIL PAGE ====================
-
+    //FOOD DETAIL PAGE
     @Transactional
     @GetMapping("/foods/{id}")
     public String foodDetailPage(
@@ -621,7 +622,7 @@ public class FoodController {
         ));
     }
 
-    // ==================== LIKE FOOD ====================
+    // LIKE FOOD
 
     @ResponseBody
     @PostMapping("/api/foods/{id}/like")
@@ -719,5 +720,35 @@ public class FoodController {
                 "followed", false,
                 "followerCount", followerCount
         ));
+    }
+
+    @ResponseBody
+    @GetMapping("/api/foods/{id}/coupons")
+    public ResponseEntity<?> getFoodCoupons(@PathVariable("id") Long id) {
+        Food food = foodRepository.findById(id).orElse(null);
+
+        if (food == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        List<Coupon> coupons = food.getCoupons();
+
+        if (coupons == null || coupons.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        List<Map<String, Object>> result = coupons.stream()
+                .map(coupon -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("id", coupon.getId());
+                    data.put("couponCode", coupon.getCouponCode());
+                    data.put("discountType", coupon.getDiscountType());
+                    data.put("discountValue", coupon.getDiscountValue());
+                    data.put("startAt", coupon.getStartAt());
+                    return data;
+                })
+                .toList();
+
+        return ResponseEntity.ok(result);
     }
 }

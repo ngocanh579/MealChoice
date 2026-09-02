@@ -160,9 +160,6 @@ async function handleAcceptOrderDetail(orderId) {
 
         const result = await response.json();
         if (result.success) {
-            const data = result.data;
-            const prepSeconds = data?.remainingPrepSeconds || 600;
-
             const badge = document.getElementById('detailStatusBadge');
             if (badge) {
                 badge.className = 'badge badge-status-lg bg-primary text-white';
@@ -250,14 +247,23 @@ async function executeCancelOrderDetail(orderId, reason) {
                 detailCancelModalInstance.hide();
             }
 
+            if (detailActiveInterval) {
+                clearInterval(detailActiveInterval);
+                detailActiveInterval = null;
+            }
+
             const badge = document.getElementById('detailStatusBadge');
+
             if (badge) {
                 badge.className = 'badge badge-status-lg bg-danger text-white';
                 badge.innerText = 'Đã hủy';
             }
 
             const group = document.getElementById('pendingButtonGroup');
-            if (group) group.remove();
+
+            if (group) {
+                group.remove();
+            }
 
             alert('Đã hủy đơn hàng thành công.');
             location.reload();
@@ -277,10 +283,13 @@ async function handleCompleteOrderDetail(orderId) {
     try {
         const response = await fetch(`/api/merchant/orders/${orderId}/complete`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
 
         const result = await response.json();
+
         if (result.success) {
             if (detailActiveInterval) {
                 clearInterval(detailActiveInterval);
@@ -306,7 +315,7 @@ async function handleCompleteOrderDetail(orderId) {
     }
 }
 
-// 6. MỞ MODAL KHÁCH KHÔNG NHẬN HÀNG
+// 5. MỞ MODAL KHÁCH KHÔNG NHẬN HÀNG
 function openRejectDeliveryModalDetail(orderId, orderCode) {
     detailRejectOrderId = orderId;
     const codeEl = document.getElementById('rejectDetailModalOrderCode');

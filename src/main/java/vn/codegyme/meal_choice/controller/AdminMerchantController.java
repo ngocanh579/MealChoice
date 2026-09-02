@@ -25,9 +25,19 @@ public class AdminMerchantController {
             @RequestParam(name = "status", required = false) MerchantStatus status,
             Model model) {
 
-        model.addAttribute("merchants", status == null ? adminService.getAllMerchants() : adminService.getMerchantsByStatus(status));
+        model.addAttribute(
+                "merchants",
+                status == null
+                        ? adminService.getAllMerchants()
+                        : adminService.getMerchantsByStatus(status)
+        );
 
         model.addAttribute("selectedStatus", status);
+
+        model.addAttribute(
+                "pendingTrustedPartnerIds",
+                adminService.getPendingTrustedPartnerMerchantIds()
+        );
 
         return "admin/merchant/list";
     }
@@ -111,9 +121,15 @@ public class AdminMerchantController {
 
         try {
             adminService.approveTrustedPartner(id);
-            redirectAttributes.addFlashAttribute("message", "Đã duyệt đối tác thân thiết.");
+            redirectAttributes.addFlashAttribute(
+                    "message",
+                    "Đã duyệt đối tác thân thiết."
+            );
         } catch (IllegalStateException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
         }
 
         return "redirect:/admin/merchants";
@@ -126,7 +142,33 @@ public class AdminMerchantController {
             RedirectAttributes redirectAttributes) {
 
         adminService.removeTrustedPartner(id);
-        redirectAttributes.addFlashAttribute("message", "Đã bỏ trạng thái đối tác thân thiết.");
+        redirectAttributes.addFlashAttribute(
+                "message",
+                "Đã bỏ trạng thái đối tác thân thiết."
+        );
+
+        return "redirect:/admin/merchants";
+    }
+
+    @PostMapping("/{id}/trusted-partner/reject")
+    public String rejectTrustedPartner(
+            @PathVariable(name = "id") UUID id,
+            @RequestParam(name = "reason", required = false) String reason,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            adminService.rejectTrustedPartner(id, reason);
+
+            redirectAttributes.addFlashAttribute(
+                    "message",
+                    "Đã từ chối đăng ký đối tác thân thiết."
+            );
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
+        }
 
         return "redirect:/admin/merchants";
     }

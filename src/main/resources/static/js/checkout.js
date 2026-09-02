@@ -356,14 +356,14 @@ async function loadCheckoutCart() {
 
     if (summary && summary.items && targetMerchantId) {
         summary.items = summary.items.filter(item => String(item.merchantId) === targetMerchantId);
-        
+
         // Recalculate summary totals
         summary.subtotalPrice = summary.items.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
         summary.serviceFee = summary.items.reduce((max, item) => Math.max(max, Number(item.serviceFee || 0)), 0);
         summary.totalItems = summary.items.reduce((sum, item) => sum + Number(item.quantity || 1), 0);
         summary.hasUnavailableItems = summary.items.some(item => !item.available);
         summary.empty = summary.items.length === 0;
-        
+
         if (summary.items.length > 0) {
             summary.merchantName = summary.items[0].merchantName;
             summary.merchantId = targetMerchantId;
@@ -510,18 +510,57 @@ function recalculateVoucher() {
     }
 }
 
+function removeCheckoutItem(foodId) {
+    if (typeof window.changeQuantityGlobal === 'function') {
+        const cart = (typeof getGlobalCart === 'function') ? getGlobalCart() : [];
+        const it = cart.find(i => i.id === foodId);
+        if (it) {
+            window.changeQuantityGlobal(foodId, -it.quantity);
+        }
+    } else {
+        let cart = [];
+        try {
+            cart = JSON.parse(localStorage.getItem('mealchoice_cart') || '[]');
+        } catch (_) { }
+        cart = cart.filter(i => i.id !== foodId);
+        localStorage.setItem('mealchoice_cart', JSON.stringify(cart));
+        window.dispatchEvent(new Event('cartUpdated'));
+    }
+    loadCheckoutCart();
+}
+
+function updateCheckoutItemQty(foodId, delta) {
+    if (typeof window.changeQuantityGlobal === 'function') {
+        window.changeQuantityGlobal(foodId, delta);
+    } else {
+        let cart = [];
+        try {
+            cart = JSON.parse(localStorage.getItem('mealchoice_cart') || '[]');
+        } catch (_) { }
+        const it = cart.find(i => i.id === foodId);
+        if (it) {
+            it.quantity += delta;
+            if (it.quantity <= 0) {
+                cart = cart.filter(i => i.id !== foodId);
+            }
+        }
+        localStorage.setItem('mealchoice_cart', JSON.stringify(cart));
+        window.dispatchEvent(new Event('cartUpdated'));
+    }
+    loadCheckoutCart();
+}
+
+window.removeCheckoutItem = removeCheckoutItem;
+window.updateCheckoutItemQty = updateCheckoutItemQty;
+
 function updatePriceSummary() {
     const total = subtotalPrice + currentShippingFee + serviceFee - discountAmount;
-
     const subEl = document.getElementById('summarySubtotal');
     if (subEl) subEl.innerText = formatCurrency(subtotalPrice);
-
     const shipEl = document.getElementById('summaryShippingFee');
     if (shipEl) shipEl.innerText = formatCurrency(currentShippingFee);
-
     const srvEl = document.getElementById('summaryServiceFee');
     if (srvEl) srvEl.innerText = formatCurrency(serviceFee);
-
     const totalEl = document.getElementById('summaryTotalAmount');
     if (totalEl) totalEl.innerText = formatCurrency(Math.max(0, total));
 
@@ -539,6 +578,155 @@ function updatePriceSummary() {
 
 // ==================== 6. KHỞI TẠO TRANG ====================
 
+// ==================== QUẢN LÝ ĐỊA CHỈ HÀNH CHÍNH (TỈNH/HUYỆN/XÃ) ====================
+const PROVINCES_API = "https://provinces.open-api.vn/api/";
+let cachedProvinces = null;
+
+async function getProvinces() {
+    if (cachedProvinces && cachedProvinces.length > 0) {
+        return cachedProvinces;
+    }
+    try {
+        const res = await fetch(`${PROVINCES_API}?depth=1`);
+        if (res.ok) {
+            cachedProvinces = await res.json();
+            return cachedProvinces;
+        }
+    } catch (e) {
+        console.warn("Lỗi tải tỉnh thành từ API:", e);
+    }
+    return [];
+}
+
+async function getDistrictsByProvinceCode(provCode) {
+    if (!provCode) return [];
+    try {
+        const res = await fetch(`${PROVINCES_API}p/${provCode}?depth=2`);
+        if (res.ok) {
+            const data = await res.json();
+            return data.districts || [];
+        }
+    } catch (e) {
+        console.warn("Lỗi tải quận huyện từ API:", e);
+    }
+    return [];
+}
+
+async function getWardsByDistrictCode(distCode) {
+    if (!distCode) return [];
+    try {
+        const res = await fetch(`${PROVINCES_API}d/${distCode}?depth=2`);
+        if (res.ok) {
+            const data = await res.json();
+            return data.wards || [];
+        }
+    } catch (e) {
+        console.warn("Lỗi tải phường xã từ API:", e);
+    }
+    return [];
+}
+
+function setupCheckoutAddressSelectListeners() {
+    const citySelect = document.getElementById('modalCity');
+    const districtSelect = document.getElementById('modalDistrict');
+    const wardSelect = document.getElementById('modalWard');
+    const modalEl = document.getElementById('newAddressModal');
+
+    // Nạp tỉnh thành khi mở modal
+    if (modalEl) {
+        modalEl.addEventListener('show.bs.modal', async () => {
+            const contactNameInput = document.getElementById('modalContactName');
+            const contactPhoneInput = document.getElementById('modalContactPhone');
+            if (contactNameInput && !contactNameInput.value) {
+                contactNameInput.value = localStorage.getItem('displayName') || '';
+            }
+
+            if (citySelect && citySelect.options.length <= 1) {
+                citySelect.innerHTML = '<option value="" selected disabled>Đang tải Tỉnh/Thành phố...</option>';
+                const provinces = await getProvinces();
+                let cityHtml = '<option value="" selected disabled>Tỉnh/Thành phố</option>';
+                provinces.forEach(p => {
+                    cityHtml += `<option value="${p.name}" data-code="${p.code}">${p.name}</option>`;
+                });
+                citySelect.innerHTML = cityHtml;
+            }
+        });
+    }
+
+    if (citySelect) {
+        citySelect.addEventListener('change', async function () {
+            const selectedOpt = citySelect.options[citySelect.selectedIndex];
+            const provCode = selectedOpt ? selectedOpt.getAttribute('data-code') : null;
+
+            districtSelect.innerHTML = '<option value="" selected disabled>Đang tải Quận/Huyện...</option>';
+            wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
+            districtSelect.disabled = true;
+            wardSelect.disabled = true;
+
+            if (!provCode) {
+                districtSelect.innerHTML = '<option value="" selected disabled>Quận/Huyện</option>';
+                return;
+            }
+
+            const districts = await getDistrictsByProvinceCode(provCode);
+            let distHtml = '<option value="" selected disabled>Quận/Huyện</option>';
+            districts.forEach(d => {
+                distHtml += `<option value="${d.name}" data-code="${d.code}">${d.name}</option>`;
+            });
+            districtSelect.innerHTML = distHtml;
+            districtSelect.disabled = false;
+        });
+    }
+
+    if (districtSelect) {
+        districtSelect.addEventListener('change', async function () {
+            const selectedOpt = districtSelect.options[districtSelect.selectedIndex];
+            const distCode = selectedOpt ? selectedOpt.getAttribute('data-code') : null;
+
+            wardSelect.innerHTML = '<option value="" selected disabled>Đang tải Phường/Xã...</option>';
+            wardSelect.disabled = true;
+
+            if (!distCode) {
+                wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
+                return;
+            }
+
+            const wards = await getWardsByDistrictCode(distCode);
+            let wardHtml = '<option value="" selected disabled>Phường/Xã</option>';
+            wards.forEach(w => {
+                wardHtml += `<option value="${w.name}" data-code="${w.code}">${w.name}</option>`;
+            });
+            wardSelect.innerHTML = wardHtml;
+            wardSelect.disabled = false;
+        });
+    }
+}
+
+function getCheckoutAuthHeaders(extraHeaders = {}) {
+    const token = localStorage.getItem('accessToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...extraHeaders
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+}
+
+async function fetchWithCheckoutAuth(url, options = {}) {
+    options.headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...getCheckoutAuthHeaders(),
+        ...options.headers
+    };
+    if (typeof window.fetchWithAuth === 'function') {
+        return window.fetchWithAuth(url, options);
+    }
+    return fetch(url, options);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 
     // Địa chỉ đang chọn
@@ -546,16 +734,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.address-modal-card.selected') ||
         document.querySelector('.address-modal-card');
 
-    if (initialSelectedCard) {
-        currentSelectedAddress = {
-            id: initialSelectedCard.getAttribute('data-id'),
-            name: initialSelectedCard.getAttribute('data-name') || '',
-            phone: initialSelectedCard.getAttribute('data-phone') || '',
-            address: initialSelectedCard.getAttribute('data-address') || '',
-            note: initialSelectedCard.getAttribute('data-note') || '',
-            isDefault: initialSelectedCard.getAttribute('data-default') === 'true'
-        };
-    }
+    // Khởi tạo listeners cho dropdown địa chỉ hành chính
+    setupCheckoutAddressSelectListeners();
 
     loadCheckoutCart();
 
@@ -601,18 +781,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ---------- Lưu địa chỉ mới ----------
+    let isSavingAddress = false;
     document.getElementById('btnSaveAddress')?.addEventListener('click', async () => {
+        if (isSavingAddress) return;
+
         const contactName = document.getElementById('modalContactName')?.value.trim();
         const contactPhone = document.getElementById('modalContactPhone')?.value.trim();
-        const city = document.getElementById('modalCity')?.value.trim();
-        const district = document.getElementById('modalDistrict')?.value.trim();
-        const ward = document.getElementById('modalWard')?.value.trim();
+        const city = document.getElementById('modalCity')?.value;
+        const district = document.getElementById('modalDistrict')?.value;
+        const ward = document.getElementById('modalWard')?.value;
         const street = document.getElementById('modalStreet')?.value.trim();
         const note = document.getElementById('modalNote')?.value.trim();
         const isDefault = document.getElementById('modalIsDefault')?.checked ?? true;
 
-        if (!contactName || !contactPhone || !city || !district || !ward || !street) {
-            alert('Điền đầy đủ các ô có dấu * trước khi lưu.');
+        if (!contactName || !contactPhone) {
+            alert('Vui lòng nhập tên người nhận và số điện thoại');
+            return;
+        }
+
+        if (!city || !district || !ward) {
+            alert('Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện và Phường/Xã');
+            return;
+        }
+
+        if (!street) {
+            alert('Vui lòng nhập địa chỉ chi tiết (số nhà, ngõ/đường)');
             return;
         }
 
@@ -627,17 +820,23 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang lưu...';
         }
 
+        isSavingAddress = true;
+
         try {
-            const fetchFn = (typeof fetchWithAuth === 'function') ? fetchWithAuth : fetch;
-            const response = await fetchFn('/api/user/address', {
+            const payload = {
+                contactName,
+                contactPhone,
+                city,
+                district,
+                ward,
+                street,
+                note: note || null,
+                isDefault: Boolean(isDefault)
+            };
+
+            const response = await fetchWithCheckoutAuth('/api/user/address', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(typeof getAuthHeaders === 'function' ? getAuthHeaders() : {})
-                },
-                body: JSON.stringify({
-                    contactName, contactPhone, city, district, ward, street, note, isDefault
-                })
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
@@ -649,6 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = 'Lưu địa chỉ';
                 }
+                isSavingAddress = false;
             }
         } catch (e) {
             console.error('Lỗi lưu địa chỉ:', e);
@@ -657,6 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = 'Lưu địa chỉ';
             }
+            isSavingAddress = false;
         }
     });
 
@@ -681,7 +882,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const urlParams = new URLSearchParams(window.location.search);
-        const targetMerchantId = urlParams.get('merchantId');
+        const targetMerchantId = urlParams.get('merchantId') || currentMerchantId;
+
+        if (!targetMerchantId) {
+            alert('Không thể xác định thông tin Cửa hàng đối tác cho giỏ hàng này. Vui lòng tải lại trang và thử lại!');
+            return;
+        }
 
         const payload = {
             merchantId: targetMerchantId,
@@ -701,20 +907,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const fetchFn = (typeof fetchWithAuth === 'function') ? fetchWithAuth : fetch;
-            const response = await fetchFn('/api/checkout/place-order', {
+            const response = await fetchWithCheckoutAuth('/api/checkout/place-order', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(typeof getAuthHeaders === 'function' ? getAuthHeaders() : {})
-                },
                 body: JSON.stringify(payload)
             });
 
             const result = await response.json().catch(() => ({}));
 
             if (result.success) {
-                // Giỏ hàng đã được dọn một phần, đồng bộ lại
                 if (typeof refreshCart === 'function') {
                     await refreshCart();
                 }

@@ -34,7 +34,6 @@ public class MerchantController {
         private final MerchantRepository merchantRepository;
         private final UserRepository userRepository;
 
-        
         // Đăng ký Merchant
         @PostMapping("/register")
         public ResponseEntity<String> registerMerchant(
@@ -70,12 +69,9 @@ public class MerchantController {
                         .orElse(null);
 
                 if (merchant == null) {
-
                         response.put("registered", false);
                         response.put("status", null);
-
                 } else {
-
                         response.put("registered", true);
                         response.put(
                                 "status",
@@ -140,7 +136,7 @@ public class MerchantController {
         @PutMapping("/{merchantId}/profile")
         public ResponseEntity<String> updateMerchantProfile(
                 @PathVariable("merchantId") UUID merchantId,
-                @Validated (MerchantUpdateRequest.ProfileUpdate.class)
+                @Validated(MerchantUpdateRequest.ProfileUpdate.class)
                 @RequestBody MerchantUpdateRequest request) {
 
                 merchantService.updateMerchantProfile(
@@ -150,6 +146,7 @@ public class MerchantController {
                 return ResponseEntity.ok(
                         "Cập nhật thông tin Merchant thành công");
         }
+
         // Cập nhật địa chỉ Merchant
         @PutMapping("/{merchantId}/addresses/{addressId}")
         public ResponseEntity<String> updateAddress(

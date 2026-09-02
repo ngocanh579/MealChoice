@@ -149,7 +149,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form id="addressForm" onsubmit="return false;">
+            <form id="addressForm" onsubmit="event.preventDefault(); submitAddressForm();">
                 <div class="modal-body">
                     <input type="hidden" id="addressId" name="id">
 
@@ -213,7 +213,7 @@
                 </div>
                 <div class="modal-footer border-top-0 pt-0">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-danger rounded-pill px-4">Lưu địa chỉ</button>
+                    <button type="submit" id="btnSaveAddressModal" class="btn btn-danger rounded-pill px-4" onclick="submitAddressForm()">Lưu địa chỉ</button>
                 </div>
             </form>
         </div>
