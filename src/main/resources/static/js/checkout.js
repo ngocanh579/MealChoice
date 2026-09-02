@@ -383,20 +383,29 @@ async function loadCheckoutCart() {
         }
 
         const div = document.createElement('div');
-        div.className = 'd-flex justify-content-between align-items-center py-2.5 border-bottom border-light';
+        div.className = 'd-flex justify-content-between align-items-center py-2.5 border-bottom border-light gap-2';
         div.innerHTML = `
-            <div class="d-flex align-items-center gap-2.5 overflow-hidden">
+            <div class="d-flex align-items-center gap-2.5 overflow-hidden flex-grow-1">
                 <img src="${item.image || '/images/default-food.png'}" 
-                     class="food-item-img border" 
+                     class="food-item-img border rounded-2 flex-shrink-0" 
                      alt="${item.name}"
                      onerror="this.src='/images/default-food.png'">
-                <div class="fw-bold text-dark fs-7">${item.quantity}x</div>
                 <div class="overflow-hidden">
                     <div class="fw-semibold text-dark fs-7 text-truncate" title="${item.name}">${item.name}</div>
                     <small class="text-muted font-size-12">${formatCurrency(price)}</small>
                 </div>
             </div>
-            <div class="fw-bold text-dark font-size-14 text-nowrap">${formatCurrency(itemSubtotal)}</div>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                <div class="d-flex align-items-center border rounded-pill px-1.5 py-0.5 bg-light font-size-12">
+                    <button type="button" class="btn btn-link text-secondary p-0 px-1 text-decoration-none fw-bold" onclick="updateCheckoutItemQty(${item.id}, -1)">-</button>
+                    <span class="px-1 fw-bold text-dark font-size-13">${item.quantity}</span>
+                    <button type="button" class="btn btn-link text-danger p-0 px-1 text-decoration-none fw-bold" onclick="updateCheckoutItemQty(${item.id}, 1)">+</button>
+                </div>
+                <div class="fw-bold text-dark font-size-13 text-nowrap text-end" style="min-width: 65px;">${formatCurrency(itemSubtotal)}</div>
+                <button type="button" class="btn btn-link text-danger p-0 text-decoration-none opacity-75 hover-opacity-100" title="Xóa món" onclick="removeCheckoutItem(${item.id})">
+                    <i class="bi bi-trash3 font-size-14"></i>
+                </button>
+            </div>
         `;
         itemsList.appendChild(div);
     });
@@ -404,6 +413,49 @@ async function loadCheckoutCart() {
     if (itemCount) itemCount.innerText = `${totalItems} món`;
     updatePriceSummary();
 }
+
+function removeCheckoutItem(foodId) {
+    if (typeof window.changeQuantityGlobal === 'function') {
+        const cart = (typeof getGlobalCart === 'function') ? getGlobalCart() : [];
+        const it = cart.find(i => i.id === foodId);
+        if (it) {
+            window.changeQuantityGlobal(foodId, -it.quantity);
+        }
+    } else {
+        let cart = [];
+        try {
+            cart = JSON.parse(localStorage.getItem('mealchoice_cart') || '[]');
+        } catch (_) {}
+        cart = cart.filter(i => i.id !== foodId);
+        localStorage.setItem('mealchoice_cart', JSON.stringify(cart));
+        window.dispatchEvent(new Event('cartUpdated'));
+    }
+    loadCheckoutCart();
+}
+
+function updateCheckoutItemQty(foodId, delta) {
+    if (typeof window.changeQuantityGlobal === 'function') {
+        window.changeQuantityGlobal(foodId, delta);
+    } else {
+        let cart = [];
+        try {
+            cart = JSON.parse(localStorage.getItem('mealchoice_cart') || '[]');
+        } catch (_) {}
+        const it = cart.find(i => i.id === foodId);
+        if (it) {
+            it.quantity += delta;
+            if (it.quantity <= 0) {
+                cart = cart.filter(i => i.id !== foodId);
+            }
+        }
+        localStorage.setItem('mealchoice_cart', JSON.stringify(cart));
+        window.dispatchEvent(new Event('cartUpdated'));
+    }
+    loadCheckoutCart();
+}
+
+window.removeCheckoutItem = removeCheckoutItem;
+window.updateCheckoutItemQty = updateCheckoutItemQty;
 
 function updatePriceSummary() {
     const total = subtotalPrice + currentShippingFee + serviceFee - discountAmount;
@@ -415,7 +467,6 @@ function updatePriceSummary() {
     if (srvEl) srvEl.innerText = formatCurrency(serviceFee);
     const totalEl = document.getElementById('summaryTotalAmount');
     if (totalEl) totalEl.innerText = formatCurrency(Math.max(0, total));
-
     const discRow = document.getElementById('summaryDiscountRow');
     if (discRow) {
         if (discountAmount > 0) {
@@ -428,7 +479,159 @@ function updatePriceSummary() {
     }
 }
 
+// ==================== QUẢN LÝ ĐỊA CHỈ HÀNH CHÍNH (TỈNH/HUYỆN/XÃ) ====================
+const PROVINCES_API = "https://provinces.open-api.vn/api/";
+let cachedProvinces = null;
+
+async function getProvinces() {
+    if (cachedProvinces && cachedProvinces.length > 0) {
+        return cachedProvinces;
+    }
+    try {
+        const res = await fetch(`${PROVINCES_API}?depth=1`);
+        if (res.ok) {
+            cachedProvinces = await res.json();
+            return cachedProvinces;
+        }
+    } catch (e) {
+        console.warn("Lỗi tải tỉnh thành từ API:", e);
+    }
+    return [];
+}
+
+async function getDistrictsByProvinceCode(provCode) {
+    if (!provCode) return [];
+    try {
+        const res = await fetch(`${PROVINCES_API}p/${provCode}?depth=2`);
+        if (res.ok) {
+            const data = await res.json();
+            return data.districts || [];
+        }
+    } catch (e) {
+        console.warn("Lỗi tải quận huyện từ API:", e);
+    }
+    return [];
+}
+
+async function getWardsByDistrictCode(distCode) {
+    if (!distCode) return [];
+    try {
+        const res = await fetch(`${PROVINCES_API}d/${distCode}?depth=2`);
+        if (res.ok) {
+            const data = await res.json();
+            return data.wards || [];
+        }
+    } catch (e) {
+        console.warn("Lỗi tải phường xã từ API:", e);
+    }
+    return [];
+}
+
+function setupCheckoutAddressSelectListeners() {
+    const citySelect = document.getElementById('modalCity');
+    const districtSelect = document.getElementById('modalDistrict');
+    const wardSelect = document.getElementById('modalWard');
+    const modalEl = document.getElementById('newAddressModal');
+
+    // Nạp tỉnh thành khi mở modal
+    if (modalEl) {
+        modalEl.addEventListener('show.bs.modal', async () => {
+            const contactNameInput = document.getElementById('modalContactName');
+            const contactPhoneInput = document.getElementById('modalContactPhone');
+            if (contactNameInput && !contactNameInput.value) {
+                contactNameInput.value = localStorage.getItem('displayName') || '';
+            }
+
+            if (citySelect && citySelect.options.length <= 1) {
+                citySelect.innerHTML = '<option value="" selected disabled>Đang tải Tỉnh/Thành phố...</option>';
+                const provinces = await getProvinces();
+                let cityHtml = '<option value="" selected disabled>Tỉnh/Thành phố</option>';
+                provinces.forEach(p => {
+                    cityHtml += `<option value="${p.name}" data-code="${p.code}">${p.name}</option>`;
+                });
+                citySelect.innerHTML = cityHtml;
+            }
+        });
+    }
+
+    if (citySelect) {
+        citySelect.addEventListener('change', async function() {
+            const selectedOpt = citySelect.options[citySelect.selectedIndex];
+            const provCode = selectedOpt ? selectedOpt.getAttribute('data-code') : null;
+
+            districtSelect.innerHTML = '<option value="" selected disabled>Đang tải Quận/Huyện...</option>';
+            wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
+            districtSelect.disabled = true;
+            wardSelect.disabled = true;
+
+            if (!provCode) {
+                districtSelect.innerHTML = '<option value="" selected disabled>Quận/Huyện</option>';
+                return;
+            }
+
+            const districts = await getDistrictsByProvinceCode(provCode);
+            let distHtml = '<option value="" selected disabled>Quận/Huyện</option>';
+            districts.forEach(d => {
+                distHtml += `<option value="${d.name}" data-code="${d.code}">${d.name}</option>`;
+            });
+            districtSelect.innerHTML = distHtml;
+            districtSelect.disabled = false;
+        });
+    }
+
+    if (districtSelect) {
+        districtSelect.addEventListener('change', async function() {
+            const selectedOpt = districtSelect.options[districtSelect.selectedIndex];
+            const distCode = selectedOpt ? selectedOpt.getAttribute('data-code') : null;
+
+            wardSelect.innerHTML = '<option value="" selected disabled>Đang tải Phường/Xã...</option>';
+            wardSelect.disabled = true;
+
+            if (!distCode) {
+                wardSelect.innerHTML = '<option value="" selected disabled>Phường/Xã</option>';
+                return;
+            }
+
+            const wards = await getWardsByDistrictCode(distCode);
+            let wardHtml = '<option value="" selected disabled>Phường/Xã</option>';
+            wards.forEach(w => {
+                wardHtml += `<option value="${w.name}" data-code="${w.code}">${w.name}</option>`;
+            });
+            wardSelect.innerHTML = wardHtml;
+            wardSelect.disabled = false;
+        });
+    }
+}
+
+function getCheckoutAuthHeaders(extraHeaders = {}) {
+    const token = localStorage.getItem('accessToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...extraHeaders
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+}
+
+async function fetchWithCheckoutAuth(url, options = {}) {
+    options.headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...getCheckoutAuthHeaders(),
+        ...options.headers
+    };
+    if (typeof window.fetchWithAuth === 'function') {
+        return window.fetchWithAuth(url, options);
+    }
+    return fetch(url, options);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Khởi tạo listeners cho dropdown địa chỉ hành chính
+    setupCheckoutAddressSelectListeners();
+
     // 1. Khởi tạo hiển thị địa chỉ đang chọn từ danh sách modal
     const initialSelectedCard = document.querySelector('.address-modal-card.selected') || document.querySelector('.address-modal-card');
     if (initialSelectedCard) {
@@ -459,24 +662,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (code === 'GIAM10K') {
             discountAmount = 10000;
-            appliedVoucher = code;
+            appliedVoucher = 'GIAM10K';
             if (msgEl) {
                 msgEl.className = 'font-size-12 mt-1 text-success';
-                msgEl.innerText = 'Áp dụng mã GIAM10K: Giảm 10.000đ';
-            }
-        } else if (code === 'GIAM20K') {
-            discountAmount = 20000;
-            appliedVoucher = code;
-            if (msgEl) {
-                msgEl.className = 'font-size-12 mt-1 text-success';
-                msgEl.innerText = 'Áp dụng mã GIAM20K: Giảm 20.000đ';
+                msgEl.innerText = 'Áp dụng mã GIAM10K thành công (-10.000 đ)';
             }
         } else if (code === 'FREESHIP') {
-            discountAmount = currentShippingFee;
-            appliedVoucher = code;
+            discountAmount = Math.min(currentShippingFee, 20000);
+            appliedVoucher = 'FREESHIP';
             if (msgEl) {
                 msgEl.className = 'font-size-12 mt-1 text-success';
-                msgEl.innerText = 'Áp dụng mã FREESHIP: Miễn phí vận chuyển';
+                msgEl.innerText = `Áp dụng mã FREESHIP thành công (-${formatCurrency(discountAmount)})`;
             }
         } else {
             discountAmount = 0;
@@ -494,15 +690,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnSaveAddress')?.addEventListener('click', async () => {
         const contactName = document.getElementById('modalContactName')?.value.trim();
         const contactPhone = document.getElementById('modalContactPhone')?.value.trim();
-        const city = document.getElementById('modalCity')?.value.trim();
-        const district = document.getElementById('modalDistrict')?.value.trim();
-        const ward = document.getElementById('modalWard')?.value.trim();
+        const city = document.getElementById('modalCity')?.value;
+        const district = document.getElementById('modalDistrict')?.value;
+        const ward = document.getElementById('modalWard')?.value;
         const street = document.getElementById('modalStreet')?.value.trim();
         const note = document.getElementById('modalNote')?.value.trim();
         const isDefault = document.getElementById('modalIsDefault')?.checked ?? true;
 
-        if (!contactName || !contactPhone || !city || !district || !ward || !street) {
-            alert('Vui lòng điền đầy đủ các thông tin bắt buộc (*)');
+        if (!contactName || !contactPhone) {
+            alert('Vui lòng nhập tên người nhận và số điện thoại');
+            return;
+        }
+
+        if (!city || !district || !ward) {
+            alert('Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện và Phường/Xã');
+            return;
+        }
+
+        if (!street) {
+            alert('Vui lòng nhập địa chỉ chi tiết (số nhà, ngõ/đường)');
             return;
         }
 
@@ -519,16 +725,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const fetchFn = (typeof fetchWithAuth === 'function') ? fetchWithAuth : fetch;
-            const response = await fetchFn('/api/user/address', {
+            const payload = {
+                contactName,
+                contactPhone,
+                city,
+                district,
+                ward,
+                street,
+                note: note || null,
+                isDefault: Boolean(isDefault)
+            };
+
+            const response = await fetchWithCheckoutAuth('/api/user/address', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(typeof getAuthHeaders === 'function' ? getAuthHeaders() : {})
-                },
-                body: JSON.stringify({
-                    contactName, contactPhone, city, district, ward, street, note, isDefault
-                })
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
@@ -539,8 +749,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 location.reload();
             } else {
-                const err = await response.json();
-                alert(err.message || 'Không thể lưu địa chỉ');
+                let errorMsg = 'Không thể lưu địa chỉ';
+                try {
+                    const err = await response.json();
+                    errorMsg = err.message || errorMsg;
+                } catch (_) {
+                    try {
+                        const txt = await response.text();
+                        if (txt) errorMsg = `${errorMsg} (${response.status}: ${txt.substring(0, 120)})`;
+                    } catch (_) {}
+                }
+                alert(errorMsg);
                 if (saveBtn) {
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = 'Lưu địa chỉ';
@@ -548,7 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) {
             console.error('Lỗi lưu địa chỉ:', e);
-            alert('Đã xảy ra lỗi kết nối');
+            alert('Đã xảy ra lỗi kết nối: ' + (e.message || 'Vui lòng thử lại'));
             if (saveBtn) {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = 'Lưu địa chỉ';
@@ -605,13 +824,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const fetchFn = (typeof fetchWithAuth === 'function') ? fetchWithAuth : fetch;
-            const response = await fetchFn('/api/checkout/place-order', {
+            const response = await fetchWithCheckoutAuth('/api/checkout/place-order', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(typeof getAuthHeaders === 'function' ? getAuthHeaders() : {})
-                },
                 body: JSON.stringify(payload)
             });
 

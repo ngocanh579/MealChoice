@@ -92,8 +92,15 @@
     }
 
     async function fetchWithAuth(url, options = {}) {
+        const defaultHeaders = {
+            "Accept": "application/json"
+        };
+        if (options.body && typeof options.body === 'string' && (!options.headers || !options.headers['Content-Type'])) {
+            defaultHeaders["Content-Type"] = "application/json";
+        }
+
         options.headers = {
-            Accept: "application/json",
+            ...defaultHeaders,
             ...options.headers,
             ...getAuthHeaders()
         };
@@ -122,6 +129,9 @@
 
         return response;
     }
+
+    window.getAuthHeaders = getAuthHeaders;
+    window.fetchWithAuth = fetchWithAuth;
 
     function getUserRoles() {
         try {
@@ -164,7 +174,6 @@
         const guestAuthNav = document.getElementById("guestAuthNav");
         const userDropdownNav = document.getElementById("userDropdownNav");
         const adminRoleNav = document.getElementById("adminRoleNav");
-        const deliveryPartnerAdminNav = document.getElementById("deliveryPartnerAdminNav");
 
         const isLoggedIn = !!(displayName || accessToken);
 
@@ -177,7 +186,6 @@
             guestAuthNav?.classList.remove("d-none");
             userDropdownNav?.classList.add("d-none");
             adminRoleNav?.classList.add("d-none");
-            deliveryPartnerAdminNav?.classList.add("d-none");
             hideMerchantNavigation();
             return;
         }
@@ -193,11 +201,9 @@
 
         if (isAdmin) {
             adminRoleNav?.classList.remove("d-none");
-            deliveryPartnerAdminNav?.classList.remove("d-none");
             hideMerchantNavigation();
         } else {
             adminRoleNav?.classList.add("d-none");
-            deliveryPartnerAdminNav?.classList.add("d-none");
             checkMerchantStatus();
         }
 

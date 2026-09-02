@@ -423,23 +423,31 @@
                     <div class="row g-2.5">
                         <div class="col-md-6 mb-2">
                             <label class="form-label small fw-semibold">Tên người nhận *</label>
-                            <input type="text" class="form-control" id="modalContactName" required placeholder="Nguyễn Văn A">
+                            <input type="text" class="form-control" id="modalContactName" required placeholder="Nguyễn Văn A"
+                                   th:value="${user != null ? user.displayName : ''}">
                         </div>
                         <div class="col-md-6 mb-2">
                             <label class="form-label small fw-semibold">Số điện thoại *</label>
-                            <input type="tel" class="form-control" id="modalContactPhone" required placeholder="0901234567">
+                            <input type="tel" class="form-control" id="modalContactPhone" required placeholder="0901234567"
+                                   th:value="${user != null ? user.phoneNumber : ''}">
                         </div>
                         <div class="col-md-4 mb-2">
                             <label class="form-label small fw-semibold">Tỉnh/Thành phố *</label>
-                            <input type="text" class="form-control" id="modalCity" required placeholder="Hà Nội">
+                            <select class="form-select rounded-3" id="modalCity" required>
+                                <option value="" selected disabled>Tỉnh/Thành phố</option>
+                            </select>
                         </div>
                         <div class="col-md-4 mb-2">
                             <label class="form-label small fw-semibold">Quận/Huyện *</label>
-                            <input type="text" class="form-control" id="modalDistrict" required placeholder="Quận Cầu Giấy">
+                            <select class="form-select rounded-3" id="modalDistrict" required disabled>
+                                <option value="" selected disabled>Quận/Huyện</option>
+                            </select>
                         </div>
                         <div class="col-md-4 mb-2">
                             <label class="form-label small fw-semibold">Phường/Xã *</label>
-                            <input type="text" class="form-control" id="modalWard" required placeholder="Phường Dịch Vọng">
+                            <select class="form-select rounded-3" id="modalWard" required disabled>
+                                <option value="" selected disabled>Phường/Xã</option>
+                            </select>
                         </div>
                         <div class="col-12 mb-2">
                             <label class="form-label small fw-semibold">Địa chỉ chi tiết (Số nhà, ngõ/đường) *</label>

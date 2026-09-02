@@ -67,11 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
 // Helper to get Auth Headers with JWT Bearer Token
 function getAuthHeaders(extraHeaders = {}) {
     const token = localStorage.getItem('accessToken');
-    return {
+    const headers = {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
         ...extraHeaders
     };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
 }
 
 // Check if user is logged in
@@ -143,6 +146,13 @@ function setupEventListeners() {
     if (profileForm) {
         profileForm.addEventListener('submit', handleProfileSubmit);
     }
+    const addressForm = document.getElementById('addressForm');
+    if (addressForm) {
+        addressForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            submitAddressForm();
+        });
+    }
 }
 
 // ==================== PROFILE FUNCTIONS ====================
@@ -151,7 +161,8 @@ function setupEventListeners() {
 async function loadProfile() {
     showLoading(true);
     try {
-        const response = await fetch(`${API_BASE}/profile`, {
+        const fetchFn = (typeof window.fetchWithAuth === 'function') ? window.fetchWithAuth : fetch;
+        const response = await fetchFn(`${API_BASE}/profile`, {
             headers: getAuthHeaders()
         });
 
@@ -274,7 +285,8 @@ async function handleProfileSubmit(e) {
 
     showLoading(true);
     try {
-        const response = await fetch(`${API_BASE}/profile`, {
+        const fetchFn = (typeof window.fetchWithAuth === 'function') ? window.fetchWithAuth : fetch;
+        const response = await fetchFn(`${API_BASE}/profile`, {
             method: 'PATCH',
             headers: getAuthHeaders(),
             body: JSON.stringify(payload)
@@ -587,7 +599,7 @@ async function openAddressModal(addressId = null) {
 function closeAddressModal() {
     const modalEl = document.getElementById('addressModal');
     if (!modalEl) return;
-    const modal = bootstrap.Modal.getInstance(modalEl);
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     if (modal) {
         modal.hide();
     }
@@ -631,6 +643,7 @@ async function submitAddressForm() {
 
     let url;
     let method;
+    let formData;
 
     if (isEdit) {
         url = `${API_BASE}/address/${addressId}`;
@@ -662,7 +675,8 @@ async function submitAddressForm() {
 
     showLoading(true);
     try {
-        const response = await fetch(url, {
+        const fetchFn = (typeof window.fetchWithAuth === 'function') ? window.fetchWithAuth : fetch;
+        const response = await fetchFn(url, {
             method: method,
             headers: getAuthHeaders(),
             body: JSON.stringify(formData)
@@ -699,7 +713,8 @@ async function deleteAddress(addressId) {
 
     showLoading(true);
     try {
-        const response = await fetch(`${API_BASE}/address/${addressId}`, {
+        const fetchFn = (typeof window.fetchWithAuth === 'function') ? window.fetchWithAuth : fetch;
+        const response = await fetchFn(`${API_BASE}/address/${addressId}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
         });
@@ -725,7 +740,8 @@ async function deleteAddress(addressId) {
 async function setDefaultAddress(addressId) {
     showLoading(true);
     try {
-        const response = await fetch(`${API_BASE}/address/${addressId}/set-default`, {
+        const fetchFn = (typeof window.fetchWithAuth === 'function') ? window.fetchWithAuth : fetch;
+        const response = await fetchFn(`${API_BASE}/address/${addressId}/set-default`, {
             method: 'PATCH',
             headers: getAuthHeaders()
         });
@@ -790,3 +806,11 @@ function showLoading(show) {
         }
     }
 }
+
+// Export functions to global scope
+window.submitAddressForm = submitAddressForm;
+window.openAddressModal = openAddressModal;
+window.editAddress = editAddress;
+window.closeAddressModal = closeAddressModal;
+window.deleteAddress = deleteAddress;
+window.setDefaultAddress = setDefaultAddress;
