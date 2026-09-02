@@ -2,7 +2,6 @@ package vn.codegyme.meal_choice.dto.order;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import vn.codegyme.meal_choice.entity.PaymentMethod;
@@ -10,6 +9,15 @@ import vn.codegyme.meal_choice.entity.PaymentMethod;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Dữ liệu người dùng gửi lên khi bấm Đặt hàng.
+ *
+ * Danh sách món KHÔNG còn lấy từ đây nữa. Server luôn đọc món và giá từ
+ * giỏ hàng trong database, nên client không thể tự đặt giá hoặc thêm món lạ.
+ *
+ * merchantId và items chỉ dùng để đối chiếu: nếu client gửi lên mà lệch với
+ * giỏ hàng thật thì server báo lỗi để người dùng tải lại trang.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,7 +25,9 @@ import java.util.UUID;
 @Builder
 public class CheckoutRequestDTO {
 
-    @NotNull(message = "Thông tin quán không được để trống")
+    /**
+     * Tùy chọn. Nếu có, phải khớp với Merchant của giỏ hàng hiện tại.
+     */
     private UUID merchantId;
 
     @NotBlank(message = "Tên người nhận không được để trống")
@@ -38,7 +48,9 @@ public class CheckoutRequestDTO {
 
     private UUID deliveryPartnerId;
 
-    @NotEmpty(message = "Danh sách món ăn không được để trống")
+    /**
+     * Tùy chọn, chỉ để đối chiếu với giỏ hàng trên server.
+     */
     @Valid
     private List<CheckoutItemDTO> items;
 }
