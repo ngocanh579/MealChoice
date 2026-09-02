@@ -66,6 +66,32 @@
                 </span>
 
             </a>
+            <!-- Quản lý Đối tác Vận chuyển -->
+            <a th:href="@{/admin/delivery-partners}"
+               class="nav-link"
+               th:classappend="${activeMenu == 'delivery-partners'} ? ' active' : ''">
+
+                <i class="bi bi-truck"></i>
+
+                <span class="admin-sidebar-label">
+                    Đối tác Vận chuyển
+                </span>
+
+            </a>
+
+            <!-- Đối soát & Khiếu nại Doanh thu -->
+            <a th:href="@{/admin/settlements}"
+               class="nav-link"
+               th:classappend="${activeMenu == 'settlements'} ? ' active' : ''">
+
+                <i class="bi bi-receipt-cutoff"></i>
+
+                <span class="admin-sidebar-label">
+                    Đối soát & Khiếu nại
+                </span>
+
+            </a>
+
             <!-- Yêu cầu thanh toán -->
             <a th:href="@{/admin/payout-requests}"
                class="nav-link"

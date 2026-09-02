@@ -7,6 +7,9 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+TRUNCATE TABLE settlement_claims;
+TRUNCATE TABLE merchant_settlements;
+TRUNCATE TABLE food_vouchers;
 TRUNCATE TABLE order_items;
 TRUNCATE TABLE orders;
 TRUNCATE TABLE delivery_partners;
