@@ -580,8 +580,14 @@ document.addEventListener('DOMContentLoaded', () => {
             note: i.note || ''
         }));
 
+        const merchantIdToUse = currentMerchantId || (cart.length > 0 ? cart[0].merchantId : null);
+        if (!merchantIdToUse) {
+            alert('Không thể xác định thông tin Cửa hàng đối tác cho giỏ hàng này. Vui lòng tải lại trang và thử lại!');
+            return;
+        }
+
         const payload = {
-            merchantId: currentMerchantId || "10000000-0000-0000-0000-000000000001",
+            merchantId: merchantIdToUse,
             deliveryPartnerId: selectedDeliveryPartnerId,
             contactName: contactName,
             contactPhone: contactPhone,

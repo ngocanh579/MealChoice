@@ -56,6 +56,9 @@ public class TrustedPartnerController {
                 startDate,
                 endDate
         );
+        if (monthlyRevenue == null) {
+            monthlyRevenue = BigDecimal.ZERO;
+        }
 
         Optional<TrustedPartnerRequest> request =
                 trustedPartnerRequestRepository

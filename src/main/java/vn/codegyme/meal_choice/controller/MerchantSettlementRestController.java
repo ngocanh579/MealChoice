@@ -75,13 +75,14 @@ public class MerchantSettlementRestController {
     }
 
     /**
-     * Danh sách các kỳ đối soát có sẵn (Tháng gần nhất)
+     * Danh sách các kỳ đối soát có sẵn (Tuần hoặc Tháng)
      */
     @GetMapping("/periods")
-    public ResponseEntity<?> getAvailablePeriods() {
+    public ResponseEntity<?> getAvailablePeriods(
+            @RequestParam(name = "periodType", defaultValue = "MONTH") String periodType) {
         try {
             Merchant merchant = getCurrentMerchant();
-            List<SettlementPeriodOptionDTO> periods = settlementService.getAvailablePeriods(merchant.getId());
+            List<SettlementPeriodOptionDTO> periods = settlementService.getAvailablePeriods(merchant.getId(), periodType);
             return ResponseEntity.ok(periods);
         } catch (Exception e) {
             log.error("Lỗi lấy danh sách kỳ đối soát: {}", e.getMessage(), e);

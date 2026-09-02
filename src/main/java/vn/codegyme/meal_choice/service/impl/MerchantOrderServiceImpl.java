@@ -244,6 +244,7 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
         }
 
         order.setStatus(OrderStatus.COMPLETED);
+        order.setCompletedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
         Order savedOrder = orderRepository.save(order);
         log.info("Merchant {} đã xác nhận hoàn thành đơn hàng ID {}", merchantId, orderId);

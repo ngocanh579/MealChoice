@@ -4,6 +4,7 @@
  */
 
 let currentSettlementData = null;
+let currentPeriodType = 'MONTH'; // 'MONTH' hoặc 'WEEK'
 let confirmModalInstance = null;
 let claimModalInstance = null;
 
@@ -22,6 +23,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+/**
+ * Chuyển đổi giữa chế độ xem Theo Tháng và Theo Tuần
+ */
+function switchPeriodType(type) {
+    if (currentPeriodType === type) return;
+    currentPeriodType = type;
+
+    const btnMonth = document.getElementById('btnPeriodTypeMonth');
+    const btnWeek = document.getElementById('btnPeriodTypeWeek');
+
+    if (type === 'MONTH') {
+        btnMonth.className = 'btn btn-sm rounded-pill fw-semibold px-3 active btn-danger text-white';
+        btnWeek.className = 'btn btn-sm rounded-pill fw-semibold px-3 text-muted';
+    } else {
+        btnWeek.className = 'btn btn-sm rounded-pill fw-semibold px-3 active btn-danger text-white';
+        btnMonth.className = 'btn btn-sm rounded-pill fw-semibold px-3 text-muted';
+    }
+
+    loadPeriods();
+}
 
 /**
  * Format tiền tệ VNĐ (ví dụ: 150.000 ₫)
@@ -50,12 +72,12 @@ function formatDateTime(dateTimeStr) {
 }
 
 /**
- * Tải danh sách các kỳ đối soát khả dụng (6 tháng gần nhất)
+ * Tải danh sách các kỳ đối soát khả dụng (Tháng hoặc Tuần)
  */
 async function loadPeriods() {
     const periodSelect = document.getElementById('periodSelect');
     try {
-        const response = await fetch('/api/merchant/settlements/periods');
+        const response = await fetch(`/api/merchant/settlements/periods?periodType=${encodeURIComponent(currentPeriodType)}`);
         if (!response.ok) {
             const errData = await response.json().catch(() => null);
             throw new Error(errData?.message || `HTTP ${response.status}: Không thể tải danh sách kỳ đối soát`);
@@ -127,7 +149,7 @@ async function loadSettlementData() {
     emptyState.classList.add('d-none');
 
     try {
-        const url = `/api/merchant/settlements/overview${periodKey ? `?periodKey=${encodeURIComponent(periodKey)}` : ''}`;
+        const url = `/api/merchant/settlements/overview?periodType=${encodeURIComponent(currentPeriodType)}${periodKey ? `&periodKey=${encodeURIComponent(periodKey)}` : ''}`;
         const response = await fetch(url);
         if (!response.ok) {
             const errData = await response.json();
@@ -161,10 +183,35 @@ function renderSettlementOverview(data) {
     document.getElementById('cardCommissionRateBadge').textContent = data.commissionRateDisplay || '0.001%';
     document.getElementById('cardNetRevenue').textContent = formatCurrency(data.netRevenue);
 
-    // 2. Cập nhật Badge trạng thái kỳ
+    // Cập nhật thông tin điều chỉnh nếu có
+    const adjInfoBox = document.getElementById('cardAdjustmentInfo');
+    if (adjInfoBox) {
+        if (data.adjustmentAmount && data.adjustmentAmount !== 0) {
+            adjInfoBox.classList.remove('d-none');
+            document.getElementById('cardOriginalNetRevenue').textContent = formatCurrency(data.originalNetRevenue);
+            const adjBadge = document.getElementById('cardAdjustmentBadge');
+            adjBadge.textContent = `${data.adjustmentAmount > 0 ? '+' : ''}${formatCurrency(data.adjustmentAmount)} (Điều chỉnh)`;
+            adjBadge.className = `badge ${data.adjustmentAmount >= 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'} px-1.5 py-0.5 ms-1`;
+        } else {
+            adjInfoBox.classList.add('d-none');
+        }
+    }
+
+    // 2. Cập nhật Badge trạng thái kỳ & In-Progress alert
     const badge = document.getElementById('currentPeriodStatusBadge');
     badge.className = `badge badge-pill-custom ${data.statusBadgeClass || 'bg-warning text-dark'}`;
     badge.textContent = data.statusDisplayName;
+
+    const inProgressBox = document.getElementById('inProgressNoticeBox');
+    if (inProgressBox) {
+        if (data.isInProgress) {
+            inProgressBox.classList.remove('d-none');
+            const endEl = document.getElementById('inProgressEndTimeText');
+            if (endEl) endEl.textContent = formatDateTime(data.endDate);
+        } else {
+            inProgressBox.classList.add('d-none');
+        }
+    }
 
     // 3. Xử lý Alert khiếu nại (PENDING / REJECTED / RESOLVED)
     const disputeBox = document.getElementById('disputeAlertBox');
@@ -213,7 +260,7 @@ function renderSettlementOverview(data) {
     // 4. Cập nhật Footer Action Bar
     const footerStatusText = document.getElementById('footerStatusText');
     footerStatusText.textContent = data.statusDisplayName;
-    footerStatusText.className = `fw-bold ${data.status === 'CONFIRMED' ? 'text-success' : (data.status === 'DISPUTED' ? 'text-danger' : 'text-warning')}`;
+    footerStatusText.className = `fw-bold ${data.status === 'CONFIRMED' ? 'text-success' : (data.status === 'DISPUTED' ? 'text-danger' : (data.isInProgress ? 'text-info' : 'text-warning'))}`;
 
     const confirmedTimeBox = document.getElementById('confirmedTimeBox');
     if (data.status === 'CONFIRMED' && data.confirmedAt) {
@@ -227,16 +274,27 @@ function renderSettlementOverview(data) {
     const btnConfirm = document.getElementById('btnOpenConfirmModal');
     const btnClaim = document.getElementById('btnOpenClaimModal');
 
-    if (data.actionable) {
+    if (data.isInProgress) {
+        btnConfirm.setAttribute('disabled', 'true');
+        btnClaim.setAttribute('disabled', 'true');
+        btnConfirm.classList.add('opacity-50');
+        btnClaim.classList.add('opacity-50');
+        btnConfirm.title = 'Kỳ đối soát đang diễn ra, chưa thể chốt số';
+        btnClaim.title = 'Kỳ đối soát đang diễn ra, chưa thể gửi khiếu nại';
+    } else if (data.actionable) {
         btnConfirm.removeAttribute('disabled');
         btnClaim.removeAttribute('disabled');
         btnConfirm.classList.remove('opacity-50');
         btnClaim.classList.remove('opacity-50');
+        btnConfirm.title = '';
+        btnClaim.title = '';
     } else {
         btnConfirm.setAttribute('disabled', 'true');
         btnClaim.setAttribute('disabled', 'true');
         btnConfirm.classList.add('opacity-50');
         btnClaim.classList.add('opacity-50');
+        btnConfirm.title = 'Kỳ đối soát này đã được xác nhận hoặc đang trong quá trình khiếu nại';
+        btnClaim.title = 'Kỳ đối soát này đã được xác nhận hoặc đang trong quá trình khiếu nại';
     }
 
     // 5. Render danh sách đơn hàng

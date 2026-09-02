@@ -363,6 +363,18 @@
                         <!-- Form Admin Quyết định -->
                         <form id="adminClaimActionForm">
                             <input type="hidden" id="handleClaimId">
+                            <div class="mb-3" id="adjustmentAmountContainer">
+                                <label for="adjustmentAmountInput" class="form-label fw-semibold small">
+                                    <i class="bi bi-cash-stack text-success me-1"></i>Số tiền bồi hoàn / điều chỉnh (VNĐ)
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" id="adjustmentAmountInput" class="form-control fw-bold text-success" placeholder="0" value="0" step="1000">
+                                    <span class="input-group-text bg-light fw-bold">₫</span>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    Nhập số tiền dương (+) để bồi hoàn thêm cho Merchant hoặc số âm (-) nếu khấu trừ. Số tiền này sẽ tự động cộng vào Doanh thu thực nhận khi Admin chấp thuận khiếu nại.
+                                </small>
+                            </div>
                             <div class="mb-3">
                                 <label for="adminNoteInput" class="form-label fw-semibold small">Ghi chú giải trình của Admin <span class="text-danger" id="adminNoteRequiredMark">*</span></label>
                                 <textarea id="adminNoteInput" class="form-control" rows="3" placeholder="Nhập nội dung giải thích, căn cứ tra soát hoặc hướng dẫn điều chỉnh cho Merchant..."></textarea>

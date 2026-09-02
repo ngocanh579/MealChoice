@@ -29,6 +29,8 @@ public class SettlementOverviewDTO {
     private String commissionRateDisplay;
     private BigDecimal totalCommissionFee;
     private BigDecimal netRevenue;
+    private BigDecimal adjustmentAmount;
+    private BigDecimal originalNetRevenue;
 
     private Long totalOrders;
     private String status;
@@ -36,6 +38,7 @@ public class SettlementOverviewDTO {
     private String statusBadgeClass;
     private LocalDateTime confirmedAt;
     private boolean actionable;
+    private boolean isInProgress;
 
     // Thông tin khiếu nại nếu có
     private String claimStatus;

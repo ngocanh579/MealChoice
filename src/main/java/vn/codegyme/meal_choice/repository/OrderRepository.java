@@ -194,14 +194,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("merchantId") UUID merchantId
     );
 
-    // Lấy danh sách đơn hoàn thành trong kỳ đối soát
+    // Lấy danh sách đơn hoàn thành trong kỳ đối soát (theo thời điểm hoàn thành đơn)
     @Query("""
         SELECT o FROM Order o
         WHERE o.merchant.id = :merchantId
           AND o.status = vn.codegyme.meal_choice.entity.OrderStatus.COMPLETED
-          AND o.createdAt >= :startDate
-          AND o.createdAt < :endDate
-        ORDER BY o.createdAt DESC
+          AND COALESCE(o.completedAt, o.updatedAt, o.createdAt) >= :startDate
+          AND COALESCE(o.completedAt, o.updatedAt, o.createdAt) < :endDate
+        ORDER BY COALESCE(o.completedAt, o.updatedAt, o.createdAt) DESC
         """)
     List<Order> findCompletedOrdersInPeriod(
             @Param("merchantId") UUID merchantId,

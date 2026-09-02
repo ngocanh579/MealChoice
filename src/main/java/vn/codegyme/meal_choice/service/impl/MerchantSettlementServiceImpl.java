@@ -18,8 +18,12 @@ import vn.codegyme.meal_choice.service.MerchantSettlementService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,34 +49,90 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
     @Override
     @Transactional(readOnly = true)
     public List<SettlementPeriodOptionDTO> getAvailablePeriods(UUID merchantId) {
+        return getAvailablePeriods(merchantId, "MONTH");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SettlementPeriodOptionDTO> getAvailablePeriods(UUID merchantId, String periodType) {
         List<SettlementPeriodOptionDTO> options = new ArrayList<>();
-        YearMonth currentYearMonth = YearMonth.now();
+        boolean isWeekly = "WEEK".equalsIgnoreCase(periodType);
 
-        // Tạo danh sách 6 tháng gần nhất
-        for (int i = 0; i < 6; i++) {
-            YearMonth ym = currentYearMonth.minusMonths(i);
-            String periodKey = ym.toString(); // YYYY-MM
-            String label = String.format("Tháng %02d/%d", ym.getMonthValue(), ym.getYear());
+        if (isWeekly) {
+            LocalDate today = LocalDate.now();
+            LocalDate currentMonday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 
-            LocalDateTime startDate = ym.atDay(1).atStartOfDay();
-            LocalDateTime endDate = ym.plusMonths(1).atDay(1).atStartOfDay();
+            for (int i = 0; i < 8; i++) {
+                LocalDate monday = currentMonday.minusWeeks(i);
+                LocalDate sunday = monday.plusDays(6);
+                LocalDateTime startDate = monday.atStartOfDay();
+                LocalDateTime endDate = monday.plusDays(7).atStartOfDay();
 
-            Optional<MerchantSettlement> existingOpt =
-                    settlementRepository.findByMerchant_IdAndPeriodKey(merchantId, periodKey);
+                int weekNum = monday.get(WeekFields.ISO.weekOfWeekBasedYear());
+                int year = monday.get(WeekFields.ISO.weekBasedYear());
+                String periodKey = String.format("%d-W%02d", year, weekNum);
+                String label = String.format("Tuần %02d/%d (%02d/%02d - %02d/%02d)",
+                        weekNum, year,
+                        monday.getDayOfMonth(), monday.getMonthValue(),
+                        sunday.getDayOfMonth(), sunday.getMonthValue());
 
-            SettlementStatus status = existingOpt.map(MerchantSettlement::getStatus)
-                    .orElse(SettlementStatus.PENDING_CONFIRMATION);
+                boolean isEnded = !LocalDateTime.now().isBefore(endDate);
 
-            options.add(SettlementPeriodOptionDTO.builder()
-                    .periodKey(periodKey)
-                    .label(label)
-                    .periodType("MONTH")
-                    .startDate(startDate)
-                    .endDate(endDate)
-                    .status(status.name())
-                    .statusDisplayName(status.getDisplayName())
-                    .statusBadgeClass(status.getBadgeClass())
-                    .build());
+                Optional<MerchantSettlement> existingOpt =
+                        settlementRepository.findByMerchant_IdAndPeriodKey(merchantId, periodKey);
+
+                SettlementStatus status;
+                if (existingOpt.isPresent()) {
+                    status = existingOpt.get().getStatus();
+                } else {
+                    status = isEnded ? SettlementStatus.PENDING_CONFIRMATION : SettlementStatus.IN_PROGRESS;
+                }
+
+                options.add(SettlementPeriodOptionDTO.builder()
+                        .periodKey(periodKey)
+                        .label(label)
+                        .periodType("WEEK")
+                        .startDate(startDate)
+                        .endDate(endDate)
+                        .status(status.name())
+                        .statusDisplayName(status.getDisplayName())
+                        .statusBadgeClass(status.getBadgeClass())
+                        .build());
+            }
+        } else {
+            YearMonth currentYearMonth = YearMonth.now();
+
+            for (int i = 0; i < 6; i++) {
+                YearMonth ym = currentYearMonth.minusMonths(i);
+                String periodKey = ym.toString();
+                String label = String.format("Tháng %02d/%d", ym.getMonthValue(), ym.getYear());
+
+                LocalDateTime startDate = ym.atDay(1).atStartOfDay();
+                LocalDateTime endDate = ym.plusMonths(1).atDay(1).atStartOfDay();
+
+                boolean isEnded = !LocalDateTime.now().isBefore(endDate);
+
+                Optional<MerchantSettlement> existingOpt =
+                        settlementRepository.findByMerchant_IdAndPeriodKey(merchantId, periodKey);
+
+                SettlementStatus status;
+                if (existingOpt.isPresent()) {
+                    status = existingOpt.get().getStatus();
+                } else {
+                    status = isEnded ? SettlementStatus.PENDING_CONFIRMATION : SettlementStatus.IN_PROGRESS;
+                }
+
+                options.add(SettlementPeriodOptionDTO.builder()
+                        .periodKey(periodKey)
+                        .label(label)
+                        .periodType("MONTH")
+                        .startDate(startDate)
+                        .endDate(endDate)
+                        .status(status.name())
+                        .statusDisplayName(status.getDisplayName())
+                        .statusBadgeClass(status.getBadgeClass())
+                        .build());
+            }
         }
 
         return options;
@@ -84,24 +144,65 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
         Merchant merchant = merchantRepository.findById(merchantId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin đối tác"));
 
-        YearMonth ym;
-        if (periodKey == null || periodKey.isBlank()) {
-            ym = YearMonth.now();
-            periodKey = ym.toString();
+        LocalDateTime startDate;
+        LocalDateTime endDate;
+        String periodLabel;
+        boolean isWeekly = "WEEK".equalsIgnoreCase(periodType) || (periodKey != null && periodKey.contains("-W"));
+        String actualPeriodType = isWeekly ? "WEEK" : "MONTH";
+
+        if (isWeekly) {
+            int year;
+            int weekNum;
+            if (periodKey != null && periodKey.contains("-W")) {
+                try {
+                    String[] parts = periodKey.split("-W");
+                    year = Integer.parseInt(parts[0]);
+                    weekNum = Integer.parseInt(parts[1]);
+                } catch (Exception e) {
+                    LocalDate now = LocalDate.now();
+                    year = now.get(WeekFields.ISO.weekBasedYear());
+                    weekNum = now.get(WeekFields.ISO.weekOfWeekBasedYear());
+                    periodKey = String.format("%d-W%02d", year, weekNum);
+                }
+            } else {
+                LocalDate now = LocalDate.now();
+                year = now.get(WeekFields.ISO.weekBasedYear());
+                weekNum = now.get(WeekFields.ISO.weekOfWeekBasedYear());
+                periodKey = String.format("%d-W%02d", year, weekNum);
+            }
+
+            LocalDate monday = LocalDate.of(year, 1, 4)
+                    .with(WeekFields.ISO.weekOfWeekBasedYear(), weekNum)
+                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+            LocalDate sunday = monday.plusDays(6);
+
+            startDate = monday.atStartOfDay();
+            endDate = monday.plusDays(7).atStartOfDay();
+            periodLabel = String.format("Tuần %02d/%d (%02d/%02d - %02d/%02d)",
+                    weekNum, year,
+                    monday.getDayOfMonth(), monday.getMonthValue(),
+                    sunday.getDayOfMonth(), sunday.getMonthValue());
         } else {
-            try {
-                ym = YearMonth.parse(periodKey);
-            } catch (Exception e) {
+            YearMonth ym;
+            if (periodKey == null || periodKey.isBlank() || periodKey.contains("-W")) {
                 ym = YearMonth.now();
                 periodKey = ym.toString();
+            } else {
+                try {
+                    ym = YearMonth.parse(periodKey);
+                } catch (Exception e) {
+                    ym = YearMonth.now();
+                    periodKey = ym.toString();
+                }
             }
+            startDate = ym.atDay(1).atStartOfDay();
+            endDate = ym.plusMonths(1).atDay(1).atStartOfDay();
+            periodLabel = String.format("Tháng %02d/%d", ym.getMonthValue(), ym.getYear());
         }
 
-        LocalDateTime startDate = ym.atDay(1).atStartOfDay();
-        LocalDateTime endDate = ym.plusMonths(1).atDay(1).atStartOfDay();
-        String periodLabel = String.format("Tháng %02d/%d", ym.getMonthValue(), ym.getYear());
+        boolean isEnded = !LocalDateTime.now().isBefore(endDate);
 
-        // Lấy các đơn hàng COMPLETED trong kỳ
+        // Lấy các đơn hàng COMPLETED trong kỳ (lọc theo thời điểm hoàn thành đơn)
         List<Order> completedOrders = orderRepository.findCompletedOrdersInPeriod(merchantId, startDate, endDate);
 
         BigDecimal grossRevenue = completedOrders.stream()
@@ -120,10 +221,10 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
         // Tổng phí chiết khấu sàn
         BigDecimal totalCommissionFee = grossRevenue.multiply(commissionRate).setScale(0, RoundingMode.HALF_UP);
 
-        // Doanh thu thực nhận = Giá sản phẩm - Khuyến mãi - Chiết khấu sàn
-        BigDecimal netRevenue = grossRevenue.subtract(totalDiscount).subtract(totalCommissionFee);
-        if (netRevenue.compareTo(BigDecimal.ZERO) < 0) {
-            netRevenue = BigDecimal.ZERO;
+        // Doanh thu thực nhận ban đầu = Giá sản phẩm - Khuyến mãi - Chiết khấu sàn
+        BigDecimal baseNetRevenue = grossRevenue.subtract(totalDiscount).subtract(totalCommissionFee);
+        if (baseNetRevenue.compareTo(BigDecimal.ZERO) < 0) {
+            baseNetRevenue = BigDecimal.ZERO;
         }
 
         long totalOrders = completedOrders.size();
@@ -132,30 +233,39 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
         MerchantSettlement settlement = settlementRepository.findByMerchant_IdAndPeriodKey(merchantId, periodKey)
                 .orElse(null);
 
+        SettlementStatus initialStatus = isEnded ? SettlementStatus.PENDING_CONFIRMATION : SettlementStatus.IN_PROGRESS;
+
         if (settlement == null) {
             settlement = MerchantSettlement.builder()
                     .merchant(merchant)
                     .periodKey(periodKey)
-                    .periodType("MONTH")
+                    .periodType(actualPeriodType)
                     .startDate(startDate)
                     .endDate(endDate)
                     .totalGrossRevenue(grossRevenue)
                     .totalDiscount(totalDiscount)
                     .commissionRate(commissionRate)
                     .totalCommissionFee(totalCommissionFee)
-                    .netRevenue(netRevenue)
+                    .netRevenue(baseNetRevenue)
+                    .adjustmentAmount(BigDecimal.ZERO)
                     .totalOrders(totalOrders)
-                    .status(SettlementStatus.PENDING_CONFIRMATION)
+                    .status(initialStatus)
                     .build();
             settlement = settlementRepository.save(settlement);
-        } else if (settlement.getStatus() == SettlementStatus.PENDING_CONFIRMATION) {
-            // Cập nhật số liệu mới nhất khi đang chờ xác nhận
+        } else if (settlement.getStatus() == SettlementStatus.PENDING_CONFIRMATION || settlement.getStatus() == SettlementStatus.IN_PROGRESS) {
+            // Cập nhật số liệu mới nhất khi đang chờ xác nhận hoặc đang diễn ra
             settlement.setTotalGrossRevenue(grossRevenue);
             settlement.setTotalDiscount(totalDiscount);
             settlement.setCommissionRate(commissionRate);
             settlement.setTotalCommissionFee(totalCommissionFee);
-            settlement.setNetRevenue(netRevenue);
+            BigDecimal adj = settlement.getAdjustmentAmount() != null ? settlement.getAdjustmentAmount() : BigDecimal.ZERO;
+            settlement.setNetRevenue(baseNetRevenue.add(adj));
             settlement.setTotalOrders(totalOrders);
+            if (isEnded && settlement.getStatus() == SettlementStatus.IN_PROGRESS) {
+                settlement.setStatus(SettlementStatus.PENDING_CONFIRMATION);
+            } else if (!isEnded) {
+                settlement.setStatus(SettlementStatus.IN_PROGRESS);
+            }
             settlement = settlementRepository.save(settlement);
         }
 
@@ -173,7 +283,7 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
             orderDTOList.add(SettlementOrderDTO.builder()
                     .orderId(order.getId())
                     .orderCode(order.getOrderCode())
-                    .createdAt(order.getCreatedAt())
+                    .createdAt(order.getCompletedAt() != null ? order.getCompletedAt() : (order.getUpdatedAt() != null ? order.getUpdatedAt() : order.getCreatedAt()))
                     .contactName(order.getContactName())
                     .contactPhone(order.getContactPhone())
                     .subtotalPrice(itemSubtotal)
@@ -185,7 +295,7 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
                     .build());
         }
 
-        // Lấy thông tin khiếu nại gần nhất nếu có (bất kể trạng thái kỳ)
+        // Lấy thông tin khiếu nại gần nhất nếu có
         String claimStatus = null;
         String claimReason = null;
         String claimDescription = null;
@@ -208,6 +318,9 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
                 && settlement.getCommissionRate().compareTo(RATE_ABOVE_200M) <= 0
                 ? "0.0005%" : "0.001%";
 
+        BigDecimal adj = settlement.getAdjustmentAmount() != null ? settlement.getAdjustmentAmount() : BigDecimal.ZERO;
+        boolean actionable = isEnded && (settlement.getStatus() == SettlementStatus.PENDING_CONFIRMATION);
+
         return SettlementOverviewDTO.builder()
                 .settlementId(settlement.getId())
                 .periodKey(periodKey)
@@ -220,13 +333,16 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
                 .commissionRate(settlement.getCommissionRate())
                 .commissionRateDisplay(finalCommissionRateDisplay)
                 .totalCommissionFee(settlement.getTotalCommissionFee())
+                .originalNetRevenue(baseNetRevenue)
+                .adjustmentAmount(adj)
                 .netRevenue(settlement.getNetRevenue())
                 .totalOrders(settlement.getTotalOrders())
                 .status(settlement.getStatus().name())
                 .statusDisplayName(settlement.getStatus().getDisplayName())
                 .statusBadgeClass(settlement.getStatus().getBadgeClass())
                 .confirmedAt(settlement.getConfirmedAt())
-                .actionable(settlement.getStatus() == SettlementStatus.PENDING_CONFIRMATION)
+                .actionable(actionable)
+                .isInProgress(!isEnded)
                 .claimStatus(claimStatus)
                 .claimReason(claimReason)
                 .claimDescription(claimDescription)
@@ -364,6 +480,9 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
 
             SettlementStatus sStatus = s.getStatus() != null ? s.getStatus() : SettlementStatus.PENDING_CONFIRMATION;
 
+            BigDecimal adj = s.getAdjustmentAmount() != null ? s.getAdjustmentAmount() : BigDecimal.ZERO;
+            boolean isEnded = !LocalDateTime.now().isBefore(s.getEndDate());
+
             return vn.codegyme.meal_choice.dto.settlement.AdminSettlementItemDTO.builder()
                     .settlementId(s.getId())
                     .merchantId(merchantId)
@@ -379,12 +498,14 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
                     .totalDiscount(s.getTotalDiscount() != null ? s.getTotalDiscount() : BigDecimal.ZERO)
                     .commissionRate(s.getCommissionRate() != null ? s.getCommissionRate() : BigDecimal.ZERO)
                     .totalCommissionFee(s.getTotalCommissionFee() != null ? s.getTotalCommissionFee() : BigDecimal.ZERO)
+                    .adjustmentAmount(adj)
                     .netRevenue(s.getNetRevenue() != null ? s.getNetRevenue() : BigDecimal.ZERO)
                     .totalOrders(s.getTotalOrders() != null ? s.getTotalOrders() : 0L)
                     .status(sStatus.name())
                     .statusDisplayName(sStatus.getDisplayName())
                     .statusBadgeClass(sStatus.getBadgeClass())
                     .confirmedAt(s.getConfirmedAt())
+                    .isInProgress(!isEnded)
                     .hasClaim(hasClaim)
                     .claimId(claim != null ? claim.getId() : null)
                     .claimReason(claim != null && claim.getReason() != null ? claim.getReason().name() : null)
@@ -432,21 +553,29 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
 
     @Override
     @Transactional
-    public vn.codegyme.meal_choice.dto.settlement.AdminSettlementItemDTO resolveClaim(Long claimId, String adminNote) {
+    public vn.codegyme.meal_choice.dto.settlement.AdminSettlementItemDTO resolveClaim(Long claimId, BigDecimal adjustmentAmount, String adminNote) {
         SettlementClaim claim = claimRepository.findById(claimId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khiếu nại ID: " + claimId));
 
+        BigDecimal adj = adjustmentAmount != null ? adjustmentAmount : BigDecimal.ZERO;
         claim.setStatus("RESOLVED");
+        claim.setAdjustmentAmount(adj);
         claim.setAdminNote(adminNote != null && !adminNote.isBlank() ? adminNote : "Admin đã xác minh và chấp thuận khiếu nại.");
         claimRepository.save(claim);
 
         MerchantSettlement settlement = claim.getSettlement();
+        settlement.setAdjustmentAmount(adj);
+        BigDecimal baseNet = settlement.getTotalGrossRevenue()
+                .subtract(settlement.getTotalDiscount())
+                .subtract(settlement.getTotalCommissionFee());
+        if (baseNet.compareTo(BigDecimal.ZERO) < 0) baseNet = BigDecimal.ZERO;
+        settlement.setNetRevenue(baseNet.add(adj));
         settlement.setStatus(SettlementStatus.CONFIRMED);
         settlement.setConfirmedAt(LocalDateTime.now());
         settlementRepository.save(settlement);
 
-        log.info("Admin đã giải quyết khiếu nại ID={} thành công (RESOLVED). Settlement ID={} chuyển sang CONFIRMED",
-                claimId, settlement.getId());
+        log.info("Admin đã giải quyết khiếu nại ID={} thành công (RESOLVED). Điều chỉnh: {}, Settlement ID={} chuyển sang CONFIRMED",
+                claimId, adj, settlement.getId());
 
         return getAdminSettlements(null, settlement.getMerchant().getMerchantEmail()).stream()
                 .filter(dto -> dto.getSettlementId().equals(settlement.getId()))
@@ -479,6 +608,23 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
 
     private String formatPeriodLabel(String periodKey) {
         if (periodKey == null || periodKey.isBlank()) return "Kỳ hiện tại";
+        if (periodKey.contains("-W")) {
+            try {
+                String[] parts = periodKey.split("-W");
+                int year = Integer.parseInt(parts[0]);
+                int weekNum = Integer.parseInt(parts[1]);
+                LocalDate monday = LocalDate.of(year, 1, 4)
+                        .with(WeekFields.ISO.weekOfWeekBasedYear(), weekNum)
+                        .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                LocalDate sunday = monday.plusDays(6);
+                return String.format("Tuần %02d/%d (%02d/%02d - %02d/%02d)",
+                        weekNum, year,
+                        monday.getDayOfMonth(), monday.getMonthValue(),
+                        sunday.getDayOfMonth(), sunday.getMonthValue());
+            } catch (Exception e) {
+                return periodKey;
+            }
+        }
         try {
             java.time.YearMonth ym = java.time.YearMonth.parse(periodKey);
             return String.format("Tháng %02d/%d", ym.getMonthValue(), ym.getYear());

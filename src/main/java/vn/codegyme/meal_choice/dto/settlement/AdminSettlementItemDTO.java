@@ -30,12 +30,14 @@ public class AdminSettlementItemDTO {
     private BigDecimal commissionRate;
     private BigDecimal totalCommissionFee;
     private BigDecimal netRevenue;
+    private BigDecimal adjustmentAmount;
     private Long totalOrders;
 
     private String status;
     private String statusDisplayName;
     private String statusBadgeClass;
     private LocalDateTime confirmedAt;
+    private boolean isInProgress;
 
     private boolean hasClaim;
     private Long claimId;

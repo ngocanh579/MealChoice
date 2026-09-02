@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum SettlementStatus {
+    IN_PROGRESS("Đang diễn ra", "bg-info-subtle text-info fw-bold"),
     PENDING_CONFIRMATION("Chờ xác nhận", "bg-warning text-dark"),
     CONFIRMED("Đã xác nhận", "bg-success text-white"),
     DISPUTED("Đang khiếu nại", "bg-danger text-white");

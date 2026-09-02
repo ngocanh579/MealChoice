@@ -19,7 +19,11 @@ public class TrustedPartnerRequest {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "merchant_id", nullable = false)
+    @JoinColumn(
+            name = "merchant_id",
+            nullable = false,
+            columnDefinition = "VARCHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    )
     private Merchant merchant;
 
     @Enumerated(EnumType.STRING)

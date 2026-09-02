@@ -337,6 +337,7 @@ CREATE TABLE orders (
     total_amount DECIMAL(12, 2) NOT NULL,
     cancel_reason VARCHAR(500) NULL,
     estimated_delivery_time DATETIME NULL,
+    completed_at DATETIME(6) NULL,
     created_at DATETIME(6) NULL,
     updated_at DATETIME(6) NULL,
     CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users (id),
@@ -411,6 +412,7 @@ CREATE TABLE IF NOT EXISTS merchant_settlements (
     total_commission_fee DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
     net_revenue DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
     total_orders BIGINT NOT NULL DEFAULT 0,
+    adjustment_amount DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
     status VARCHAR(30) NOT NULL DEFAULT 'PENDING_CONFIRMATION',
     confirmed_at DATETIME NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -429,11 +431,26 @@ CREATE TABLE IF NOT EXISTS settlement_claims (
     reason VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
     evidence_image_url VARCHAR(500) NULL,
+    adjustment_amount DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
     status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
     admin_note TEXT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_claims_settlement FOREIGN KEY (settlement_id) REFERENCES merchant_settlements (id) ON DELETE CASCADE,
     CONSTRAINT fk_claims_merchant FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+ 
+-- =============================================================================
+-- 25. BẢNG TRUSTED_PARTNER_REQUESTS (Yêu cầu đăng ký Đối tác thân thiết của Merchant)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS trusted_partner_requests (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    merchant_id VARCHAR(36) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    revenue DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    reject_reason VARCHAR(500) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at DATETIME NULL,
+    CONSTRAINT fk_trusted_partner_merchant FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 

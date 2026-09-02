@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -37,6 +38,10 @@ public class SettlementClaim {
 
     @Column(name = "evidence_image_url", length = 500)
     private String evidenceImageUrl;
+
+    @Column(name = "adjustment_amount", nullable = false, precision = 14, scale = 2)
+    @Builder.Default
+    private BigDecimal adjustmentAmount = BigDecimal.ZERO;
 
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default

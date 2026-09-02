@@ -3,7 +3,6 @@ package vn.codegyme.meal_choice.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.codegyme.meal_choice.dto.settlement.AdminSettlementItemDTO;
 import vn.codegyme.meal_choice.dto.settlement.SettlementOverviewDTO;
@@ -11,6 +10,7 @@ import vn.codegyme.meal_choice.entity.MerchantSettlement;
 import vn.codegyme.meal_choice.repository.MerchantSettlementRepository;
 import vn.codegyme.meal_choice.service.MerchantSettlementService;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -62,10 +62,23 @@ public class AdminSettlementRestController {
     @PostMapping("/claims/{claimId}/resolve")
     public ResponseEntity<?> resolveClaim(
             @PathVariable("claimId") Long claimId,
-            @RequestBody(required = false) Map<String, String> body) {
+            @RequestBody(required = false) Map<String, Object> body) {
         try {
-            String adminNote = body != null ? body.get("adminNote") : null;
-            AdminSettlementItemDTO updated = settlementService.resolveClaim(claimId, adminNote);
+            String adminNote = null;
+            BigDecimal adjustmentAmount = BigDecimal.ZERO;
+
+            if (body != null) {
+                if (body.get("adminNote") != null) {
+                    adminNote = body.get("adminNote").toString();
+                }
+                if (body.get("adjustmentAmount") != null) {
+                    try {
+                        adjustmentAmount = new BigDecimal(body.get("adjustmentAmount").toString().trim());
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            AdminSettlementItemDTO updated = settlementService.resolveClaim(claimId, adjustmentAmount, adminNote);
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Đã phê duyệt khiếu nại thành công! Kỳ đối soát được chuyển sang trạng thái ĐÃ XÁC NHẬN để thực hiện lệnh chi trả tiền (Payout).",

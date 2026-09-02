@@ -64,6 +64,10 @@ public class MerchantSettlement {
     @Builder.Default
     private Long totalOrders = 0L;
 
+    @Column(name = "adjustment_amount", nullable = false, precision = 14, scale = 2)
+    @Builder.Default
+    private BigDecimal adjustmentAmount = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default

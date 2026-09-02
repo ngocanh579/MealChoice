@@ -117,6 +117,16 @@
             </div>
 
             <div class="d-flex align-items-center gap-2 flex-wrap">
+                <!-- Chọn loại kỳ: Tháng hoặc Tuần -->
+                <div class="btn-group btn-group-sm rounded-pill p-1 bg-light border shadow-sm" role="group">
+                    <button type="button" id="btnPeriodTypeMonth" class="btn btn-sm rounded-pill fw-semibold px-3 active btn-danger text-white" onclick="switchPeriodType('MONTH')">
+                        <i class="bi bi-calendar-month me-1"></i>Theo Tháng
+                    </button>
+                    <button type="button" id="btnPeriodTypeWeek" class="btn btn-sm rounded-pill fw-semibold px-3 text-muted" onclick="switchPeriodType('WEEK')">
+                        <i class="bi bi-calendar-week me-1"></i>Theo Tuần
+                    </button>
+                </div>
+
                 <!-- Chọn kỳ đối soát -->
                 <div class="d-flex align-items-center gap-2">
                     <label for="periodSelect" class="text-muted small fw-semibold text-nowrap">
@@ -134,17 +144,35 @@
             </div>
         </div>
 
-        <!-- Formula Callout -->
-        <div class="formula-callout d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-info-circle-fill text-warning fs-5"></i>
-                <div class="small">
-                    <strong>Công thức đối soát:</strong>
-                    <span class="text-dark">Doanh thu thực nhận = Giá sản phẩm - Khuyến mãi - Chiết khấu sàn</span>
+        <!-- Formula Callout & In-Progress Alert -->
+        <div class="d-flex flex-column gap-2.5">
+            <div class="formula-callout d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle-fill text-warning fs-5"></i>
+                    <div class="small">
+                        <strong>Công thức đối soát:</strong>
+                        <span class="text-dark">Doanh thu thực nhận = Giá sản phẩm - Khuyến mãi - Chiết khấu sàn</span>
+                    </div>
+                </div>
+                <div class="badge bg-white text-dark border shadow-sm px-2.5 py-1.5 small">
+                    Chiết khấu: <strong>0.001%</strong> (&lt;200tr) | <strong>0.0005%</strong> (&ge;200tr)
                 </div>
             </div>
-            <div class="badge bg-white text-dark border shadow-sm px-2.5 py-1.5 small">
-                Chiết khấu: <strong>0.001%</strong> (&lt;200tr) | <strong>0.0005%</strong> (&ge;200tr)
+
+            <!-- In-Progress Notice Box (Chỉ hiện khi kỳ đang diễn ra) -->
+            <div id="inProgressNoticeBox" class="alert alert-info border-start border-info border-4 rounded-4 shadow-sm p-3 mb-0 d-none">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 bg-info bg-opacity-25 text-info fs-5 flex-shrink-0">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="flex-grow-1 small">
+                        <strong class="text-dark">Kỳ đối soát này hiện đang diễn ra (chưa kết thúc kỳ).</strong>
+                        <div class="text-secondary mt-0.5">
+                            Doanh thu và danh sách đơn hàng đang được cập nhật tạm tính liên tục theo thời gian thực.
+                            Bạn sẽ có thể <strong>Xác nhận</strong> hoặc <strong>Khiếu nại</strong> sau khi kỳ kết thúc vào lúc <span id="inProgressEndTimeText" class="fw-semibold text-dark"></span>.
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -204,7 +232,11 @@
                     <div>
                         <span class="text-muted small fw-medium">Doanh thu thực nhận</span>
                         <h4 class="fw-bold mb-0 mt-1 text-success fs-4" id="cardNetRevenue">0 ₫</h4>
-                        <small class="text-success fw-medium font-size-12">Số tiền được thanh toán</small>
+                        <small class="text-success fw-medium font-size-12 d-block">Số tiền được thanh toán</small>
+                        <div id="cardAdjustmentInfo" class="mt-1 font-size-11 text-muted d-none">
+                            <span>Gốc: <strong id="cardOriginalNetRevenue">0 ₫</strong></span>
+                            <span class="badge bg-success-subtle text-success px-1.5 py-0.5 ms-1" id="cardAdjustmentBadge"></span>
+                        </div>
                     </div>
                 </div>
             </div>

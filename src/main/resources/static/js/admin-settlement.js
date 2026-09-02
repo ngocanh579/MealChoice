@@ -129,6 +129,8 @@ function openClaimHandleModal(settlementId, claimId, reasonName, description, ev
     const actionButtonsContainer = document.getElementById('claimActionButtonsContainer');
     const adminNoteRequiredMark = document.getElementById('adminNoteRequiredMark');
     const adminNoteHelpText = document.getElementById('adminNoteHelpText');
+    const adjustmentContainer = document.getElementById('adjustmentAmountContainer');
+    const adjustmentAmountInput = document.getElementById('adjustmentAmountInput');
 
     if (claimStatus === 'RESOLVED') {
         badgeContainer.innerHTML = '<span class="badge bg-success">Đã chấp thuận</span>';
@@ -140,6 +142,7 @@ function openClaimHandleModal(settlementId, claimId, reasonName, description, ev
         if (actionButtonsContainer) actionButtonsContainer.classList.add('d-none');
         if (adminNoteRequiredMark) adminNoteRequiredMark.classList.add('d-none');
         if (adminNoteHelpText) adminNoteHelpText.textContent = 'Ghi chú giải trình khi Admin duyệt khiếu nại (Chế độ xem).';
+        if (adjustmentContainer) adjustmentContainer.classList.add('d-none');
         adminNoteInput.setAttribute('readonly', 'true');
     } else if (claimStatus === 'REJECTED') {
         badgeContainer.innerHTML = '<span class="badge bg-danger">Đã từ chối</span>';
@@ -151,6 +154,7 @@ function openClaimHandleModal(settlementId, claimId, reasonName, description, ev
         if (actionButtonsContainer) actionButtonsContainer.classList.add('d-none');
         if (adminNoteRequiredMark) adminNoteRequiredMark.classList.add('d-none');
         if (adminNoteHelpText) adminNoteHelpText.textContent = 'Lý do từ chối gửi cho Merchant (Chế độ xem).';
+        if (adjustmentContainer) adjustmentContainer.classList.add('d-none');
         adminNoteInput.setAttribute('readonly', 'true');
     } else {
         badgeContainer.innerHTML = '<span class="badge bg-warning text-dark">Chờ xử lý</span>';
@@ -158,6 +162,8 @@ function openClaimHandleModal(settlementId, claimId, reasonName, description, ev
         if (actionButtonsContainer) actionButtonsContainer.classList.remove('d-none');
         if (adminNoteRequiredMark) adminNoteRequiredMark.classList.remove('d-none');
         if (adminNoteHelpText) adminNoteHelpText.textContent = 'Nội dung này sẽ hiển thị trực tiếp trên giao diện của Merchant.';
+        if (adjustmentContainer) adjustmentContainer.classList.remove('d-none');
+        if (adjustmentAmountInput) adjustmentAmountInput.value = '0';
         adminNoteInput.removeAttribute('readonly');
     }
 
@@ -179,6 +185,8 @@ function showLightbox(src) {
 async function executeClaimAction(action) {
     const claimId = document.getElementById('handleClaimId').value;
     const adminNote = document.getElementById('adminNoteInput').value;
+    const adjustmentAmountInput = document.getElementById('adjustmentAmountInput');
+    const adjustmentAmount = adjustmentAmountInput ? parseFloat(adjustmentAmountInput.value || 0) : 0;
 
     if (action === 'reject' && !adminNote.trim()) {
         alert('Vui lòng nhập ghi chú giải trình lý do từ chối để Merchant nắm thông tin!');
@@ -186,10 +194,11 @@ async function executeClaimAction(action) {
         return;
     }
 
-    const isConfirm = confirm(action === 'resolve' 
-        ? 'Bạn có chắc chắn muốn CHẤP THUẬN khiếu nại này và chuyển kỳ đối soát sang trạng thái ĐÃ XÁC NHẬN để chi trả tiền?' 
-        : 'Bạn có chắc chắn muốn TỪ CHỐI khiếu nại này?');
-    
+    const confirmMsg = action === 'resolve'
+        ? `Bạn có chắc chắn muốn CHẤP THUẬN khiếu nại này với số tiền điều chỉnh là ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(adjustmentAmount)} và chuyển kỳ đối soát sang trạng thái ĐÃ XÁC NHẬN?`
+        : 'Bạn có chắc chắn muốn TỪ CHỐI khiếu nại này?';
+
+    const isConfirm = confirm(confirmMsg);
     if (!isConfirm) return;
 
     const btnResolve = document.getElementById('btnResolveClaim');
@@ -199,10 +208,14 @@ async function executeClaimAction(action) {
 
     try {
         const url = `/api/admin/settlements/claims/${claimId}/${action}`;
+        const payload = action === 'resolve'
+            ? { adjustmentAmount: adjustmentAmount, adminNote: adminNote.trim() }
+            : { adminNote: adminNote.trim() };
+
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminNote: adminNote.trim() })
+            body: JSON.stringify(payload)
         });
 
         const result = await res.json();

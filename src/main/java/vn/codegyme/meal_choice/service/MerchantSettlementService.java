@@ -14,6 +14,8 @@ public interface MerchantSettlementService {
 
     List<SettlementPeriodOptionDTO> getAvailablePeriods(UUID merchantId);
 
+    List<SettlementPeriodOptionDTO> getAvailablePeriods(UUID merchantId, String periodType);
+
     SettlementOverviewDTO getSettlementOverview(UUID merchantId, String periodKey, String periodType);
 
     SettlementOverviewDTO confirmSettlement(UUID merchantId, Long settlementId);
@@ -26,7 +28,7 @@ public interface MerchantSettlementService {
 
     AdminSettlementStatsDTO getAdminSettlementStats();
 
-    AdminSettlementItemDTO resolveClaim(Long claimId, String adminNote);
+    AdminSettlementItemDTO resolveClaim(Long claimId, java.math.BigDecimal adjustmentAmount, String adminNote);
 
     AdminSettlementItemDTO rejectClaim(Long claimId, String adminNote);
 }
