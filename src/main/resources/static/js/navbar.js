@@ -1,4 +1,8 @@
 // ==================== MEALCHOICE NAVBAR & GLOBAL UTILITIES ====================
+//
+// Phần giỏ hàng đã chuyển sang /js/cart.js (giỏ hàng lưu trên server).
+// File này chỉ còn xử lý: phiên đăng nhập, refresh token, menu navbar,
+// yêu thích món và theo dõi quán.
 
 (function () {
     if (window.__MEALCHOICE_NAVBAR_INITIALIZED__) {
@@ -8,12 +12,12 @@
 
     // ==================== AUTH & SESSION ====================
 
-    // Hàm xóa sạch Session và Cookie khi đăng xuất/hết hạn phiên
     function clearAuthSession() {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("displayName");
         localStorage.removeItem("userRoles");
+        localStorage.removeItem("mealchoice_cart"); // dọn giỏ hàng cũ của bản localStorage
         document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     }
 
@@ -39,7 +43,7 @@
         }
     }
 
-    // ==================== NAVBAR & AUTH FETCH WRAPPER ====================
+    // ==================== AUTH FETCH WRAPPER ====================
 
     function getAuthHeaders() {
         const token = localStorage.getItem("accessToken");
@@ -51,7 +55,6 @@
     // Biến Lock (Promise Singleton) tránh Race Condition khi nhiều request 401 cùng lúc
     let refreshTokenPromise = null;
 
-    // Hàm thực hiện Refresh Token đơn nhiệm (Single-flight)
     async function doRefreshToken() {
         if (refreshTokenPromise) {
             return refreshTokenPromise;
@@ -68,7 +71,7 @@
             try {
                 const response = await fetch("/api/auth/refresh-token", {
                     method: "POST",
-                    headers: { 
+                    headers: {
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
@@ -87,7 +90,6 @@
                     }
                 }
 
-                // Refresh Token hết hạn hoặc không hợp lệ -> Đăng xuất người dùng
                 console.warn("Refresh Token đã hết hạn hoặc không hợp lệ. Đăng xuất...");
                 clearAuthSession();
                 window.location.href = "/login";
@@ -103,7 +105,7 @@
         return refreshTokenPromise;
     }
 
-    // Wrapper fetch thông minh: Tự động refresh token và retry request khi dính HTTP 401 hoặc redirect
+    // Tự động refresh token và gọi lại request khi dính HTTP 401 hoặc bị chuyển hướng
     async function fetchWithAuth(url, options = {}) {
         options.headers = {
             "Accept": "application/json",
@@ -113,10 +115,10 @@
 
         let response = await fetch(url, options);
 
-        // Khi bị 401 hoặc chuyển hướng về /login
-        const isUnauthorized = response.status === 401 || (response.redirected && response.url.includes("/login"));
+        const isUnauthorized =
+            response.status === 401 || (response.redirected && response.url.includes("/login"));
+
         if (isUnauthorized) {
-            console.log("Phiên đăng nhập hết hạn hoặc chưa xác thực (401/redirect), đang tự động cấp lại token...");
             const newToken = await doRefreshToken();
             if (newToken) {
                 options.headers = {
@@ -132,14 +134,14 @@
 
     function getUserRoles() {
         try {
-            return JSON.parse(
-                localStorage.getItem("userRoles") || "[]"
-            );
+            return JSON.parse(localStorage.getItem("userRoles") || "[]");
         } catch (error) {
             console.error("Không đọc được userRoles:", error);
             return [];
         }
     }
+
+    // ==================== NAVBAR ====================
 
     function initNavbar() {
         const displayName = localStorage.getItem("displayName");
@@ -193,8 +195,7 @@
         }
 
         // Redirect sau login
-        const redirectUrl =
-            sessionStorage.getItem("redirectAfterLogin");
+        const redirectUrl = sessionStorage.getItem("redirectAfterLogin");
 
         if (redirectUrl && isLoggedIn) {
             sessionStorage.removeItem("redirectAfterLogin");
@@ -218,14 +219,9 @@
 
             const data = await response.json();
 
-            const registerNav =
-                document.getElementById("registerMerchantNav");
-
-            const pendingNav =
-                document.getElementById("merchantPendingNav");
-
-            const merchantNav =
-                document.getElementById("merchantRoleNav");
+            const registerNav = document.getElementById("registerMerchantNav");
+            const pendingNav = document.getElementById("merchantPendingNav");
+            const merchantNav = document.getElementById("merchantRoleNav");
 
             registerNav?.classList.add("d-none");
             pendingNav?.classList.add("d-none");
@@ -249,7 +245,7 @@
         initNavbar();
     }
 
-    // ==================== WISHLIST ====================
+    // ==================== YÊU THÍCH MÓN ====================
 
     document.addEventListener("click", async e => {
         const button = e.target.closest(".btn-wishlist");
@@ -259,15 +255,11 @@
         e.stopPropagation();
 
         const isLoggedIn =
-            localStorage.getItem("displayName") ||
-            localStorage.getItem("accessToken");
+            localStorage.getItem("displayName") || localStorage.getItem("accessToken");
 
         if (!isLoggedIn) {
             alert("Vui lòng đăng nhập để thực hiện chức năng này!");
-            sessionStorage.setItem(
-                "redirectAfterLogin",
-                window.location.href
-            );
+            sessionStorage.setItem("redirectAfterLogin", window.location.href);
             window.location.href = "/login";
             return;
         }
@@ -303,7 +295,7 @@
         }
     });
 
-    // ==================== FOLLOW MERCHANT ====================
+    // ==================== THEO DÕI QUÁN ====================
 
     document.addEventListener("click", async e => {
         const button = e.target.closest(".btn-follow-merchant");
@@ -313,15 +305,11 @@
         e.stopPropagation();
 
         const isLoggedIn =
-            localStorage.getItem("displayName") ||
-            localStorage.getItem("accessToken");
+            localStorage.getItem("displayName") || localStorage.getItem("accessToken");
 
         if (!isLoggedIn) {
             alert("Vui lòng đăng nhập để thực hiện chức năng này!");
-            sessionStorage.setItem(
-                "redirectAfterLogin",
-                window.location.href
-            );
+            sessionStorage.setItem("redirectAfterLogin", window.location.href);
             window.location.href = "/login";
             return;
         }
@@ -329,15 +317,11 @@
         const merchantId = button.dataset.merchantId;
         if (!merchantId) return;
 
-        const isFollowed =
-            button.classList.contains("btn-danger");
+        const isFollowed = button.classList.contains("btn-danger");
 
         const url = isFollowed
             ? `/api/merchants/${merchantId}/unfollow`
             : `/api/merchants/${merchantId}/follow`;
-
-        console.log("=== FOLLOW DEBUG === url:", url, "merchantId:", merchantId, "isFollowed:", isFollowed);
-        console.log("=== FOLLOW DEBUG === accessToken:", localStorage.getItem("accessToken") ? "EXISTS" : "MISSING");
 
         try {
             const response = await fetchWithAuth(url, {
@@ -348,11 +332,7 @@
                 }
             });
 
-            console.log("=== FOLLOW DEBUG === response status:", response.status, response.statusText);
-
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error("=== FOLLOW DEBUG === error response body:", errorText);
                 throw new Error("Follow request failed: " + response.status);
             }
 
@@ -360,30 +340,30 @@
             const contentType = response.headers.get("content-type");
             if (contentType && contentType.includes("application/json")) {
                 data = await response.json();
-                console.log("=== FOLLOW DEBUG === response data:", JSON.stringify(data));
             }
 
-            const newFollowed = typeof data.followed !== 'undefined' ? data.followed : !isFollowed;
+            const newFollowed =
+                typeof data.followed !== "undefined" ? data.followed : !isFollowed;
 
-            // Cập nhật tất cả các nút follow của merchant này trên trang
-            document.querySelectorAll(`.btn-follow-merchant[data-merchant-id="${merchantId}"]`).forEach(btn => {
-                btn.classList.toggle("btn-danger", newFollowed);
-                btn.classList.toggle("btn-outline-danger", !newFollowed);
+            document
+                .querySelectorAll(`.btn-follow-merchant[data-merchant-id="${merchantId}"]`)
+                .forEach(btn => {
+                    btn.classList.toggle("btn-danger", newFollowed);
+                    btn.classList.toggle("btn-outline-danger", !newFollowed);
 
-                const btnIcon = btn.querySelector("i");
-                const btnText = btn.querySelector("span");
+                    const btnIcon = btn.querySelector("i");
+                    const btnText = btn.querySelector("span");
 
-                if (btnIcon) {
-                    btnIcon.className = newFollowed ? "bi bi-check-lg me-1" : "bi bi-plus-lg me-1";
-                }
-                if (btnText) {
-                    btnText.innerText = newFollowed ? "Đang theo dõi" : "Theo dõi";
-                }
-            });
+                    if (btnIcon) {
+                        btnIcon.className = newFollowed ? "bi bi-check-lg me-1" : "bi bi-plus-lg me-1";
+                    }
+                    if (btnText) {
+                        btnText.innerText = newFollowed ? "Đang theo dõi" : "Theo dõi";
+                    }
+                });
 
-            // Cập nhật số lượng người theo dõi trên trang Cửa hàng nếu có
             const followerCountEl = document.getElementById("storeFollowerCount");
-            if (followerCountEl && typeof data.followerCount !== 'undefined') {
+            if (followerCountEl && typeof data.followerCount !== "undefined") {
                 followerCountEl.innerText = data.followerCount;
             }
 
@@ -393,256 +373,51 @@
         }
     });
 
-    // ==================== CART ====================
 
-    function getGlobalCart() {
-        try {
-            return JSON.parse(
-                localStorage.getItem("mealchoice_cart") || "[]"
-            );
-        } catch (error) {
-            console.error("Lỗi đọc giỏ hàng:", error);
-            return [];
-        }
-    }
+    // ==================== CHỐNG ẢNH LỖI LẶP VÔ HẠN ====================
+    //
+    // Trước đây avatar dùng onerror="this.src='/images/default-avatar.png'".
+    // File đó không tồn tại, nên mỗi lần lỗi lại gán đúng URL vừa lỗi ->
+    // trình duyệt bắn request 404 liên tục cho tới khi rời trang.
+    //
+    // Bộ lọc dưới đây bắt sự kiện error ở pha capture (sự kiện error của <img>
+    // không nổi bọt nên bắt buộc dùng capture), thay ảnh bằng ảnh dự phòng ĐÚNG
+    // MỘT LẦN rồi đánh dấu; lần lỗi sau không đổi src nữa. Áp dụng cho mọi <img>
+    // trên toàn site, kể cả ảnh do JS render sau này.
 
-    function saveGlobalCart(cart) {
-        try {
-            localStorage.setItem(
-                "mealchoice_cart",
-                JSON.stringify(cart)
-            );
+    const DEFAULT_IMAGE_FALLBACK = "/images/default-food.svg";
 
-            window.dispatchEvent(new Event("cartUpdated"));
-        } catch (error) {
-            console.error("Lỗi lưu giỏ hàng:", error);
-        }
-    }
+    document.addEventListener("error", event => {
+        const img = event.target;
 
-    function addToCartGlobal(
-        idOrItem,
-        name,
-        price,
-        discountPrice,
-        serviceFee = 0,
-        merchantId = null,
-        merchantName = null,
-        image = null
-    ) {
-        let itemToAdd;
-        if (typeof idOrItem === "object" && idOrItem !== null) {
-            itemToAdd = {
-                id: idOrItem.id,
-                name: idOrItem.name || idOrItem.foodName || "Món ăn",
-                price: Number(idOrItem.price || 0),
-                discountPrice: idOrItem.discountPrice !== null && idOrItem.discountPrice !== undefined
-                    ? Number(idOrItem.discountPrice)
-                    : Number(idOrItem.price || 0),
-                serviceFee: Number(idOrItem.serviceFee || 0),
-                merchantId: idOrItem.merchantId || null,
-                merchantName: idOrItem.merchantName || null,
-                image: idOrItem.image || null,
-                quantity: Number(idOrItem.quantity || 1)
-            };
-        } else {
-            itemToAdd = {
-                id: idOrItem,
-                name: name || "Món ăn",
-                price: Number(price || 0),
-                discountPrice: discountPrice !== null && discountPrice !== undefined
-                    ? Number(discountPrice)
-                    : Number(price || 0),
-                serviceFee: Number(serviceFee || 0),
-                merchantId: merchantId || null,
-                merchantName: merchantName || null,
-                image: image || null,
-                quantity: 1
-            };
+        if (!img || img.tagName !== "IMG") {
+            return;
         }
 
-        const cart = getGlobalCart();
-
-        // Kiểm tra nếu giỏ hàng đã có món của quán khác
-        if (cart.length > 0 && itemToAdd.merchantId) {
-            const existingMerchantId = cart[0].merchantId;
-            if (existingMerchantId && existingMerchantId !== itemToAdd.merchantId) {
-                const confirmClear = confirm("Giỏ hàng của bạn đang có món của cửa hàng khác. Bạn có muốn xóa giỏ hàng cũ để thêm món của quán này không?");
-                if (confirmClear) {
-                    cart.length = 0;
-                } else {
-                    return;
-                }
-            }
+        // Đã thay ảnh dự phòng mà vẫn lỗi: dừng hẳn, không thử lại nữa
+        if (img.dataset.fallbackApplied === "1") {
+            img.onerror = null;
+            return;
         }
 
-        const existing = cart.find(item => item.id === itemToAdd.id);
+        img.dataset.fallbackApplied = "1";
+        img.onerror = null;
 
-        if (existing) {
-            existing.quantity += itemToAdd.quantity;
-            if (itemToAdd.merchantId && !existing.merchantId) existing.merchantId = itemToAdd.merchantId;
-            if (itemToAdd.merchantName && !existing.merchantName) existing.merchantName = itemToAdd.merchantName;
-            if (itemToAdd.image && !existing.image) existing.image = itemToAdd.image;
-        } else {
-            cart.push(itemToAdd);
+        const fallback = img.dataset.fallback || DEFAULT_IMAGE_FALLBACK;
+
+        // Ảnh dự phòng trùng với ảnh vừa lỗi thì đừng tải lại
+        if (img.getAttribute("src") === fallback) {
+            return;
         }
 
-        saveGlobalCart(cart);
-        updateNavbarCartUI();
-    }
+        img.src = fallback;
+    }, true);
 
-    function changeQuantityGlobal(id, delta) {
-        const cart = getGlobalCart();
-        const item = cart.find(item => item.id === id);
+    // ==================== XUẤT RA GLOBAL ====================
 
-        if (!item) return;
-
-        item.quantity += delta;
-
-        if (item.quantity <= 0) {
-            cart.splice(cart.indexOf(item), 1);
-        }
-
-        saveGlobalCart(cart);
-        updateNavbarCartUI();
-    }
-
-    function formatCurrencyGlobal(value) {
-        return new Intl.NumberFormat("vi-VN")
-            .format(Math.round(value)) + " đ";
-    }
-
-    function updateNavbarCartUI() {
-        const countEl = document.getElementById("navbarCartCount");
-        const itemsEl = document.getElementById("navbarCartItems");
-        const totalEl = document.getElementById("navbarCartTotal");
-        const checkoutBtn = document.getElementById("btnNavbarCheckout");
-
-        if (!countEl) return;
-
-        const cart = getGlobalCart();
-
-        let totalItems = 0;
-        let totalPrice = 0;
-
-        if (itemsEl) {
-            itemsEl.innerHTML = "";
-        }
-
-        if (!cart.length) {
-            countEl.innerText = "0";
-
-            if (itemsEl) {
-                itemsEl.innerHTML = `
-                    <div class="text-center py-4 text-muted fs-8">
-                        <i class="bi bi-basket fs-2 d-block opacity-50 mb-1"></i>
-                        <span>Giỏ hàng trống</span>
-                    </div>
-                `;
-            }
-
-            checkoutBtn?.setAttribute("disabled", "true");
-            checkoutBtn?.classList.add("opacity-50");
-
-        } else {
-            checkoutBtn?.removeAttribute("disabled");
-            checkoutBtn?.classList.remove("opacity-50");
-
-            cart.forEach(item => {
-                const price =
-                    item.discountPrice ?? item.price;
-
-                totalItems += item.quantity;
-                totalPrice += price * item.quantity;
-
-                if (!itemsEl) return;
-
-                const div = document.createElement("div");
-
-                div.className =
-                    "d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom border-light-subtle fs-8";
-
-                div.innerHTML = `
-                    <div class="pe-2 overflow-hidden flex-grow-1"
-                         style="max-width: 180px;">
-                        <span class="d-block fw-semibold text-dark text-truncate"
-                              title="${item.name}">
-                            ${item.name}
-                        </span>
-                        <span class="text-danger fw-bold">
-                            ${formatCurrencyGlobal(price)}
-                        </span>
-                    </div>
-
-                    <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
-                        <button type="button"
-                                class="btn btn-xs btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center"
-                                style="width:18px;height:18px;padding:0;"
-                                onclick="changeQuantityGlobal(${item.id}, -1); event.stopPropagation();">
-                            -
-                        </button>
-
-                        <span class="fw-bold"
-                              style="min-width:12px;text-align:center;">
-                            ${item.quantity}
-                        </span>
-
-                        <button type="button"
-                                class="btn btn-xs btn-outline-danger rounded-circle d-flex align-items-center justify-content-center"
-                                style="width:18px;height:18px;padding:0;"
-                                onclick="changeQuantityGlobal(${item.id}, 1); event.stopPropagation();">
-                            +
-                        </button>
-                    </div>
-                `;
-
-                itemsEl.appendChild(div);
-            });
-
-            countEl.innerText = totalItems;
-        }
-
-        if (totalEl) {
-            totalEl.innerText =
-                formatCurrencyGlobal(totalPrice);
-        }
-    }
-
-    // ==================== CART EVENTS ====================
-
-    document.addEventListener("DOMContentLoaded", () => {
-        updateNavbarCartUI();
-
-        document
-            .getElementById("btnNavbarCheckout")
-            ?.addEventListener("click", e => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                if (getGlobalCart().length) {
-                    window.location.href = "/checkout";
-                }
-            });
-    });
-
-    window.addEventListener("cartUpdated", updateNavbarCartUI);
-
-    window.addEventListener("storage", e => {
-        if (e.key === "mealchoice_cart") {
-            updateNavbarCartUI();
-        }
-    });
-
-    // Expose global methods
     window.clearAuthSession = clearAuthSession;
     window.handleLogout = handleLogout;
+    window.getAuthHeaders = getAuthHeaders;
     window.fetchWithAuth = fetchWithAuth;
-    window.addToCartGlobal = addToCartGlobal;
-    window.addToGlobalCart = addToCartGlobal;
-    window.getGlobalCart = getGlobalCart;
-    window.saveGlobalCart = saveGlobalCart;
-    window.updateNavbarCartUI = updateNavbarCartUI;
-    window.changeQuantityGlobal = changeQuantityGlobal;
-    window.formatCurrencyGlobal = formatCurrencyGlobal;
 
 })();
-

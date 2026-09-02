@@ -29,11 +29,12 @@
             <div class="ratio ratio-4x3 position-relative overflow-hidden bg-light">
                 <img th:if="${food.images != null and !#lists.isEmpty(food.images)}"
                      th:src="${food.images[0].imageUrl}"
+                     data-fallback="/images/default-food.svg"
                      class="card-img-top object-fit-cover food-card-img"
                      th:alt="${food.foodName}"
                      loading="lazy">
                 <img th:unless="${food.images != null and !#lists.isEmpty(food.images)}"
-                     src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80"
+                     src="/images/default-food.svg"
                      class="card-img-top object-fit-cover food-card-img"
                      th:alt="${food.foodName}"
                      loading="lazy">

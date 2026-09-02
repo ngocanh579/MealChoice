@@ -1,6 +1,6 @@
 <nav th:fragment="navbar" xmlns:th="http://www.thymeleaf.org"
-    xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-    class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm sticky-top">
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm sticky-top">
 
     <div class="container">
 
@@ -12,7 +12,7 @@
 
         <!-- Nút menu trên mobile -->
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-            aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -40,7 +40,7 @@
                 <!-- Nhà hàng -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle fw-semibold" href="#" id="restDropdown" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+                       data-bs-toggle="dropdown" aria-expanded="false">
                         Nhà hàng
                     </a>
 
@@ -72,7 +72,7 @@
 
                     <a class="btn btn-outline-dark rounded-pill px-3 py-1 text-sm
                               d-flex align-items-center gap-2 dropdown-toggle" href="#" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                       data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
 
                         <i class="bi bi-basket2-fill text-success"></i>
 
@@ -94,7 +94,7 @@
                         <!-- Danh sách món trong giỏ -->
                         <div id="navbarCartItems" class="overflow-y-auto mb-2" style="max-height: 220px;">
 
-                            <!-- Render bằng navbar.js -->
+                            <!-- Render bằng cart.js -->
 
                         </div>
 
@@ -115,15 +115,12 @@
 
                         </div>
 
-                        <!-- Thanh toán -->
-                        <div class="d-flex gap-2">
-
-                            <button type="button" class="btn btn-danger btn-sm rounded-pill
-                                           w-100 fw-bold py-2" id="btnNavbarCheckout"
-                                style="background: linear-gradient(135deg, #ff416c, #ff4b2b); border: none;">
-                                Thanh toán
-                            </button>
-
+                        <!-- Xem giỏ hàng -->
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="/cart"
+                               class="btn btn-outline-danger btn-sm rounded-pill fw-semibold w-100 py-2">
+                                <i class="bi bi-cart3 me-1"></i>Xem chi tiết giỏ hàng
+                            </a>
                         </div>
 
                     </div>
@@ -134,7 +131,7 @@
 
                     <a class="btn btn-danger rounded-pill px-3 py-1 text-sm
                               d-flex align-items-center gap-1 fw-semibold" style="font-size: 0.85rem;"
-                        href="/admin/merchants">
+                       href="/admin/merchants">
 
                         <i class="bi bi-shield-lock-fill"></i>
 
@@ -146,7 +143,7 @@
 
                     <a class="btn btn-danger rounded-pill px-3 py-1 text-sm
                               d-flex align-items-center gap-1 fw-semibold" style="font-size: 0.85rem;"
-                        href="/admin/delivery-partners">
+                       href="/admin/delivery-partners">
 
                         <i class="bi bi-truck"></i>
 
@@ -160,8 +157,8 @@
 
                     <a class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm
                               d-flex align-items-center gap-1 fw-semibold" style="font-size: 0.85rem;"
-                        th:href="${isMerchantBlocked} ? '#' : '/merchant/dashboard'"
-                        th:attr="data-blocked=${isMerchantBlocked}" id="merchantChannelBtn">
+                       th:href="${isMerchantBlocked} ? '#' : '/merchant/dashboard'"
+                       th:attr="data-blocked=${isMerchantBlocked}" id="merchantChannelBtn">
 
                         <i class="bi bi-shop"></i>
 
@@ -175,7 +172,7 @@
                     th:classappend="${(isMerchant != null and isMerchant) or (isAdmin != null and isAdmin)} ? 'd-none' : ''">
 
                     <a class="nav-link fw-semibold text-danger d-flex align-items-center gap-1"
-                        href="/merchant/register">
+                       href="/merchant/register">
 
                         <i class="bi bi-plus-circle"></i>
 
@@ -204,13 +201,13 @@
                 <li class="nav-item dropdown" id="userDropdownNav" th:classappend="${isLoggedIn} ? '' : 'd-none'">
 
                     <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 fw-semibold" href="#"
-                        id="userMenuDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                       id="userMenuDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
 
                         <!-- Avatar -->
-                        <img th:src="${currentUserAvatar != null ? currentUserAvatar : '/images/default-avatar.svg'}"
-                            alt="Avatar" id="navbarUserAvatar" class="rounded-circle border"
-                            style="width: 32px; height: 32px; object-fit: cover;"
-                            onerror="this.src='/images/default-avatar.png'">
+                        <img th:src="${currentUserAvatar != null and !currentUserAvatar.isBlank() ? currentUserAvatar : '/images/default-avatar.svg'}"
+                             alt="Ảnh đại diện" id="navbarUserAvatar" class="rounded-circle border"
+                             style="width: 32px; height: 32px; object-fit: cover;"
+                             data-fallback="/images/default-avatar.svg">
 
                         <span th:text="${currentUserName != null ? currentUserName : 'Tài khoản'}" id="navbarUserName">
                             Tài khoản
@@ -272,7 +269,7 @@
 
     <!-- POPUP MERCHANT BỊ KHÓA -->
     <div class="modal fade" id="merchantBlockedModal" tabindex="-1" aria-labelledby="merchantBlockedModalLabel"
-        aria-hidden="true">
+         aria-hidden="true">
 
         <div class="modal-dialog modal-dialog-centered">
 
@@ -355,5 +352,8 @@
 
     <!-- JS xử lý Navbar -->
     <script th:src="@{/js/navbar.js}"></script>
+
+    <!-- JS giỏ hàng, đồng bộ với /api/cart. Phải nạp SAU navbar.js -->
+    <script th:src="@{/js/cart.js}"></script>
 
 </nav>
