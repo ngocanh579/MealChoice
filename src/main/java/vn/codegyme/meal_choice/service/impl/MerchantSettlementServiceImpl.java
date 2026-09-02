@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -318,8 +319,35 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
                 && settlement.getCommissionRate().compareTo(RATE_ABOVE_200M) <= 0
                 ? "0.0005%" : "0.001%";
 
+        // Kiểm tra chống đối soát trùng lặp giữa Tuần và Tháng (Anti-Double-Settlement)
+        List<MerchantSettlement> overlappingConfirmed =
+                settlementRepository.findOverlappingConfirmedSettlements(
+                        merchantId,
+                        settlement.getPeriodKey(),
+                        settlement.getStartDate(),
+                        settlement.getEndDate()
+                );
+
+        boolean hasOverlap = !overlappingConfirmed.isEmpty();
+        String overlapMessage = null;
+        if (hasOverlap) {
+            String overlappingPeriods = overlappingConfirmed.stream()
+                    .map(s -> "WEEK".equalsIgnoreCase(s.getPeriodType()) ? "Tuần " + s.getPeriodKey() : "Tháng " + s.getPeriodKey())
+                    .collect(Collectors.joining(", "));
+
+            if ("MONTH".equalsIgnoreCase(settlement.getPeriodType())) {
+                overlapMessage = "Kỳ này có khoảng thời gian đã được xác nhận chốt tiền ở kỳ " + overlappingPeriods 
+                        + ". Để tránh tính tiền 2 lần, kỳ này chỉ dùng để xem báo cáo thống kê và không thể chốt số.";
+            } else {
+                overlapMessage = "Kỳ này có khoảng thời gian đã được xác nhận chốt tiền ở kỳ " + overlappingPeriods 
+                        + ". Số tiền đã được chuyển, không thể chốt số lần 2.";
+            }
+        }
+
         BigDecimal adj = settlement.getAdjustmentAmount() != null ? settlement.getAdjustmentAmount() : BigDecimal.ZERO;
-        boolean actionable = isEnded && (settlement.getStatus() == SettlementStatus.PENDING_CONFIRMATION);
+        boolean actionable = isEnded 
+                && (settlement.getStatus() == SettlementStatus.PENDING_CONFIRMATION)
+                && !hasOverlap;
 
         BigDecimal baseOriginalNetRevenue = settlement.getTotalGrossRevenue() != null
                 ? settlement.getTotalGrossRevenue()
@@ -352,6 +380,8 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
                 .confirmedAt(settlement.getConfirmedAt())
                 .actionable(actionable)
                 .isInProgress(!isEnded)
+                .hasOverlap(hasOverlap)
+                .overlapMessage(overlapMessage)
                 .claimStatus(claimStatus)
                 .claimReason(claimReason)
                 .claimDescription(claimDescription)
@@ -375,6 +405,23 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
         if (settlement.getStatus() != SettlementStatus.PENDING_CONFIRMATION 
                 && settlement.getStatus() != SettlementStatus.IN_PROGRESS) {
             throw new IllegalStateException("Kỳ đối soát này đã được xử lý trước đó");
+        }
+
+        // Kiểm tra chống đối soát trùng lặp ở tầng Service
+        List<MerchantSettlement> overlappingConfirmed =
+                settlementRepository.findOverlappingConfirmedSettlements(
+                        merchantId,
+                        settlement.getPeriodKey(),
+                        settlement.getStartDate(),
+                        settlement.getEndDate()
+                );
+
+        if (!overlappingConfirmed.isEmpty()) {
+            String overlappingPeriods = overlappingConfirmed.stream()
+                    .map(s -> "WEEK".equalsIgnoreCase(s.getPeriodType()) ? "Tuần " + s.getPeriodKey() : "Tháng " + s.getPeriodKey())
+                    .collect(Collectors.joining(", "));
+            throw new IllegalStateException("Không thể xác nhận: Kỳ đối soát này có khoảng thời gian trùng lặp với kỳ " 
+                    + overlappingPeriods + " đã được chốt chuyển tiền trước đó.");
         }
 
         settlement.setStatus(SettlementStatus.CONFIRMED);
@@ -406,6 +453,18 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
         if (settlement.getStatus() != SettlementStatus.PENDING_CONFIRMATION 
                 && settlement.getStatus() != SettlementStatus.IN_PROGRESS) {
             throw new IllegalStateException("Kỳ đối soát này đã được xử lý trước đó");
+        }
+
+        List<MerchantSettlement> overlappingConfirmed =
+                settlementRepository.findOverlappingConfirmedSettlements(
+                        merchantId,
+                        settlement.getPeriodKey(),
+                        settlement.getStartDate(),
+                        settlement.getEndDate()
+                );
+
+        if (!overlappingConfirmed.isEmpty()) {
+            throw new IllegalStateException("Kỳ đối soát này có khoảng thời gian đã được chốt ở kỳ khác, không thể khiếu nại.");
         }
 
         String evidenceUrl = null;

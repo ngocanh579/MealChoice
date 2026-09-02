@@ -35,6 +35,22 @@ public interface MerchantSettlementRepository extends JpaRepository<MerchantSett
 
     @Query("""
         SELECT s FROM MerchantSettlement s
+        WHERE s.merchant.id = :merchantId
+          AND s.status = vn.codegyme.meal_choice.entity.SettlementStatus.CONFIRMED
+          AND s.periodKey <> :periodKey
+          AND s.startDate < :endDate
+          AND s.endDate > :startDate
+        ORDER BY s.startDate ASC
+        """)
+    List<MerchantSettlement> findOverlappingConfirmedSettlements(
+            @Param("merchantId") UUID merchantId,
+            @Param("periodKey") String periodKey,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+    @Query("""
+        SELECT s FROM MerchantSettlement s
         WHERE s.status = vn.codegyme.meal_choice.entity.SettlementStatus.PENDING_CONFIRMATION
           AND s.endDate <= :cutoff
         """)

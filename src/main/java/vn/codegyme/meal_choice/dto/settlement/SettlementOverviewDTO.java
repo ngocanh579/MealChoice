@@ -40,6 +40,10 @@ public class SettlementOverviewDTO {
     private boolean actionable;
     private boolean isInProgress;
 
+    // Chống đối soát trùng lặp giữa Tuần và Tháng
+    private boolean hasOverlap;
+    private String overlapMessage;
+
     // Thông tin khiếu nại nếu có
     private String claimStatus;
     private String claimReason;

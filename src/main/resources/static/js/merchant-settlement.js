@@ -197,7 +197,7 @@ function renderSettlementOverview(data) {
         }
     }
 
-    // 2. Cập nhật Badge trạng thái kỳ & In-Progress alert
+    // 2. Cập nhật Badge trạng thái kỳ & In-Progress / Overlap alert
     const badge = document.getElementById('currentPeriodStatusBadge');
     badge.className = `badge badge-pill-custom ${data.statusBadgeClass || 'bg-warning text-dark'}`;
     badge.textContent = data.statusDisplayName;
@@ -210,6 +210,18 @@ function renderSettlementOverview(data) {
             if (endEl) endEl.textContent = formatDateTime(data.endDate);
         } else {
             inProgressBox.classList.add('d-none');
+        }
+    }
+
+    // 2.1 Xử lý Overlap Alert (chống đối soát trùng lặp Tuần & Tháng)
+    const overlapBox = document.getElementById('overlapNoticeBox');
+    if (overlapBox) {
+        if (data.hasOverlap) {
+            overlapBox.classList.remove('d-none');
+            const msgEl = document.getElementById('overlapMessageText');
+            if (msgEl) msgEl.textContent = data.overlapMessage || 'Kỳ đối soát này có khoảng thời gian đã được xác nhận chốt tiền ở kỳ khác. Kỳ này chỉ dùng để xem báo cáo thống kê và không thể chốt số.';
+        } else {
+            overlapBox.classList.add('d-none');
         }
     }
 
@@ -259,8 +271,8 @@ function renderSettlementOverview(data) {
 
     // 4. Cập nhật Footer Action Bar
     const footerStatusText = document.getElementById('footerStatusText');
-    footerStatusText.textContent = data.statusDisplayName;
-    footerStatusText.className = `fw-bold ${data.status === 'CONFIRMED' ? 'text-success' : (data.status === 'DISPUTED' ? 'text-danger' : (data.isInProgress ? 'text-info' : 'text-warning'))}`;
+    footerStatusText.textContent = data.hasOverlap ? `${data.statusDisplayName} (Đã chốt ở kỳ khác)` : data.statusDisplayName;
+    footerStatusText.className = `fw-bold ${data.status === 'CONFIRMED' ? 'text-success' : (data.status === 'DISPUTED' ? 'text-danger' : (data.hasOverlap ? 'text-warning' : (data.isInProgress ? 'text-info' : 'text-warning')))}`;
 
     const confirmedTimeBox = document.getElementById('confirmedTimeBox');
     if (data.status === 'CONFIRMED' && data.confirmedAt) {
@@ -274,7 +286,14 @@ function renderSettlementOverview(data) {
     const btnConfirm = document.getElementById('btnOpenConfirmModal');
     const btnClaim = document.getElementById('btnOpenClaimModal');
 
-    if (data.isInProgress) {
+    if (data.hasOverlap) {
+        btnConfirm.setAttribute('disabled', 'true');
+        btnClaim.setAttribute('disabled', 'true');
+        btnConfirm.classList.add('opacity-50');
+        btnClaim.classList.add('opacity-50');
+        btnConfirm.title = data.overlapMessage || 'Kỳ đối soát này có khoảng thời gian đã được chốt ở kỳ khác.';
+        btnClaim.title = 'Kỳ đối soát này có khoảng thời gian đã được chốt ở kỳ khác, không thể gửi khiếu nại.';
+    } else if (data.isInProgress) {
         btnConfirm.setAttribute('disabled', 'true');
         btnClaim.setAttribute('disabled', 'true');
         btnConfirm.classList.add('opacity-50');
