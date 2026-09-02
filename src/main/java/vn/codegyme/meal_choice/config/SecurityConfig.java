@@ -47,6 +47,19 @@ public class SecurityConfig {
                                 "/**"
                         ).permitAll()
 
+                        // Giỏ hàng: luôn yêu cầu đăng nhập.
+                        // Đặt TRƯỚC các rule permitAll bên dưới để không bị ghi đè.
+                        .requestMatchers(
+                                "/api/cart/**",
+                                "/api/cart"
+                        ).authenticated()
+
+                        // Đơn hàng của khách hàng
+                        .requestMatchers(
+                                "/api/user/orders/**",
+                                "/api/user/orders"
+                        ).authenticated()
+
                         // Public
                         .requestMatchers(
                                 "/",
