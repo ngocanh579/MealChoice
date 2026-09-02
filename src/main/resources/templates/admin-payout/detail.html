@@ -593,7 +593,7 @@
                         <!-- COMPLETE -->
                         <!-- ===================================== -->
 
-                        <form th:action="@{/admin/payout-requests/{id}/complete(id=${request.id})}" method="post">
+                        <form th:action="@{/admin/payout-requests/{id}/complete(id=${request.id})}" method="post" enctype="multipart/form-data">
 
                             <h6 class="fw-bold text-success mb-3">
 
@@ -606,22 +606,27 @@
 
                             <div class="mb-3">
 
-                                <label class="form-label">
+                                <label class="form-label fw-semibold">
 
-                                    URL ảnh chuyển khoản
+                                    Ảnh chứng từ / Ủy nhiệm chi chuyển khoản
                                     <span class="text-danger">*</span>
 
                                 </label>
 
-                                <input type="text" class="form-control" name="transferProofUrl"
-                                    placeholder="https://..." required>
+                                <input type="file" class="form-control" name="proofImage" id="proofImageInput"
+                                    accept="image/*" required onchange="previewProofImage(this)">
 
-                                <small class="text-muted">
+                                <small class="text-muted d-block mt-1">
 
-                                    Tạm thời nhập URL ảnh.
-                                    Sau này có thể đổi sang upload file.
+                                    <i class="bi bi-info-circle me-1"></i>Hỗ trợ tải lên ảnh: JPG, PNG, WEBP (tối đa 5MB)
 
                                 </small>
+
+                                <!-- Preview ảnh trước khi xác nhận -->
+                                <div id="proofPreviewBox" class="mt-2 text-center p-2 border rounded-3 bg-light d-none">
+                                    <img id="proofPreviewImg" src="#" alt="Xem trước chứng từ"
+                                         class="img-fluid rounded-2 shadow-sm" style="max-height: 180px; object-fit: contain;">
+                                </div>
 
                             </div>
 
@@ -759,6 +764,30 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <script>
+        function previewProofImage(input) {
+            const previewBox = document.getElementById('proofPreviewBox');
+            const previewImg = document.getElementById('proofPreviewImg');
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Kích thước ảnh không được vượt quá 5MB!');
+                    input.value = '';
+                    if (previewBox) previewBox.classList.add('d-none');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (previewImg) previewImg.src = e.target.result;
+                    if (previewBox) previewBox.classList.remove('d-none');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                if (previewBox) previewBox.classList.add('d-none');
+            }
+        }
     </script>
 
 </body>

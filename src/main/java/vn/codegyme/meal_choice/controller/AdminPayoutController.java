@@ -23,6 +23,8 @@ public class AdminPayoutController {
 
         private final AdminPayoutService adminPayoutService;
 
+        private final vn.codegyme.meal_choice.service.FileStorageService fileStorageService;
+
         // =====================================================
         // DANH SÁCH YÊU CẦU
         // =====================================================
@@ -86,7 +88,9 @@ public class AdminPayoutController {
         public String complete(
                         @PathVariable UUID id,
 
-                        @RequestParam String transferProofUrl,
+                        @RequestParam(value = "proofImage", required = false) MultipartFile proofImage,
+
+                        @RequestParam(value = "transferProofUrl", required = false) String transferProofUrl,
 
                         @RequestParam(required = false) String adminNote,
 
@@ -94,16 +98,26 @@ public class AdminPayoutController {
 
                 try {
 
+                        String finalProofUrl = transferProofUrl;
+
+                        if (proofImage != null && !proofImage.isEmpty()) {
+                                finalProofUrl = fileStorageService.savePayoutProofImage(proofImage);
+                        }
+
+                        if (finalProofUrl == null || finalProofUrl.trim().isEmpty()) {
+                                throw new IllegalArgumentException("Vui lòng tải lên ảnh chứng từ chuyển khoản.");
+                        }
+
                         adminPayoutService
                                         .completePayoutRequest(
                                                         id,
-                                                        transferProofUrl,
+                                                        finalProofUrl,
                                                         adminNote);
 
                         redirectAttributes
                                         .addFlashAttribute(
                                                         "message",
-                                                        "Đã hoàn tất yêu cầu và xác nhận chuyển khoản.");
+                                                        "Đã hoàn tất yêu cầu và xác nhận chuyển khoản thành công.");
 
                 } catch (Exception e) {
 
