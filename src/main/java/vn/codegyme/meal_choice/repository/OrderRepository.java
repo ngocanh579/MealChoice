@@ -183,4 +183,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    // Lấy danh sách đơn hoàn thành trong kỳ đối soát
+    @Query("""
+        SELECT o FROM Order o
+        WHERE o.merchant.id = :merchantId
+          AND o.status = vn.codegyme.meal_choice.entity.OrderStatus.COMPLETED
+          AND o.createdAt >= :startDate
+          AND o.createdAt < :endDate
+        ORDER BY o.createdAt DESC
+        """)
+    List<Order> findCompletedOrdersInPeriod(
+            @Param("merchantId") UUID merchantId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }
