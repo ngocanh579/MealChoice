@@ -89,9 +89,20 @@ public class MerchantPayoutController {
                                 merchant.getId()
                         );
 
-        System.out.println(
-                "6. Payout history OK. Size = "
-                        + requests.size()
+        var transactions =
+                merchantPayoutService
+                        .getTransactionHistory(
+                                merchant.getId()
+                        );
+
+        model.addAttribute(
+                "requests",
+                requests
+        );
+
+        model.addAttribute(
+                "transactions",
+                transactions
         );
 
         model.addAttribute(
@@ -118,12 +129,23 @@ public class MerchantPayoutController {
         );
 
 
-        // Kiểm tra đủ điều kiện > 1000
+        // Tổng số tiền đang chờ Admin duyệt
+        BigDecimal totalPendingAmount =
+                merchantFinanceService
+                        .getTotalPendingAmount(
+                                merchant.getId()
+                        );
+
+        model.addAttribute(
+                "totalPendingAmount",
+                totalPendingAmount
+        );
+
+        // Kiểm tra đủ điều kiện: Doanh thu đã đối soát > 1000 và Số dư khả dụng > 0
         boolean canWithdraw =
                 totalRevenue.compareTo(
                         new BigDecimal("1000")
-                ) > 0;
-
+                ) > 0 && availableBalance.compareTo(BigDecimal.ZERO) > 0;
 
         model.addAttribute(
                 "canWithdraw",

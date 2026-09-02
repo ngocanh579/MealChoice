@@ -3,8 +3,8 @@ package vn.codegyme.meal_choice.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vn.codegyme.meal_choice.repository.MerchantPayoutRequestRepository;
+import vn.codegyme.meal_choice.repository.MerchantSettlementRepository;
 import vn.codegyme.meal_choice.service.MerchantFinanceService;
-import vn.codegyme.meal_choice.service.MerchantStatService;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -14,21 +14,25 @@ import java.util.UUID;
 public class MerchantFinanceServiceImpl
         implements MerchantFinanceService {
 
-    private final MerchantStatService merchantStatService;
-
     private final MerchantPayoutRequestRepository
             payoutRequestRepository;
 
+    private final MerchantSettlementRepository
+            settlementRepository;
+
 
     // ==========================================
-    // TỔNG DOANH THU
+    // TỔNG DOANH THU ĐÃ ĐỐI SOÁT XÁC NHẬN (CONFIRMED)
     // ==========================================
 
     @Override
     public BigDecimal getTotalRevenue(UUID merchantId) {
+        BigDecimal confirmedRevenue = settlementRepository
+                .getTotalConfirmedSettlementRevenue(merchantId);
 
-        return merchantStatService
-                .getTotalRevenue(merchantId);
+        return confirmedRevenue != null
+                ? confirmedRevenue
+                : BigDecimal.ZERO;
     }
 
 
@@ -50,20 +54,41 @@ public class MerchantFinanceServiceImpl
 
 
     // ==========================================
-    // SỐ DƯ CÓ THỂ RÚT
+    // TỔNG TIỀN ĐANG CHỜ DUYỆT RÚT (PENDING)
+    // ==========================================
+
+    @Override
+    public BigDecimal getTotalPendingAmount(UUID merchantId) {
+
+        BigDecimal amount =
+                payoutRequestRepository
+                        .getTotalPendingAmount(merchantId);
+
+        return amount != null
+                ? amount
+                : BigDecimal.ZERO;
+    }
+
+
+    // ==========================================
+    // SỐ DƯ CÓ THỂ RÚT (AVAILABLE BALANCE)
+    // Số dư = Doanh thu đã chốt - Đã chuyển - Đang chờ duyệt
     // ==========================================
 
     @Override
     public BigDecimal getAvailableBalance(UUID merchantId) {
 
-        BigDecimal totalRevenue =
+        BigDecimal confirmedRevenue =
                 getTotalRevenue(merchantId);
 
         BigDecimal totalPaid =
                 getTotalPaidAmount(merchantId);
 
+        BigDecimal totalPending =
+                getTotalPendingAmount(merchantId);
+
         BigDecimal balance =
-                totalRevenue.subtract(totalPaid);
+                confirmedRevenue.subtract(totalPaid).subtract(totalPending);
 
 
         if (balance.compareTo(BigDecimal.ZERO) < 0) {

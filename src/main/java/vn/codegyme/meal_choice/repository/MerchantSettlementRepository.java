@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import vn.codegyme.meal_choice.entity.MerchantSettlement;
 import vn.codegyme.meal_choice.entity.SettlementStatus;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +15,14 @@ import java.util.UUID;
 
 @Repository
 public interface MerchantSettlementRepository extends JpaRepository<MerchantSettlement, Long> {
+
+    @Query("""
+        SELECT COALESCE(SUM(s.netRevenue), 0)
+        FROM MerchantSettlement s
+        WHERE s.merchant.id = :merchantId
+          AND s.status = vn.codegyme.meal_choice.entity.SettlementStatus.CONFIRMED
+        """)
+    BigDecimal getTotalConfirmedSettlementRevenue(@Param("merchantId") UUID merchantId);
 
     @Query("SELECT s FROM MerchantSettlement s WHERE s.merchant.id = :merchantId AND s.periodKey = :periodKey")
     Optional<MerchantSettlement> findByMerchant_IdAndPeriodKey(@Param("merchantId") UUID merchantId, @Param("periodKey") String periodKey);

@@ -10,5 +10,7 @@ public interface MerchantFinanceService {
 
     BigDecimal getTotalPaidAmount(UUID merchantId);
 
+    BigDecimal getTotalPendingAmount(UUID merchantId);
+
     BigDecimal getAvailableBalance(UUID merchantId);
 }

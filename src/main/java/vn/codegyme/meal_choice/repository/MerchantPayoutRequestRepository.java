@@ -44,4 +44,14 @@ public interface MerchantPayoutRequestRepository
     BigDecimal getTotalPaidAmount(
             @Param("merchantId") UUID merchantId
     );
+
+    @Query("""
+            SELECT COALESCE(SUM(r.amount), 0)
+            FROM MerchantPayoutRequest r
+            WHERE r.merchant.id = :merchantId
+            AND r.status = vn.codegyme.meal_choice.entity.PayoutRequestStatus.PENDING
+            """)
+    BigDecimal getTotalPendingAmount(
+            @Param("merchantId") UUID merchantId
+    );
 }

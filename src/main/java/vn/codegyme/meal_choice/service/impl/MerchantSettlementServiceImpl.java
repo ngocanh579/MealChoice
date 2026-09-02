@@ -321,6 +321,15 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
         BigDecimal adj = settlement.getAdjustmentAmount() != null ? settlement.getAdjustmentAmount() : BigDecimal.ZERO;
         boolean actionable = isEnded && (settlement.getStatus() == SettlementStatus.PENDING_CONFIRMATION);
 
+        BigDecimal baseOriginalNetRevenue = settlement.getTotalGrossRevenue() != null
+                ? settlement.getTotalGrossRevenue()
+                        .subtract(settlement.getTotalDiscount() != null ? settlement.getTotalDiscount() : BigDecimal.ZERO)
+                        .subtract(settlement.getTotalCommissionFee() != null ? settlement.getTotalCommissionFee() : BigDecimal.ZERO)
+                : BigDecimal.ZERO;
+        if (baseOriginalNetRevenue.compareTo(BigDecimal.ZERO) < 0) {
+            baseOriginalNetRevenue = BigDecimal.ZERO;
+        }
+
         return SettlementOverviewDTO.builder()
                 .settlementId(settlement.getId())
                 .periodKey(periodKey)
@@ -333,7 +342,7 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
                 .commissionRate(settlement.getCommissionRate())
                 .commissionRateDisplay(finalCommissionRateDisplay)
                 .totalCommissionFee(settlement.getTotalCommissionFee())
-                .originalNetRevenue(baseNetRevenue)
+                .originalNetRevenue(baseOriginalNetRevenue)
                 .adjustmentAmount(adj)
                 .netRevenue(settlement.getNetRevenue())
                 .totalOrders(settlement.getTotalOrders())
@@ -363,7 +372,8 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
             throw new RuntimeException("Bạn không có quyền thao tác trên kỳ đối soát này");
         }
 
-        if (settlement.getStatus() != SettlementStatus.PENDING_CONFIRMATION) {
+        if (settlement.getStatus() != SettlementStatus.PENDING_CONFIRMATION 
+                && settlement.getStatus() != SettlementStatus.IN_PROGRESS) {
             throw new IllegalStateException("Kỳ đối soát này đã được xử lý trước đó");
         }
 
@@ -393,7 +403,8 @@ public class MerchantSettlementServiceImpl implements MerchantSettlementService 
             throw new RuntimeException("Bạn không có quyền thao tác trên kỳ đối soát này");
         }
 
-        if (settlement.getStatus() != SettlementStatus.PENDING_CONFIRMATION) {
+        if (settlement.getStatus() != SettlementStatus.PENDING_CONFIRMATION 
+                && settlement.getStatus() != SettlementStatus.IN_PROGRESS) {
             throw new IllegalStateException("Kỳ đối soát này đã được xử lý trước đó");
         }
 

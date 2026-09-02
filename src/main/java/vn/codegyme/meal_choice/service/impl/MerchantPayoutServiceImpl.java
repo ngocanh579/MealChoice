@@ -4,13 +4,16 @@ package vn.codegyme.meal_choice.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.codegyme.meal_choice.dto.payout.MerchantTransactionHistoryDTO;
 import vn.codegyme.meal_choice.entity.*;
 import vn.codegyme.meal_choice.repository.MerchantPayoutRequestRepository;
 import vn.codegyme.meal_choice.repository.MerchantRepository;
+import vn.codegyme.meal_choice.repository.MerchantSettlementRepository;
 import vn.codegyme.meal_choice.service.MerchantFinanceService;
 import vn.codegyme.meal_choice.service.MerchantPayoutService;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +31,9 @@ public class MerchantPayoutServiceImpl
 
     private final MerchantPayoutRequestRepository
             payoutRequestRepository;
+
+    private final MerchantSettlementRepository
+            settlementRepository;
 
     private final MerchantFinanceService
             merchantFinanceService;
@@ -73,7 +79,7 @@ public class MerchantPayoutServiceImpl
         ) <= 0) {
 
             throw new IllegalArgumentException(
-                    "Merchant chỉ được rút tiền khi tổng doanh thu lớn hơn 1000 VNĐ."
+                    "Merchant chỉ được rút tiền khi có doanh thu từ các kỳ đối soát đã xác nhận (lớn hơn 1.000 VNĐ)."
             );
         }
 
@@ -259,6 +265,84 @@ public class MerchantPayoutServiceImpl
                 .findByMerchant_IdOrderByCreatedAtDesc(
                         merchantId
                 );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MerchantTransactionHistoryDTO> getTransactionHistory(UUID merchantId) {
+        List<MerchantTransactionHistoryDTO> list = new java.util.ArrayList<>();
+
+        // 1. Nguồn tiền NHẬN: Các kỳ đối soát đã xác nhận (CONFIRMED)
+        List<MerchantSettlement> confirmedSettlements = settlementRepository
+                .findByMerchant_IdAndStatusOrderByStartDateDesc(merchantId, SettlementStatus.CONFIRMED);
+
+        for (MerchantSettlement s : confirmedSettlements) {
+            LocalDateTime time = s.getConfirmedAt() != null ? s.getConfirmedAt() : s.getEndDate();
+            list.add(MerchantTransactionHistoryDTO.builder()
+                    .id("STL-" + s.getId())
+                    .createdAt(time)
+                    .type("RECEIVE_SETTLEMENT")
+                    .typeDisplayName("Nhận tiền đối soát")
+                    .typeBadgeClass("bg-success-subtle text-success border border-success-subtle")
+                    .amount(s.getNetRevenue())
+                    .isIncome(true)
+                    .accountInfo("Cộng vào Số dư khả dụng")
+                    .periodLabel("Kỳ " + s.getPeriodKey())
+                    .status("COMPLETED")
+                    .statusDisplayName("Đã cộng ví")
+                    .statusBadgeClass("bg-success")
+                    .completedAt(time)
+                    .build());
+        }
+
+        // 2. Nguồn tiền RÚT: Các yêu cầu rút tiền / thanh lý
+        List<MerchantPayoutRequest> requests = payoutRequestRepository
+                .findByMerchant_IdOrderByCreatedAtDesc(merchantId);
+
+        for (MerchantPayoutRequest req : requests) {
+            String typeName = req.getType() == PayoutRequestType.LIQUIDATION ? "Thanh lý" : "Rút tiền";
+            String typeBadge = req.getType() == PayoutRequestType.LIQUIDATION 
+                    ? "bg-danger-subtle text-danger border border-danger-subtle" 
+                    : "bg-primary-subtle text-primary border border-primary-subtle";
+
+            String statusDisplay = "Chờ Admin duyệt";
+            String statusBadge = "bg-warning text-dark";
+            if (req.getStatus() == PayoutRequestStatus.COMPLETED) {
+                statusDisplay = "Đã chuyển tiền";
+                statusBadge = "bg-success";
+            } else if (req.getStatus() == PayoutRequestStatus.REJECTED) {
+                statusDisplay = "Bị từ chối";
+                statusBadge = "bg-danger";
+            }
+
+            list.add(MerchantTransactionHistoryDTO.builder()
+                    .id(req.getId().toString())
+                    .createdAt(req.getCreatedAt())
+                    .type(req.getType().name())
+                    .typeDisplayName(typeName)
+                    .typeBadgeClass(typeBadge)
+                    .amount(req.getAmount())
+                    .isIncome(false)
+                    .accountInfo(req.getBankName() + " " + req.getBankAccountNumber())
+                    .periodLabel("-")
+                    .status(req.getStatus().name())
+                    .statusDisplayName(statusDisplay)
+                    .statusBadgeClass(statusBadge)
+                    .completedAt(req.getCompletedAt())
+                    .rejectedAt(req.getRejectedAt())
+                    .transferProofUrl(req.getTransferProofUrl())
+                    .adminNote(req.getAdminNote())
+                    .build());
+        }
+
+        // Sắp xếp giảm dần theo thời gian (mới nhất lên trước)
+        list.sort((a, b) -> {
+            if (a.getCreatedAt() == null) return 1;
+            if (b.getCreatedAt() == null) return -1;
+            return b.getCreatedAt().compareTo(a.getCreatedAt());
+        });
+
+        return list;
     }
 
 

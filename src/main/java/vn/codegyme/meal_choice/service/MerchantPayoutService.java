@@ -21,4 +21,8 @@ public interface MerchantPayoutService {
     List<MerchantPayoutRequest> getMerchantRequests(
             UUID merchantId
     );
+
+    List<vn.codegyme.meal_choice.dto.payout.MerchantTransactionHistoryDTO> getTransactionHistory(
+            UUID merchantId
+    );
 }
