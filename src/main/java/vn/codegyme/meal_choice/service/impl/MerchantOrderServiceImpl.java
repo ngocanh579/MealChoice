@@ -338,6 +338,6 @@ public class MerchantOrderServiceImpl implements MerchantOrderService {
             log.warn("Không tính được khoảng cách đơn hàng ID {}, dùng mặc định 3km: {}", order != null ? order.getId() : null, e.getMessage());
         }
         // Thời gian giao hàng dự kiến: 4 phút / 1km
-        return (int) Math.max(4, Math.round(distanceKm * 4));
+        return (int) Math.max(0.5, Math.round(distanceKm * 0.5));
     }
 }

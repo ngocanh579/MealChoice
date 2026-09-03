@@ -1,5 +1,5 @@
-<nav th:fragment="navbar"
-     xmlns:th="http://www.thymeleaf.org"
+<nav th:fragment="navbar" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm sticky-top">
 
     <div class="container">
@@ -23,6 +23,7 @@
 
         <!-- Nội dung navbar -->
         <div class="collapse navbar-collapse" id="navbarContent">
+
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
 
                 <!-- Trang chủ -->
@@ -73,43 +74,60 @@
 
                 <!-- Giỏ hàng -->
                 <li class="nav-item dropdown me-2" id="navbarCartDropdown">
-                    <a class="btn btn-outline-dark rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-2 dropdown-toggle"
-                       href="#"
-                       role="button"
-                       data-bs-toggle="dropdown"
-                       aria-expanded="false"
-                       data-bs-auto-close="outside">
+
+                    <a class="btn btn-outline-dark rounded-pill px-3 py-1 text-sm
+                              d-flex align-items-center gap-2 dropdown-toggle" href="#" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+
                         <i class="bi bi-basket2-fill text-success"></i>
+
                         <span>Giỏ hàng</span>
+
                         <span class="badge bg-success rounded-pill" id="navbarCartCount">
                             0
                         </span>
+
                     </a>
-                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-3"
-                         style="width: 320px; z-index: 1100;">
+
+                    <div class="dropdown-menu dropdown-menu-end
+                                border-0 shadow-lg rounded-4 p-3" style="width: 320px; z-index: 1100;">
+
                         <h6 class="fw-bold text-dark border-bottom pb-2 mb-2">
                             Giỏ hàng của bạn
                         </h6>
-                        <div id="navbarCartItems"
-                             class="overflow-y-auto mb-2"
-                             style="max-height: 220px;">
+
+                        <!-- Danh sách món trong giỏ -->
+                        <div id="navbarCartItems" class="overflow-y-auto mb-2" style="max-height: 220px;">
+
+                            <!-- Render bằng navbar.js -->
+
                         </div>
+
+                        <!-- Tổng tiền -->
                         <div class="border-top pt-2 mb-2 fs-7" id="navbarCartSummary">
+
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted">Tổng tiền:</span>
+
+                                <span class="text-muted">
+                                    Tổng tiền:
+                                </span>
+
                                 <strong class="text-danger" id="navbarCartTotal">
                                     0 đ
                                 </strong>
+
                             </div>
+
                         </div>
-                        <div class="d-flex gap-2">
-                            <button type="button"
-                                    class="btn btn-danger btn-sm rounded-pill w-100 fw-bold py-2"
-                                    id="btnNavbarCheckout"
-                                    style="background: linear-gradient(135deg, #ff416c, #ff4b2b); border: none;">
-                                Thanh toán
-                            </button>
+
+                        <!-- Xem giỏ hàng -->
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="/cart"
+                               class="btn btn-outline-danger btn-sm rounded-pill fw-semibold w-100 py-2">
+                                <i class="bi bi-cart3 me-1"></i>Xem chi tiết giỏ hàng
+                            </a>
                         </div>
+
                     </div>
                 </li>
 
@@ -121,20 +139,36 @@
                        style="font-size: 0.85rem;"
                        href="/admin/merchants">
                         <i class="bi bi-shield-lock-fill"></i>
+
                         <span>Quản lý Admin</span>
+
+                    </a>
+                </li>
+                <li class="nav-item" th:classappend="${isAdmin} ? '' : 'd-none'">
+
+                    <a class="btn btn-danger rounded-pill px-3 py-1 text-sm
+                              d-flex align-items-center gap-1 fw-semibold" style="font-size: 0.85rem;"
+                       href="/admin/delivery-partners">
+
+                        <i class="bi bi-truck"></i>
+
+                        <span>Đối tác vận chuyển</span>
+
                     </a>
                 </li>
 
-                <!-- Kênh Merchant -->
-                <li class="nav-item"
-                    id="merchantRoleNav"
-                    th:classappend="${isMerchant} ? '' : 'd-none'">
-                    <a class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm d-flex align-items-center gap-1 fw-semibold"
+                <!-- Khu vực Merchant -->
+                <li class="nav-item" id="merchantRoleNav" th:classappend="${isMerchant} ? '' : 'd-none'">
+
+                    <a class="btn btn-outline-danger rounded-pill px-3 py-1 text-sm
+                              d-flex align-items-center gap-1 fw-semibold" style="font-size: 0.85rem;"
                        th:href="${isMerchantBlocked} ? '#' : '/merchant/dashboard'"
-                       th:attr="data-blocked=${isMerchantBlocked}"
-                       id="merchantChannelBtn">
+                       th:attr="data-blocked=${isMerchantBlocked}" id="merchantChannelBtn">
+
                         <i class="bi bi-shop"></i>
+
                         <span>Kênh Merchant</span>
+
                     </a>
                 </li>
 
@@ -205,18 +239,24 @@
                         <li>
                             <hr class="dropdown-divider">
                         </li>
+
                         <li>
                             <a class="dropdown-item py-2 text-danger"
                                href="#"
                                onclick="handleLogout(event)">
                                 <i class="bi bi-box-arrow-right me-2"></i>
+
                                 Đăng xuất
+
                             </a>
                         </li>
+
                     </ul>
+
                 </li>
 
             </ul>
+
         </div>
     </div>
 
@@ -249,6 +289,7 @@
                         <i class="bi bi-lock-fill text-danger"
                            style="font-size: 3.5rem;">
                         </i>
+
                     </div>
 
                     <h5 class="text-center fw-bold mb-3">
@@ -295,5 +336,8 @@
 
     <!-- JavaScript của navbar -->
     <script th:src="@{/js/navbar.js}"></script>
+
+    <!-- JS giỏ hàng, đồng bộ với /api/cart. Phải nạp SAU navbar.js -->
+    <script th:src="@{/js/cart.js}"></script>
 
 </nav>

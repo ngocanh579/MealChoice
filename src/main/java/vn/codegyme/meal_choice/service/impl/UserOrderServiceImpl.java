@@ -7,23 +7,23 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.codegyme.meal_choice.dto.Delivery.GeoPoint;
-import vn.codegyme.meal_choice.dto.order.CheckoutItemDTO;
 import vn.codegyme.meal_choice.dto.order.CheckoutRequestDTO;
 import vn.codegyme.meal_choice.dto.order.OrderResponseDTO;
 import vn.codegyme.meal_choice.entity.*;
+import vn.codegyme.meal_choice.mapper.CartMapper;
 import vn.codegyme.meal_choice.mapper.OrderMapper;
 import vn.codegyme.meal_choice.repository.*;
+import vn.codegyme.meal_choice.service.CartService;
 import vn.codegyme.meal_choice.service.DistanceService;
 import vn.codegyme.meal_choice.service.GeocodingService;
 import vn.codegyme.meal_choice.service.ShippingFeeService;
 import vn.codegyme.meal_choice.service.UserOrderService;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -32,7 +32,6 @@ public class UserOrderServiceImpl implements UserOrderService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
-    private final MerchantRepository merchantRepository;
     private final FoodRepository foodRepository;
     private final OrderMapper orderMapper;
     private final DeliveryPartnerRepository deliveryPartnerRepository;
@@ -41,87 +40,135 @@ public class UserOrderServiceImpl implements UserOrderService {
     private final DistanceService distanceService;
     private final GeocodingService geocodingService;
 
-    // Phí giao hàng cố định mặc định dự phòng: 15.000 đ
+    private final CartService cartService;
+    private final CartMapper cartMapper;
+
+    /** Phí giao hàng cố định dự phòng: 15.000 đ */
     private static final BigDecimal DEFAULT_SHIPPING_FEE = BigDecimal.valueOf(15000);
 
-    /**
-     * TÍNH NĂNG 4: Tạo đơn hàng mới từ giỏ hàng (Checkout)
-     */
+    /** Ngưỡng khoảng cách giao hàng tối đa dùng để tính cước (km) */
+    private static final double MAX_DELIVERY_DISTANCE_KM = 30.0;
+
+    // =====================================================================
+    // ĐẶT HÀNG TỪ GIỎ HÀNG
+    // =====================================================================
+
     @Override
     @Transactional
     public OrderResponseDTO placeOrder(UUID userId, CheckoutRequestDTO request) {
-        log.info("Bắt đầu đặt hàng cho user: {}, merchant: {}", userId, request.getMerchantId());
 
-        // BƯỚC 1: Kiểm tra thông tin người dùng và cửa hàng
+        log.info("Bắt đầu đặt hàng từ giỏ hàng của user {} cho quán {}", userId, request.getMerchantId());
+
+        if (request.getMerchantId() == null) {
+            throw new IllegalArgumentException("Không xác định được quán cần đặt hàng");
+        }
+
+        // ---------- BƯỚC 1: Người dùng ----------
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin người dùng"));
 
-        Merchant merchant = merchantRepository.findById(request.getMerchantId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin cửa hàng"));
+        // ---------- BƯỚC 2: Đọc giỏ hàng và lọc món của quán ----------
+        Cart cart = cartService.getCartEntity(userId);
 
-        if (request.getItems() == null || request.getItems().isEmpty()) {
-            throw new IllegalArgumentException("Đơn hàng phải có ít nhất 1 món ăn");
+        if (cart == null || cart.isEmpty()) {
+            throw new IllegalArgumentException("Giỏ hàng của bạn đang trống");
         }
 
-        // BƯỚC 2: Xử lý từng món ăn, tính tiền món và kiểm tra ràng buộc 1 cửa hàng
+        List<CartItem> cartItems = cart.getItems().stream()
+                .filter(item -> item.getFood() != null
+                        && item.getFood().getMerchant() != null
+                        && item.getFood().getMerchant().getId().equals(request.getMerchantId()))
+                .toList();
+
+        if (cartItems.isEmpty()) {
+            throw new IllegalArgumentException("Giỏ hàng không có món nào thuộc quán này");
+        }
+
+        Merchant merchant = cartItems.get(0).getFood().getMerchant();
+
+        if (merchant.getMerchantStatus() != MerchantStatus.APPROVED) {
+            throw new IllegalArgumentException(
+                    "Cửa hàng \"" + merchant.getMerchantRestaurantName() + "\" hiện không nhận đơn hàng");
+        }
+
+        // ---------- BƯỚC 3: Duyệt từng món, tính tiền theo giá HIỆN TẠI ----------
         BigDecimal subtotal = BigDecimal.ZERO;
         BigDecimal maxServiceFee = BigDecimal.ZERO;
         List<OrderItem> orderItems = new ArrayList<>();
 
-        for (CheckoutItemDTO itemDto : request.getItems()) {
-            Food food = foodRepository.findById(itemDto.getFoodId())
-                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy món ăn ID: " + itemDto.getFoodId()));
+        for (CartItem cartItem : cartItems) {
 
-            // Ràng buộc: Món ăn phải thuộc đúng Merchant đang đặt hàng
-            if (food.getMerchant() == null || !food.getMerchant().getId().equals(merchant.getId())) {
-                throw new IllegalArgumentException("Món ăn '" + food.getFoodName() + "' không thuộc cửa hàng này!");
+            Food food = cartItem.getFood();
+
+            if (food == null) {
+                throw new IllegalArgumentException(
+                        "Một món trong giỏ hàng không còn tồn tại. Vui lòng kiểm tra lại giỏ hàng");
             }
 
-            if (!Boolean.TRUE.equals(food.getIsActive()) || food.getDeletedAt() != null) {
-                throw new IllegalArgumentException("Món ăn '" + food.getFoodName() + "' hiện không còn phục vụ!");
+            if (!cartMapper.isAvailable(food)) {
+                throw new IllegalArgumentException(
+                        "Món \"" + food.getFoodName()
+                                + "\" hiện không còn phục vụ. Vui lòng bỏ món này khỏi giỏ hàng");
             }
 
-            // Giá áp dụng: Ưu tiên giá giảm nếu có
-            BigDecimal unitPrice = (food.getDiscountPrice() != null && food.getDiscountPrice().compareTo(BigDecimal.ZERO) > 0)
-                    ? food.getDiscountPrice()
-                    : food.getPrice();
+            if (food.getMerchant() == null
+                    || !food.getMerchant().getId().equals(merchant.getId())) {
+                throw new IllegalArgumentException(
+                        "Món \"" + food.getFoodName() + "\" không thuộc cửa hàng này");
+            }
 
-            BigDecimal itemSubtotal = unitPrice.multiply(BigDecimal.valueOf(itemDto.getQuantity()));
+            int quantity = cartItem.getQuantity() != null ? cartItem.getQuantity() : 0;
+
+            if (quantity < 1) {
+                continue;
+            }
+
+            // Giá lấy trực tiếp từ bảng foods tại thời điểm đặt
+            BigDecimal unitPrice = cartMapper.resolveEffectivePrice(food);
+            BigDecimal itemSubtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+
             subtotal = subtotal.add(itemSubtotal);
 
-            // Cập nhật phí dịch vụ cao nhất giữa các món
-            if (food.getServiceFee() != null && food.getServiceFee().compareTo(maxServiceFee) > 0) {
+            if (food.getServiceFee() != null
+                    && food.getServiceFee().compareTo(maxServiceFee) > 0) {
                 maxServiceFee = food.getServiceFee();
             }
 
-            // Tạo đối tượng OrderItem
             OrderItem orderItem = OrderItem.builder()
                     .food(food)
                     .foodName(food.getFoodName())
                     .foodImage(findPrimaryFoodImage(food))
                     .price(unitPrice)
-                    .quantity(itemDto.getQuantity())
+                    .quantity(quantity)
                     .subtotal(itemSubtotal)
-                    .note(itemDto.getNote())
+                    .note(cartItem.getNote())
                     .build();
 
             orderItems.add(orderItem);
 
-            // Cập nhật số lượt đặt của món ăn
-            food.setOrderCount((food.getOrderCount() != null ? food.getOrderCount() : 0) + itemDto.getQuantity());
+            food.setOrderCount((food.getOrderCount() != null ? food.getOrderCount() : 0) + quantity);
             foodRepository.save(food);
         }
 
-        // BƯỚC 3: Tính toán các loại phí (Phí ship động theo đơn vị vận chuyển), phí dịch vụ & voucher
+        if (orderItems.isEmpty()) {
+            throw new IllegalArgumentException("Đơn hàng phải có ít nhất 1 món ăn");
+        }
+
+        // ---------- BƯỚC 4: Phí vận chuyển ----------
         DeliveryPartner deliveryPartner = null;
         BigDecimal shippingFee = DEFAULT_SHIPPING_FEE;
-        double distanceKm = 3.0; // Mặc định 3km nếu không tính được
+        double distanceKm = 3.0;
 
         if (request.getDeliveryPartnerId() != null) {
-            deliveryPartner = deliveryPartnerRepository.findById(request.getDeliveryPartnerId()).orElse(null);
+            deliveryPartner = deliveryPartnerRepository
+                    .findById(request.getDeliveryPartnerId())
+                    .orElse(null);
         }
+
         if (deliveryPartner == null) {
-            List<DeliveryPartner> activePartners = deliveryPartnerRepository.findByStatus(DeliveryPartnerStatus.ACTIVE);
+            List<DeliveryPartner> activePartners =
+                    deliveryPartnerRepository.findByStatus(DeliveryPartnerStatus.ACTIVE);
+
             if (!activePartners.isEmpty()) {
                 deliveryPartner = activePartners.get(0);
             }
@@ -129,57 +176,67 @@ public class UserOrderServiceImpl implements UserOrderService {
 
         if (deliveryPartner != null) {
             try {
-                List<MerchantAddress> merchantAddrs = merchantAddressRepository.findByMerchantId(merchant.getId());
+                List<MerchantAddress> merchantAddrs =
+                        merchantAddressRepository.findByMerchantId(merchant.getId());
+
                 if (!merchantAddrs.isEmpty() && request.getDeliveryAddress() != null) {
                     MerchantAddress mAddr = merchantAddrs.get(0);
+
                     GeoPoint mPoint = (mAddr.getLatitude() != null && mAddr.getLongitude() != null)
                             ? new GeoPoint(mAddr.getLatitude(), mAddr.getLongitude())
                             : geocodingService.geocode(mAddr.getMerchantAddress() + ", Việt Nam");
-                    GeoPoint uPoint = geocodingService.geocode(request.getDeliveryAddress() + ", Việt Nam");
+
+                    GeoPoint uPoint =
+                            geocodingService.geocode(request.getDeliveryAddress() + ", Việt Nam");
+
                     if (mPoint != null && uPoint != null) {
-                        distanceKm = distanceService.calculateDistanceKm(mPoint, uPoint);
-                        if (request.getDeliveryAddress().toLowerCase().contains("hà nội")
-                                && mAddr.getMerchantAddress().toLowerCase().contains("hà nội")
-                                && distanceKm > 35.0) {
-                            distanceKm = 3.0;
-                        }
+                        distanceKm = clampDistance(
+                                distanceService.calculateDistanceKm(mPoint, uPoint));
                     }
                 }
+
                 shippingFee = shippingFeeService.calculateShippingFee(deliveryPartner, distanceKm);
+
             } catch (Exception e) {
-                log.warn("Không tính được phí ship chính xác qua API, dùng cước cơ bản: {}", e.getMessage());
-                shippingFee = (deliveryPartner.getBaseFee() != null) ? deliveryPartner.getBaseFee() : DEFAULT_SHIPPING_FEE;
+                log.warn("Không tính được phí ship chính xác, dùng cước cơ bản: {}", e.getMessage());
+                shippingFee = (deliveryPartner.getBaseFee() != null)
+                        ? deliveryPartner.getBaseFee()
+                        : DEFAULT_SHIPPING_FEE;
             }
         }
 
+        // ---------- BƯỚC 5: Phí dịch vụ, voucher, tổng tiền ----------
         BigDecimal serviceFee = maxServiceFee;
-        BigDecimal discountAmount = calculateVoucherDiscount(request.getVoucherCode(), subtotal);
+        BigDecimal discountAmount = calculateVoucherDiscount(
+                request.getVoucherCode(), subtotal, shippingFee);
 
-        BigDecimal totalAmount = subtotal.add(shippingFee).add(serviceFee).subtract(discountAmount);
+        BigDecimal totalAmount = subtotal
+                .add(shippingFee)
+                .add(serviceFee)
+                .subtract(discountAmount);
+
         if (totalAmount.compareTo(BigDecimal.ZERO) < 0) {
             totalAmount = BigDecimal.ZERO;
         }
 
-        // BƯỚC 4: Tạo thực thể Order và lưu vào cơ sở dữ liệu
+        // ---------- BƯỚC 6: Thời gian dự kiến ----------
         LocalDateTime now = LocalDateTime.now();
 
-        // 1. Thời gian chuẩn bị món (lấy thời gian chuẩn bị của món lâu nhất, mặc định 10 phút, tối thiểu 5 phút)
-        int prepMinutes = 10;
-        if (!orderItems.isEmpty()) {
-            int maxPrep = orderItems.stream()
-                    .mapToInt(item -> (item.getFood() != null && item.getFood().getPreparationTime() != null && item.getFood().getPreparationTime() > 0)
-                            ? item.getFood().getPreparationTime()
-                            : 10)
-                    .max()
-                    .orElse(10);
-            prepMinutes = Math.max(5, maxPrep);
-        }
+        int prepMinutes = orderItems.stream()
+                .mapToInt(item -> (item.getFood() != null
+                        && item.getFood().getPreparationTime() != null
+                        && item.getFood().getPreparationTime() > 0)
+                        ? item.getFood().getPreparationTime()
+                        : 10)
+                .max()
+                .orElse(10);
 
-        // 2. Thời gian giao hàng vận chuyển: 4 phút / 1km (tối thiểu 4 phút)
-        int deliveryTransitMinutes = (int) Math.max(4, Math.round(distanceKm * 4));
-        int totalEstimatedMinutes = prepMinutes + deliveryTransitMinutes;
-        LocalDateTime estimatedDelivery = now.plusMinutes(totalEstimatedMinutes);
+        prepMinutes = Math.max(5, prepMinutes);
 
+        int deliveryTransitMinutes = (int) Math.max(0.5, Math.round(distanceKm * 0.5));
+        LocalDateTime estimatedDelivery = now.plusMinutes(prepMinutes + deliveryTransitMinutes);
+
+        // ---------- BƯỚC 7: Lưu đơn hàng ----------
         Order order = Order.builder()
                 .orderCode(generateOrderCode())
                 .user(user)
@@ -190,7 +247,9 @@ public class UserOrderServiceImpl implements UserOrderService {
                 .deliveryAddress(request.getDeliveryAddress())
                 .note(request.getNote())
                 .status(OrderStatus.PENDING)
-                .paymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : PaymentMethod.COD)
+                .paymentMethod(request.getPaymentMethod() != null
+                        ? request.getPaymentMethod()
+                        : PaymentMethod.COD)
                 .subtotalPrice(subtotal)
                 .shippingFee(shippingFee)
                 .serviceFee(serviceFee)
@@ -201,111 +260,299 @@ public class UserOrderServiceImpl implements UserOrderService {
                 .updatedAt(now)
                 .build();
 
-        // Gán các món ăn vào đơn hàng
         for (OrderItem item : orderItems) {
             order.addOrderItem(item);
         }
 
         Order savedOrder = orderRepository.save(order);
-        log.info("Đặt hàng thành công, mã đơn: {}", savedOrder.getOrderCode());
 
-        return orderMapper.toOrderResponseDTO(savedOrder);
+        // ---------- BƯỚC 8: Chỉ dọn sạch các món của quán này khỏi giỏ hàng ----------
+        cartService.clearCartForMerchant(userId, request.getMerchantId());
+
+        // ---------- BƯỚC 9: Lưu Log thay đổi trạng thái ----------
+        log.info("Đặt hàng thành công, mã đơn {}", savedOrder.getOrderCode());
+
+        return decorate(orderMapper.toOrderResponseDTO(savedOrder), savedOrder);
     }
 
-    /**
-     * Lấy danh sách lịch sử đơn hàng của User
-     */
+    // =====================================================================
+    // XEM DANH SÁCH ĐƠN HÀNG
+    // =====================================================================
+
     @Override
     @Transactional
     public List<OrderResponseDTO> getUserOrders(UUID userId) {
+
         List<Order> orders = orderRepository.findByUser_IdOrderByIdDesc(userId);
-        for (Order o : orders) {
-            autoSyncOrderStatus(o);
+
+        orders.forEach(this::autoSyncOrderStatus);
+
+        List<OrderResponseDTO> dtos = orderMapper.toOrderResponseDTOList(orders);
+
+        for (int i = 0; i < dtos.size(); i++) {
+            decorate(dtos.get(i), orders.get(i));
         }
-        return orderMapper.toOrderResponseDTOList(orders);
+
+        return dtos;
     }
 
-    /**
-     * Lấy danh sách lịch sử đơn hàng của User có phân trang (mặc định mới nhất đến cũ nhất theo ID)
-     */
     @Override
     @Transactional
     public Page<OrderResponseDTO> getUserOrders(UUID userId, Pageable pageable) {
+
         Page<Order> orderPage = orderRepository.findByUser_IdOrderByIdDesc(userId, pageable);
-        for (Order o : orderPage.getContent()) {
-            autoSyncOrderStatus(o);
-        }
-        return orderMapper.toOrderResponseDTOPage(orderPage);
+
+        orderPage.getContent().forEach(this::autoSyncOrderStatus);
+
+        return orderPage.map(order -> decorate(orderMapper.toOrderResponseDTO(order), order));
     }
 
-    /**
-     * Xem chi tiết đơn hàng theo mã đơn (Dùng cho trang Đặt hàng thành công)
-     */
+    @Override
+    @Transactional
+    public Page<OrderResponseDTO> getUserOrders(UUID userId, OrderStatus status, Pageable pageable) {
+
+        Page<Order> orderPage = (status != null)
+                ? orderRepository.findByUser_IdAndStatusOrderByIdDesc(userId, status, pageable)
+                : orderRepository.findByUser_IdOrderByIdDesc(userId, pageable);
+
+        orderPage.getContent().forEach(this::autoSyncOrderStatus);
+
+        return orderPage.map(order -> decorate(orderMapper.toOrderResponseDTO(order), order));
+    }
+
+    // =====================================================================
+    // XEM CHI TIẾT MỘT ĐƠN HÀNG
+    // =====================================================================
+
+    @Override
+    @Transactional
+    public OrderResponseDTO getUserOrderDetail(UUID userId, Long orderId) {
+
+        Order order = findOwnedOrderOrThrow(userId, orderId);
+
+        autoSyncOrderStatus(order);
+
+        return decorate(orderMapper.toOrderResponseDTO(order), order);
+    }
+
     @Override
     @Transactional
     public OrderResponseDTO getOrderDetailByCode(String orderCode) {
+
         Order order = orderRepository.findByOrderCodeWithItems(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã: " + orderCode));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Không tìm thấy đơn hàng với mã: " + orderCode));
+
         autoSyncOrderStatus(order);
-        return orderMapper.toOrderResponseDTO(order);
+
+        return decorate(orderMapper.toOrderResponseDTO(order), order);
     }
 
-    // ==================== HELPER METHODS ====================
+    @Override
+    @Transactional
+    public OrderResponseDTO getOrderDetailByCode(String orderCode, UUID userId) {
 
+        Order order = orderRepository.findByOrderCodeAndUserIdWithItems(orderCode, userId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Không tìm thấy đơn hàng với mã: " + orderCode));
+
+        autoSyncOrderStatus(order);
+
+        return decorate(orderMapper.toOrderResponseDTO(order), order);
+    }
+
+    // =====================================================================
+    // KHÁCH HÀNG HỦY ĐƠN
+    // =====================================================================
+
+    @Override
+    @Transactional
+    public OrderResponseDTO cancelOrderByUser(UUID userId, Long orderId, String cancelReason) {
+
+        Order order = findOwnedOrderOrThrow(userId, orderId);
+
+        // Lý do hủy là bắt buộc
+        if (cancelReason == null || cancelReason.trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập lý do hủy đơn hàng");
+        }
+
+        String reason = cancelReason.trim();
+
+        if (reason.length() > 400) {
+            reason = reason.substring(0, 400);
+        }
+
+        // Đồng bộ trạng thái trước khi kiểm tra, tránh hủy nhầm đơn quán đã nhận
+        autoSyncOrderStatus(order);
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Đơn hàng này đã được hủy trước đó");
+        }
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Quán đã tiếp nhận đơn hàng nên không thể hủy. "
+                            + "Vui lòng liên hệ trực tiếp với cửa hàng.");
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setCancelReason("Khách hàng hủy: " + reason);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        // Trả lại lượt đặt đã cộng cho món khi tạo đơn, để thống kê không bị lệch
+        rollbackFoodOrderCount(order);
+
+        Order savedOrder = orderRepository.save(order);
+
+        log.info("User {} đã hủy đơn hàng ID {}, lý do: {}", userId, orderId, reason);
+
+        return decorate(orderMapper.toOrderResponseDTO(savedOrder), savedOrder);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isCancellableByUser(UUID userId, Long orderId) {
+
+        return orderRepository.findByIdAndUser_Id(orderId, userId)
+                .map(order -> order.getStatus() == OrderStatus.PENDING)
+                .orElse(false);
+    }
+
+    // =====================================================================
+    // HELPER
+    // =====================================================================
+
+    private Order findOwnedOrderOrThrow(UUID userId, Long orderId) {
+
+        if (orderId == null) {
+            throw new IllegalArgumentException("Không xác định được đơn hàng");
+        }
+
+        return orderRepository.findByIdAndUserIdWithItems(orderId, userId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Không tìm thấy đơn hàng hoặc đơn hàng không thuộc về bạn"));
+    }
+
+    /**
+     * Gắn thêm cờ cho phép hủy vào DTO.
+     */
+    private OrderResponseDTO decorate(OrderResponseDTO dto, Order order) {
+        if (dto == null) {
+            return null;
+        }
+
+        dto.setCanCancelByUser(order != null && order.getStatus() == OrderStatus.PENDING);
+
+        return dto;
+    }
+
+    /**
+     * Tự chuyển PREPARING sang DELIVERING khi đã quá thời gian chuẩn bị.
+     */
     private void autoSyncOrderStatus(Order order) {
-        if (order == null) return;
-        if (order.getStatus() == OrderStatus.PREPARING && order.getPreparingUntil() != null) {
-            if (LocalDateTime.now().isAfter(order.getPreparingUntil())) {
-                order.setStatus(OrderStatus.DELIVERING);
-                order.setUpdatedAt(LocalDateTime.now());
-                orderRepository.save(order);
-                log.info("User query: Tự động chuyển đơn hàng ID {} sang DELIVERING do hết thời gian chuẩn bị", order.getId());
-            }
+        if (order == null) {
+            return;
+        }
+
+        if (order.getStatus() == OrderStatus.PREPARING
+                && order.getPreparingUntil() != null
+                && LocalDateTime.now().isAfter(order.getPreparingUntil())) {
+
+            order.setStatus(OrderStatus.DELIVERING);
+            order.setUpdatedAt(LocalDateTime.now());
+            orderRepository.save(order);
+
+            log.info("Tự động chuyển đơn hàng ID {} sang DELIVERING", order.getId());
         }
     }
 
     /**
-     * Tính toán số tiền giảm giá dựa theo mã Voucher (hỗ trợ 2 loại: giảm số tiền và giảm theo %)
+     * Trừ lại orderCount đã cộng khi tạo đơn.
      */
-    private BigDecimal calculateVoucherDiscount(String voucherCode, BigDecimal subtotal) {
-        if (voucherCode == null || voucherCode.trim().isEmpty() || subtotal == null || subtotal.compareTo(BigDecimal.ZERO) <= 0) {
+    private void rollbackFoodOrderCount(Order order) {
+        if (order.getOrderItems() == null) {
+            return;
+        }
+
+        for (OrderItem item : order.getOrderItems()) {
+
+            Food food = item.getFood();
+
+            if (food == null || item.getQuantity() == null) {
+                continue;
+            }
+
+            int current = food.getOrderCount() != null ? food.getOrderCount() : 0;
+            food.setOrderCount(Math.max(0, current - item.getQuantity()));
+
+            foodRepository.save(food);
+        }
+    }
+
+    /**
+     * Tính số tiền giảm theo mã voucher.
+     *
+     * Mã không nằm trong danh sách hợp lệ sẽ KHÔNG được giảm giá.
+     */
+    private BigDecimal calculateVoucherDiscount(String voucherCode,
+                                                BigDecimal subtotal,
+                                                BigDecimal shippingFee) {
+
+        if (voucherCode == null
+                || voucherCode.trim().isEmpty()
+                || subtotal == null
+                || subtotal.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO;
         }
 
         String code = voucherCode.trim().toUpperCase();
-        switch (code) {
-            // Loại 1: Giảm theo số tiền cố định
-            case "GIAM10K":
-                return BigDecimal.valueOf(10000);
-            case "GIAM20K":
-                return BigDecimal.valueOf(20000);
-            case "GIAM50K":
-                return BigDecimal.valueOf(50000);
 
-            // Loại 2: Giảm theo phần trăm (%)
-            case "GIAM10%":
-            case "GIAM10PT":
-                return subtotal.multiply(BigDecimal.valueOf(10)).divide(BigDecimal.valueOf(100));
-            case "GIAM20%":
-            case "GIAM20PT":
-                return subtotal.multiply(BigDecimal.valueOf(20)).divide(BigDecimal.valueOf(100));
-            case "GIAM50%":
-            case "GIAM50PT":
-                return subtotal.multiply(BigDecimal.valueOf(50)).divide(BigDecimal.valueOf(100));
+        BigDecimal discount = switch (code) {
+            case "GIAM10K" -> BigDecimal.valueOf(10000);
+            case "GIAM20K" -> BigDecimal.valueOf(20000);
+            case "GIAM50K" -> BigDecimal.valueOf(50000);
 
-            default:
-                // Mặc định giảm 10.000 đ cho các mã hợp lệ khác
-                return BigDecimal.valueOf(10000);
-        }
+            case "GIAM10%", "GIAM10PT" -> percentOf(subtotal, 10);
+            case "GIAM20%", "GIAM20PT" -> percentOf(subtotal, 20);
+            case "GIAM50%", "GIAM50PT" -> percentOf(subtotal, 50);
+
+            case "FREESHIP" -> shippingFee != null ? shippingFee : BigDecimal.ZERO;
+
+            // Mã không hợp lệ: không giảm giá
+            default -> BigDecimal.ZERO;
+        };
+
+        // Không cho giảm quá tiền món + phí ship
+        BigDecimal ceiling = subtotal.add(shippingFee != null ? shippingFee : BigDecimal.ZERO);
+
+        return discount.min(ceiling);
+    }
+
+    private BigDecimal percentOf(BigDecimal amount, int percent) {
+        return amount
+                .multiply(BigDecimal.valueOf(percent))
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
     }
 
     /**
-     * Lấy ảnh đại diện chính của món ăn
+     * Giới hạn khoảng cách trong ngưỡng giao đồ ăn hợp lý.
+     *
+     * Thay cho đoạn hard-code riêng cho Hà Nội trước đây: khi geocoding trả về
+     * tọa độ sai tỉnh, khoảng cách có thể lên hàng trăm km và phí ship bị thổi phồng.
      */
+    private double clampDistance(double distanceKm) {
+        if (distanceKm <= 0 || Double.isNaN(distanceKm)) {
+            return 3.0;
+        }
+
+        return Math.min(distanceKm, MAX_DELIVERY_DISTANCE_KM);
+    }
+
     private String findPrimaryFoodImage(Food food) {
         if (food.getImages() == null || food.getImages().isEmpty()) {
             return null;
         }
+
         return food.getImages().stream()
                 .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
                 .map(FoodImage::getImageUrl)
@@ -313,10 +560,10 @@ public class UserOrderServiceImpl implements UserOrderService {
                 .orElse(food.getImages().get(0).getImageUrl());
     }
 
-    /**
-     * Sinh mã đơn hàng ngẫu nhiên: MC-XXXXXXX-XXX
-     */
     private String generateOrderCode() {
-        return "MC-" + System.currentTimeMillis() % 10000000 + "-" + String.format("%03d", new Random().nextInt(1000));
+        return "MC-"
+                + System.currentTimeMillis() % 10000000
+                + "-"
+                + String.format("%03d", new Random().nextInt(1000));
     }
 }

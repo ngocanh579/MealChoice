@@ -64,6 +64,12 @@ public class OrderResponseDTO {
     private Long remainingDeliverySeconds;
     private Boolean canComplete;
 
+    /**
+     * true khi khách hàng còn được phép tự hủy đơn (đơn đang ở trạng thái PENDING).
+     * Giao diện /user/orders dùng cờ này để bật/tắt nút "Hủy đơn".
+     */
+    private Boolean canCancelByUser;
+
     private LocalDateTime createdAt;
     private String formattedCreatedAt;
 

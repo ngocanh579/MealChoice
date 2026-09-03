@@ -631,6 +631,7 @@ public class PageController {
         if (authentication != null
                 && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
+            String email = userDetails.getUsername();
             Optional<Merchant> merchantOpt =
                     merchantRepository.findByUser_Id(userDetails.getId());
 
@@ -705,16 +706,32 @@ public class PageController {
     @GetMapping("/checkout/success")
     public String checkoutSuccess(
             @RequestParam(name = "orderCode", required = false) String orderCode,
+            @RequestParam(name = "orders", required = false) String ordersParam,
             Model model) {
 
-        if (orderCode != null && !orderCode.isBlank()) {
+        List<OrderResponseDTO> ordersList = new ArrayList<>();
+
+        if (ordersParam != null && !ordersParam.isBlank()) {
+            String[] codes = ordersParam.split(",");
+            for (String code : codes) {
+                try {
+                    OrderResponseDTO o = userOrderService.getOrderDetailByCode(code.trim());
+                    ordersList.add(o);
+                } catch (Exception e) {
+                    log.warn("Không tìm thấy đơn hàng mã {}: {}", code, e.getMessage());
+                }
+            }
+        } else if (orderCode != null && !orderCode.isBlank()) {
             try {
                 OrderResponseDTO order = userOrderService.getOrderDetailByCode(orderCode);
-                model.addAttribute("order", order);
+                ordersList.add(order);
+                model.addAttribute("order", order); // Backward compat
             } catch (Exception e) {
                 log.warn("Không tìm thấy đơn hàng mã {}: {}", orderCode, e.getMessage());
             }
         }
+
+        model.addAttribute("ordersList", ordersList);
 
         return "checkout/success";
     }
@@ -722,9 +739,11 @@ public class PageController {
     // Trang lịch sử đơn hàng của User
     @GetMapping("/user/orders")
     public String userOrdersPage(
+            @RequestParam(name = "status", required = false) OrderStatus status,
             @RequestParam(name = "page", defaultValue = "0") int page,
             Authentication authentication,
             Model model) {
+
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
             return "redirect:/login";
@@ -735,16 +754,36 @@ public class PageController {
             return "redirect:/login";
         }
 
-        int pageSize = 50;
-        Pageable pageable = PageRequest.of(Math.max(0, page), pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
-        Page<OrderResponseDTO> orderPage = userOrderService.getUserOrders(user.getId(), pageable);
+        int pageSize = 20;
+
+        Pageable pageable = PageRequest.of(
+                Math.max(0, page),
+                pageSize,
+                org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "id"));
+
+        // Truyền thêm status để lọc theo trạng thái đơn hàng
+        Page<OrderResponseDTO> orderPage =
+                userOrderService.getUserOrders(user.getId(), status, pageable);
 
         model.addAttribute("user", user);
         model.addAttribute("orders", orderPage.getContent());
         model.addAttribute("orderPage", orderPage);
         model.addAttribute("currentPage", page);
+        model.addAttribute("selectedStatus", status);
 
         return "user/orders";
+    }
+
+    // Trang giỏ hàng full-page
+    @GetMapping("/cart")
+    public String cartPage(Authentication authentication, Model model) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            return "redirect:/login?redirect=/cart";
+        }
+
+        return "user/cart";
     }
 
     // ==================== MERCHANT ORDERS & STATS ====================

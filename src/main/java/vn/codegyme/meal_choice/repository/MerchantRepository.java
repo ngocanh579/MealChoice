@@ -54,6 +54,16 @@ public interface MerchantRepository extends JpaRepository<Merchant, UUID> {
         SELECT DISTINCT m
         FROM Merchant m
         LEFT JOIN FETCH m.addresses
+        WHERE m.user.id = :userId
+    """)
+    Optional<Merchant> findByUserIdWithAddresses(
+            @Param("userId") UUID userId
+    );
+
+    @Query("""
+        SELECT DISTINCT m
+        FROM Merchant m
+        LEFT JOIN FETCH m.addresses
         ORDER BY m.id DESC
         """)
     List<Merchant> findAllWithAddressesOrderByIdDesc();
