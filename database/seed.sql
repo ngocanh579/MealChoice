@@ -688,6 +688,16 @@ VALUES (
     );
 
 -- =============================================================================
+-- 15.1 FOOD_VOUCHERS (Món ăn áp dụng mã giảm giá)
+-- =============================================================================
+INSERT INTO food_vouchers (food_id, voucher_id) VALUES
+    (1, 1),
+    (3, 1),
+    (2, 2),
+    (4, 3),
+    (5, 3);
+
+-- =============================================================================
 -- 16. DELIVERY_PARTNERS (Đối tác vận chuyển mẫu)
 -- =============================================================================
 INSERT INTO
@@ -1003,24 +1013,34 @@ INSERT INTO order_items (id, order_id, food_id, food_name, price, quantity, subt
 -- =============================================================================
 -- 20. SAMPLE ORDERS FOR WEEK 35 & 36 (TUẦN & THÁNG 8, 9/2026)
 -- =============================================================================
+-- Tuần 35 (24/08 - 30/08/2026)
 INSERT INTO orders (
     id, order_code, user_id, merchant_id, delivery_partner_id, contact_name, contact_phone, 
     delivery_address, status, payment_method, subtotal_price, shipping_fee, service_fee, 
     discount_amount, total_amount, cancel_reason, completed_at, created_at, updated_at
 ) VALUES
--- Tuần 35 (24/08 - 30/08/2026)
 (201, 'MC-20260826-01', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Nguyễn Văn Anh', '0900000002', 'Số 12 Ngõ 68 Cầu Giấy, Hà Nội', 'COMPLETED', 'COD', 120000.00, 16000.00, 5000.00, 0.00, 141000.00, NULL, '2026-08-26 12:30:00', '2026-08-26 11:45:00', '2026-08-26 12:30:00'),
 (202, 'MC-20260828-02', '00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'Trần Thị Bình', '0900000003', 'Số 45 Láng Hạ, Hà Nội', 'COMPLETED', 'CARD', 180000.00, 15000.00, 5000.00, 20000.00, 180000.00, NULL, '2026-08-28 19:15:00', '2026-08-28 18:30:00', '2026-08-28 19:15:00'),
-(203, 'MC-20260830-03', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Nguyễn Văn Anh', '0900000002', 'Số 12 Ngõ 68 Cầu Giấy, Hà Nội', 'COMPLETED', 'COD', 250000.00, 18000.00, 5000.00, 0.00, 273000.00, NULL, '2026-08-30 14:00:00', '2026-08-30 13:10:00', '2026-08-30 14:00:00'),
+(203, 'MC-20260830-03', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Nguyễn Văn Anh', '0900000002', 'Số 12 Ngõ 68 Cầu Giấy, Hà Nội', 'COMPLETED', 'COD', 250000.00, 18000.00, 5000.00, 0.00, 273000.00, NULL, '2026-08-30 14:00:00', '2026-08-30 13:10:00', '2026-08-30 14:00:00');
 
 -- Tuần 36 (31/08 - 06/09/2026 - Đang diễn ra)
+INSERT INTO orders (
+    id, order_code, user_id, merchant_id, delivery_partner_id, contact_name, contact_phone, 
+    delivery_address, status, payment_method, subtotal_price, shipping_fee, service_fee, 
+    discount_amount, total_amount, cancel_reason, completed_at, created_at, updated_at
+) VALUES
 (204, 'MC-20260831-04', '00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'Trần Thị Bình', '0900000003', 'Số 45 Láng Hạ, Hà Nội', 'COMPLETED', 'COD', 95000.00, 14000.00, 5000.00, 0.00, 114000.00, NULL, '2026-08-31 12:40:00', '2026-08-31 12:00:00', '2026-08-31 12:40:00'),
 (205, 'MC-20260901-05', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Nguyễn Văn Anh', '0900000002', 'Số 12 Ngõ 68 Cầu Giấy, Hà Nội', 'COMPLETED', 'CARD', 150000.00, 16000.00, 5000.00, 0.00, 171000.00, NULL, '2026-09-01 19:20:00', '2026-09-01 18:40:00', '2026-09-01 19:20:00'),
 (206, 'MC-20260902-06', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Nguyễn Văn Anh', '0900000002', 'Số 12 Ngõ 68 Cầu Giấy, Hà Nội', 'PREPARING', 'COD', 85000.00, 15000.00, 5000.00, 0.00, 105000.00, NULL, NULL, NOW(), NOW()),
 (207, 'MC-20260902-07', '00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'Trần Thị Bình', '0900000003', 'Số 45 Láng Hạ, Hà Nội', 'DELIVERING', 'CARD', 110000.00, 14000.00, 5000.00, 0.00, 129000.00, NULL, NULL, NOW(), NOW()),
-(208, 'MC-20260901-08', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Nguyễn Văn Anh', '0900000002', 'Số 12 Ngõ 68 Cầu Giấy, Hà Nội', 'CANCELLED', 'COD', 70000.00, 15000.00, 5000.00, 0.00, 90000.00, 'Khách hàng đổi ý muốn đổi món khác', NULL, '2026-09-01 10:15:00', '2026-09-01 10:20:00'),
+(208, 'MC-20260901-08', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Nguyễn Văn Anh', '0900000002', 'Số 12 Ngõ 68 Cầu Giấy, Hà Nội', 'CANCELLED', 'COD', 70000.00, 15000.00, 5000.00, 0.00, 90000.00, 'Khách hàng đổi ý muốn đổi món khác', NULL, '2026-09-01 10:15:00', '2026-09-01 10:20:00');
 
 -- Đơn cho Merchant 2 (Tiệm Trà & Ăn Vặt)
+INSERT INTO orders (
+    id, order_code, user_id, merchant_id, delivery_partner_id, contact_name, contact_phone, 
+    delivery_address, status, payment_method, subtotal_price, shipping_fee, service_fee, 
+    discount_amount, total_amount, cancel_reason, completed_at, created_at, updated_at
+) VALUES
 (209, 'MC-20260827-09', '00000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000003', 'Nguyễn Văn Anh', '0900000002', 'Tòa Sông Đà, Mỹ Đình, Hà Nội', 'COMPLETED', 'COD', 90000.00, 15000.00, 3000.00, 0.00, 108000.00, NULL, '2026-08-27 15:45:00', '2026-08-27 15:00:00', '2026-08-27 15:45:00'),
 (210, 'MC-20260901-10', '00000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000003', 'Trần Thị Bình', '0900000003', 'Tòa Sông Đà, Mỹ Đình, Hà Nội', 'COMPLETED', 'CARD', 115000.00, 15000.00, 3000.00, 10000.00, 123000.00, NULL, '2026-09-01 16:30:00', '2026-09-01 15:50:00', '2026-09-01 16:30:00');
 
@@ -1054,21 +1074,10 @@ INSERT INTO merchant_settlements (
     total_gross_revenue, total_discount, commission_rate, total_commission_fee, 
     net_revenue, total_orders, adjustment_amount, status, confirmed_at, created_at, updated_at
 ) VALUES
--- Kỳ Tháng 07/2026 (Đã xác nhận)
-(10, '10000000-0000-0000-0000-000000000001', '2026-07', 'MONTH', '2026-07-01 00:00:00', '2026-08-01 00:00:00', 
- 350000.00, 0.00, 0.000010, 3.50, 349996.50, 1, 0.00, 'CONFIRMED', '2026-08-02 10:15:00', '2026-08-01 00:05:00', '2026-08-02 10:15:00'),
-
--- Kỳ Tháng 08/2026 (Chờ xác nhận - Chưa chốt do Tuần 35 đang khiếu nại)
-(11, '10000000-0000-0000-0000-000000000001', '2026-08', 'MONTH', '2026-08-01 00:00:00', '2026-09-01 00:00:00', 
- 890000.00, 20000.00, 0.000010, 8.70, 869991.30, 4, 0.00, 'PENDING_CONFIRMATION', NULL, '2026-09-01 00:05:00', '2026-09-01 00:05:00'),
-
--- Kỳ Tuần 34/2026 (17/08 - 23/08 - Đã xác nhận)
-(12, '10000000-0000-0000-0000-000000000001', '2026-W34', 'WEEK', '2026-08-17 00:00:00', '2026-08-24 00:00:00', 
- 340000.00, 0.00, 0.000010, 3.40, 339996.60, 1, 0.00, 'CONFIRMED', '2026-08-25 09:00:00', '2026-08-24 00:05:00', '2026-08-25 09:00:00'),
-
--- Kỳ Tuần 35/2026 (24/08 - 30/08 - Đang khiếu nại DISPUTED)
-(13, '10000000-0000-0000-0000-000000000001', '2026-W35', 'WEEK', '2026-08-24 00:00:00', '2026-08-31 00:00:00', 
- 550000.00, 20000.00, 0.000010, 5.30, 529994.70, 3, 0.00, 'DISPUTED', NULL, '2026-08-31 00:05:00', '2026-08-31 10:20:00');
+(10, '10000000-0000-0000-0000-000000000001', '2026-07', 'MONTH', '2026-07-01 00:00:00', '2026-08-01 00:00:00', 350000.00, 0.00, 0.000010, 3.50, 349996.50, 1, 0.00, 'CONFIRMED', '2026-08-02 10:15:00', '2026-08-01 00:05:00', '2026-08-02 10:15:00'),
+(11, '10000000-0000-0000-0000-000000000001', '2026-08', 'MONTH', '2026-08-01 00:00:00', '2026-09-01 00:00:00', 890000.00, 20000.00, 0.000010, 8.70, 869991.30, 4, 0.00, 'PENDING_CONFIRMATION', NULL, '2026-09-01 00:05:00', '2026-09-01 00:05:00'),
+(12, '10000000-0000-0000-0000-000000000001', '2026-W34', 'WEEK', '2026-08-17 00:00:00', '2026-08-24 00:00:00', 340000.00, 0.00, 0.000010, 3.40, 339996.60, 1, 0.00, 'CONFIRMED', '2026-08-25 09:00:00', '2026-08-24 00:05:00', '2026-08-25 09:00:00'),
+(13, '10000000-0000-0000-0000-000000000001', '2026-W35', 'WEEK', '2026-08-24 00:00:00', '2026-08-31 00:00:00', 550000.00, 20000.00, 0.000010, 5.30, 529994.70, 3, 0.00, 'DISPUTED', NULL, '2026-08-31 00:05:00', '2026-08-31 10:20:00');
 
 -- =============================================================================
 -- 23. KHIẾU NẠI ĐỐI SOÁT (SETTLEMENT_CLAIMS)
@@ -1077,17 +1086,8 @@ INSERT INTO settlement_claims (
     id, settlement_id, merchant_id, reason, description, evidence_image_url, 
     adjustment_amount, status, admin_note, created_at, updated_at
 ) VALUES
--- Khiếu nại PENDING đang chờ Admin duyệt cho Kỳ Tuần 35
-(1, 13, '10000000-0000-0000-0000-000000000001', 'COMMISSION_FEE_MISMATCH', 
- 'Phí chiết khấu kỳ tuần 35 chưa áp dụng đúng chính sách ưu đãi hợp đồng mới cho nhóm món phở đặc biệt. Nhờ Admin kiểm tra và hoàn lại 50.000 đ.', 
- 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800', 
- 0.00, 'PENDING', NULL, '2026-08-31 10:20:00', '2026-08-31 10:20:00'),
-
--- Khiếu nại đã giải quyết RESOLVED ở kỳ trước (Tháng 07)
-(2, 10, '10000000-0000-0000-0000-000000000001', 'OTHER', 
- 'Đề nghị hỗ trợ chi phí mã giảm giá đồng tài trợ trong chiến dịch ngày hội ẩm thực.', 
- 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800', 
- 30000.00, 'RESOLVED', 'Admin đã kiểm tra chương trình đồng tài trợ và chấp thuận bồi hoàn thêm 30.000 VNĐ.', '2026-08-01 14:00:00', '2026-08-02 09:30:00');
+(1, 13, '10000000-0000-0000-0000-000000000001', 'COMMISSION_FEE_MISMATCH', 'Phí chiết khấu kỳ tuần 35 chưa áp dụng đúng chính sách ưu đãi hợp đồng mới cho nhóm món phở đặc biệt. Nhờ Admin kiểm tra và hoàn lại 50.000 đ.', 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800', 0.00, 'PENDING', NULL, '2026-08-31 10:20:00', '2026-08-31 10:20:00'),
+(2, 10, '10000000-0000-0000-0000-000000000001', 'OTHER', 'Đề nghị hỗ trợ chi phí mã giảm giá đồng tài trợ trong chiến dịch ngày hội ẩm thực.', 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800', 30000.00, 'RESOLVED', 'Admin đã kiểm tra chương trình đồng tài trợ và chấp thuận bồi hoàn thêm 30.000 VNĐ.', '2026-08-01 14:00:00', '2026-08-02 09:30:00');
 
 -- =============================================================================
 -- 24. YÊU CẦU RÚT TIỀN (MERCHANT_PAYOUT_REQUESTS)
@@ -1096,25 +1096,9 @@ INSERT INTO merchant_payout_requests (
     id, merchant_id, type, amount, bank_name, bank_account_number, 
     status, admin_note, transfer_proof_url, created_at, completed_at, rejected_at
 ) VALUES
--- 1. Lệnh rút tiền đã hoàn tất (COMPLETED) kèm ảnh chứng từ ủy nhiệm chi
-('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'WITHDRAWAL', 
- 300000, 'Vietcombank', '987654321098', 'COMPLETED', 
- 'Đã thực hiện lệnh chuyển khoản qua ngân hàng Vietcombank cho quán. Mã giao dịch VCB-883921.', 
- 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800', 
- '2026-08-15 14:00:00', '2026-08-15 16:30:00', NULL),
-
--- 2. Lệnh rút tiền đang chờ Admin duyệt (PENDING) để test chức năng duyệt trên Admin
-('30000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'WITHDRAWAL', 
- 250000, 'Vietcombank', '987654321098', 'PENDING', 
- NULL, NULL, 
- NOW(), NULL, NULL),
-
--- 3. Lệnh rút tiền bị từ chối (REJECTED) kèm ghi chú giải thích
-('30000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', 'WITHDRAWAL', 
- 150000, 'Vietcombank', '987654321098', 'REJECTED', 
- 'Số tài khoản ngân hàng không trùng khớp với tên pháp nhân đăng ký ban đầu. Quán vui lòng vào Cài đặt tài khoản cập nhật lại.', 
- NULL, 
- '2026-08-10 09:00:00', NULL, '2026-08-10 11:30:00');
+('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'WITHDRAWAL', 300000, 'Vietcombank', '987654321098', 'COMPLETED', 'Đã thực hiện lệnh chuyển khoản qua ngân hàng Vietcombank cho quán. Mã giao dịch VCB-883921.', 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800', '2026-08-15 14:00:00', '2026-08-15 16:30:00', NULL),
+('30000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'WITHDRAWAL', 250000, 'Vietcombank', '987654321098', 'PENDING', NULL, NULL, NOW(), NULL, NULL),
+('30000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', 'WITHDRAWAL', 150000, 'Vietcombank', '987654321098', 'REJECTED', 'Số tài khoản ngân hàng không trùng khớp với tên pháp nhân đăng ký ban đầu. Quán vui lòng vào Cài đặt tài khoản cập nhật lại.', NULL, '2026-08-10 09:00:00', NULL, '2026-08-10 11:30:00');
 
 -- =============================================================================
 -- 25. YÊU CẦU ĐỐI TÁC THÂN THIẾT (TRUSTED_PARTNER_REQUESTS)
@@ -1122,8 +1106,5 @@ INSERT INTO merchant_payout_requests (
 INSERT INTO trusted_partner_requests (
     id, merchant_id, status, revenue, reject_reason, created_at, reviewed_at
 ) VALUES
--- Hồ sơ chờ Admin duyệt PENDING cho Merchant 1
 (1, '10000000-0000-0000-0000-000000000001', 'PENDING', 105000000.00, NULL, '2026-09-01 09:30:00', NULL),
-
--- Hồ sơ đã bị từ chối REJECTED ở kỳ trước cho Merchant 2 (để test hiển thị trạng thái)
 (2, '10000000-0000-0000-0000-000000000002', 'REJECTED', 85000000.00, 'Doanh thu tháng chưa đạt ngưỡng tối thiểu 100.000.000 VNĐ theo tiêu chuẩn quy định.', '2026-08-15 11:00:00', '2026-08-16 14:00:00');

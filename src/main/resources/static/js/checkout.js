@@ -15,6 +15,8 @@ let selectedDeliveryPartnerId = null;
 let serviceFee = 0;
 let subtotalPrice = 0;
 let currentMerchantId = null;
+let currentCartItems = [];
+let currentApplicableCoupons = [];
 let currentSelectedAddress = null;
 let cartHasUnavailableItems = false;
 
@@ -389,7 +391,15 @@ async function loadCheckoutCart() {
         return;
     }
 
+    if (!summary.merchantId && summary.items && summary.items.length > 0) {
+        summary.merchantId = summary.items[0].merchantId;
+        if (!summary.merchantName) {
+            summary.merchantName = summary.items[0].merchantName;
+        }
+    }
+
     currentMerchantId = summary.merchantId;
+    currentCartItems = summary.items || [];
     cartHasUnavailableItems = !!summary.hasUnavailableItems;
 
     if (merchantTitle) {
@@ -477,11 +487,81 @@ async function loadCheckoutCart() {
         loadShippingQuotes(currentMerchantId, currentSelectedAddress.id);
     }
 
+    await loadApplicableCoupons(currentMerchantId, currentCartItems);
     recalculateVoucher();
     updatePriceSummary();
 }
 
 // ==================== 5. VOUCHER & TỔNG TIỀN ====================
+
+async function loadApplicableCoupons(merchantId, items) {
+    const selectEl = document.getElementById('voucherSelect');
+    if (!selectEl) return;
+
+    if (!merchantId && items && items.length > 0) {
+        merchantId = items.find(i => i.merchantId)?.merchantId;
+    }
+
+    if (!merchantId || !items || items.length === 0) {
+        selectEl.innerHTML = '<option value="">-- Không có mã ưu đãi nào --</option>';
+        currentApplicableCoupons = [];
+        return;
+    }
+
+    const foodIds = items.map(it => (it.foodId != null ? it.foodId : it.id)).filter(Boolean);
+    const url = `/api/checkout/applicable-coupons?merchantId=${encodeURIComponent(merchantId)}&foodIds=${foodIds.join(',')}`;
+
+    try {
+        const res = (typeof fetchWithCheckoutAuth === 'function')
+            ? await fetchWithCheckoutAuth(url)
+            : await fetch(url, { headers: { 'Accept': 'application/json' } });
+
+        if (!res.ok) {
+            selectEl.innerHTML = '<option value="">-- Không có mã ưu đãi khả dụng --</option>';
+            currentApplicableCoupons = [];
+            return;
+        }
+
+        const coupons = await res.json();
+        currentApplicableCoupons = Array.isArray(coupons) ? coupons : [];
+
+        selectEl.innerHTML = '';
+
+        if (currentApplicableCoupons.length === 0) {
+            selectEl.innerHTML = '<option value="">-- Quán không có mã giảm giá cho các món này --</option>';
+            appliedVoucher = '';
+            discountAmount = 0;
+            const msgEl = document.getElementById('voucherMessage');
+            if (msgEl) msgEl.innerText = '';
+            return;
+        }
+
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = '-- Chọn 1 mã ưu đãi của quán --';
+        selectEl.appendChild(defaultOpt);
+
+        currentApplicableCoupons.forEach(cp => {
+            const opt = document.createElement('option');
+            opt.value = cp.couponCode;
+            opt.textContent = cp.displayText || `${cp.couponCode} - ${cp.label}`;
+            if (appliedVoucher && appliedVoucher === cp.couponCode) {
+                opt.selected = true;
+            }
+            selectEl.appendChild(opt);
+        });
+
+        if (appliedVoucher && !currentApplicableCoupons.some(c => c.couponCode === appliedVoucher)) {
+            appliedVoucher = '';
+            discountAmount = 0;
+            const msgEl = document.getElementById('voucherMessage');
+            if (msgEl) msgEl.innerText = '';
+        }
+    } catch (err) {
+        console.error('Lỗi khi tải mã giảm giá của quán:', err);
+        selectEl.innerHTML = '<option value="">-- Không thể tải mã ưu đãi --</option>';
+    }
+}
 
 function recalculateVoucher() {
     if (!appliedVoucher) {
@@ -489,19 +569,42 @@ function recalculateVoucher() {
         return;
     }
 
-    const voucher = VOUCHERS[appliedVoucher];
+    const coupon = currentApplicableCoupons.find(c => c.couponCode === appliedVoucher);
+    if (!coupon) {
+        if (appliedVoucher === 'FREESHIP') {
+            discountAmount = currentShippingFee;
+        } else {
+            discountAmount = 0;
+        }
+        return;
+    }
 
-    if (!voucher) {
+    // Tính tổng tiền các món trong giỏ hàng được áp dụng coupon này
+    let eligibleSubtotal = 0;
+    const applicableIds = Array.isArray(coupon.applicableFoodIds) ? coupon.applicableFoodIds : [];
+
+    if (applicableIds.length === 0) {
+        // Áp dụng cho toàn quán
+        eligibleSubtotal = subtotalPrice;
+    } else {
+        const idSet = new Set(applicableIds.map(Number));
+        currentCartItems.forEach(it => {
+            const fId = Number(it.foodId != null ? it.foodId : it.id);
+            if (idSet.has(fId)) {
+                eligibleSubtotal += Number(it.subtotal || 0);
+            }
+        });
+    }
+
+    if (eligibleSubtotal <= 0) {
         discountAmount = 0;
         return;
     }
 
-    if (voucher.type === 'amount') {
-        discountAmount = voucher.value;
-    } else if (voucher.type === 'percent') {
-        discountAmount = Math.round(subtotalPrice * voucher.value / 100);
-    } else if (voucher.type === 'freeship') {
-        discountAmount = currentShippingFee;
+    if (coupon.discountType === 'PERCENT') {
+        discountAmount = Math.round(eligibleSubtotal * Number(coupon.discountValue) / 100);
+    } else if (coupon.discountType === 'FIXED') {
+        discountAmount = Math.min(eligibleSubtotal, Number(coupon.discountValue));
     }
 
     const ceiling = subtotalPrice + currentShippingFee;
@@ -739,31 +842,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadCheckoutCart();
 
-    // ---------- Áp dụng voucher ----------
-    document.getElementById('btnApplyVoucher')?.addEventListener('click', () => {
-        const codeInput = document.getElementById('voucherInput');
-        const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
+    // ---------- Áp dụng voucher (Select Option - chỉ chọn 1) ----------
+    const voucherSelect = document.getElementById('voucherSelect');
+    voucherSelect?.addEventListener('change', (e) => {
+        const code = e.target.value ? e.target.value.trim().toUpperCase() : '';
         const msgEl = document.getElementById('voucherMessage');
 
         if (!code) {
             appliedVoucher = '';
             discountAmount = 0;
             if (msgEl) {
-                msgEl.className = 'font-size-12 mt-1 text-danger';
-                msgEl.innerText = 'Nhập mã giảm giá trước khi áp dụng';
+                msgEl.className = 'font-size-12 mt-1';
+                msgEl.innerHTML = '';
             }
             updatePriceSummary();
             return;
         }
 
-        const voucher = VOUCHERS[code];
-
-        if (!voucher) {
+        const coupon = currentApplicableCoupons.find(c => c.couponCode === code);
+        if (!coupon && code !== 'FREESHIP') {
             appliedVoucher = '';
             discountAmount = 0;
             if (msgEl) {
                 msgEl.className = 'font-size-12 mt-1 text-danger';
-                msgEl.innerText = 'Mã này không dùng được. Kiểm tra lại hoặc thử mã khác.';
+                msgEl.innerText = 'Mã này không khả dụng cho các món trong giỏ hàng.';
             }
             updatePriceSummary();
             return;
@@ -773,8 +875,11 @@ document.addEventListener('DOMContentLoaded', () => {
         recalculateVoucher();
 
         if (msgEl) {
-            msgEl.className = 'font-size-12 mt-1 text-success';
-            msgEl.innerText = `Đã áp dụng ${code}: ${voucher.label}`;
+            msgEl.className = 'font-size-12 mt-1 text-success fw-medium';
+            const foodText = (coupon && coupon.applicableFoodNames && coupon.applicableFoodNames.length > 0)
+                ? ` (Áp dụng cho: <strong>${coupon.applicableFoodNames.join(', ')}</strong>)`
+                : '';
+            msgEl.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i>Đã áp dụng <strong>${code}</strong>: ${coupon ? coupon.label : ''}${foodText}`;
         }
 
         updatePriceSummary();

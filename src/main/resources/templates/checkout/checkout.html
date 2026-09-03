@@ -341,13 +341,12 @@
 
                     <!-- Mã giảm giá (Voucher) -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-dark font-size-13 mb-1.5">Mã ưu đãi / Voucher</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control text-uppercase font-monospace font-size-13"
-                                id="voucherInput" placeholder="Nhập mã (GIAM10K, FREESHIP...)">
-                            <button class="btn btn-outline-danger font-size-13 fw-semibold px-3" type="button"
-                                id="btnApplyVoucher">Áp dụng</button>
-                        </div>
+                        <label for="voucherSelect" class="form-label fw-bold text-dark font-size-13 mb-1.5">
+                            <i class="bi bi-ticket-perforated me-1 text-danger"></i>Mã ưu đãi / Voucher của quán
+                        </label>
+                        <select class="form-select font-size-13 py-2" id="voucherSelect">
+                            <option value="">-- Đang tải mã giảm giá... --</option>
+                        </select>
                         <div id="voucherMessage" class="font-size-12 mt-1"></div>
                     </div>
 

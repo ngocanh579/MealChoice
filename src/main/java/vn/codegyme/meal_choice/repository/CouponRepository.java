@@ -33,6 +33,20 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
             Long id
     );
 
+    Optional<Coupon> findByMerchant_IdAndCouponCode(UUID merchantId, String couponCode);
+
+    @Query("""
+            SELECT DISTINCT c
+            FROM Coupon c
+            WHERE c.merchant.id = :merchantId
+              AND c.isActive = true
+              AND (c.startAt IS NULL OR c.startAt <= CURRENT_TIMESTAMP)
+              AND (c.endAt IS NULL OR c.endAt >= CURRENT_TIMESTAMP)
+              AND (c.usageLimit IS NULL OR c.usedCount < c.usageLimit)
+            ORDER BY c.createdAt DESC
+            """)
+    List<Coupon> findAllActiveByMerchantId(@Param("merchantId") UUID merchantId);
+
     // Lấy các Coupon đang hoạt động được áp dụng cho món ăn
     @Query("""
             SELECT c
