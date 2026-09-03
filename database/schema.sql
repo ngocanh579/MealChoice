@@ -52,6 +52,14 @@ DROP TABLE IF EXISTS users;
 
 DROP TABLE IF EXISTS roles;
 
+DROP TABLE IF EXISTS cart_items;
+
+DROP TABLE IF EXISTS carts;
+
+DROP TABLE IF EXISTS merchant_payout_requests;
+
+DROP TABLE IF EXISTS trusted_partner_requests;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =============================================================================

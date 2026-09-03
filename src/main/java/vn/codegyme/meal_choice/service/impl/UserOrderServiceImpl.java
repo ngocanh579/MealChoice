@@ -36,6 +36,7 @@ public class UserOrderServiceImpl implements UserOrderService {
     private final OrderMapper orderMapper;
     private final DeliveryPartnerRepository deliveryPartnerRepository;
     private final MerchantAddressRepository merchantAddressRepository;
+    private final AddressRepository addressRepository;
     private final ShippingFeeService shippingFeeService;
     private final DistanceService distanceService;
     private final GeocodingService geocodingService;
@@ -180,15 +181,28 @@ public class UserOrderServiceImpl implements UserOrderService {
                 List<MerchantAddress> merchantAddrs =
                         merchantAddressRepository.findByMerchantId(merchant.getId());
 
-                if (!merchantAddrs.isEmpty() && request.getDeliveryAddress() != null) {
+                if (!merchantAddrs.isEmpty()) {
                     MerchantAddress mAddr = merchantAddrs.get(0);
 
                     GeoPoint mPoint = (mAddr.getLatitude() != null && mAddr.getLongitude() != null)
                             ? new GeoPoint(mAddr.getLatitude(), mAddr.getLongitude())
                             : geocodingService.geocode(mAddr.getMerchantAddress() + ", Việt Nam");
 
-                    GeoPoint uPoint =
-                            geocodingService.geocode(request.getDeliveryAddress() + ", Việt Nam");
+                    // Ưu tiên dùng tọa độ đã lưu trong DB (cùng nguồn với DeliveryQuoteService)
+                    // để tránh geocode lại từ text gây ra khoảng cách khác nhau
+                    GeoPoint uPoint = null;
+                    if (request.getAddressId() != null) {
+                        Address savedAddr =
+                                addressRepository.findById(request.getAddressId()).orElse(null);
+                        if (savedAddr != null && savedAddr.getLatitude() != null && savedAddr.getLongitude() != null) {
+                            uPoint = new GeoPoint(savedAddr.getLatitude(), savedAddr.getLongitude());
+                        }
+                    }
+
+                    // Fallback: geocode từ text nếu không có addressId hoặc chưa có tọa độ
+                    if (uPoint == null && request.getDeliveryAddress() != null) {
+                        uPoint = geocodingService.geocode(request.getDeliveryAddress() + ", Việt Nam");
+                    }
 
                     if (mPoint != null && uPoint != null) {
                         distanceKm = clampDistance(

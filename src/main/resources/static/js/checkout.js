@@ -997,6 +997,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const payload = {
             merchantId: targetMerchantId,
             deliveryPartnerId: selectedDeliveryPartnerId,
+            addressId: currentSelectedAddress.id ? Number(currentSelectedAddress.id) : null,
             contactName: currentSelectedAddress.name,
             contactPhone: currentSelectedAddress.phone,
             deliveryAddress: currentSelectedAddress.address,
