@@ -832,10 +832,26 @@ async function fetchWithCheckoutAuth(url, options = {}) {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Địa chỉ đang chọn
+    // Địa chỉ đang chọn – đọc từ card địa chỉ mặc định đã được render sẵn bởi Thymeleaf
     const initialSelectedCard =
         document.querySelector('.address-modal-card.selected') ||
         document.querySelector('.address-modal-card');
+
+    // Khởi tạo currentSelectedAddress từ card địa chỉ mặc định ngay khi trang load
+    // để loadCheckoutCart() có thể tự động gọi loadShippingQuotes() mà không cần
+    // user phải bấm chọn lại địa chỉ một lần nữa.
+    if (initialSelectedCard) {
+        const id      = initialSelectedCard.getAttribute('data-id');
+        const name    = initialSelectedCard.getAttribute('data-name')    || '';
+        const phone   = initialSelectedCard.getAttribute('data-phone')   || '';
+        const address = initialSelectedCard.getAttribute('data-address') || '';
+        const note    = initialSelectedCard.getAttribute('data-note')    || '';
+        const isDefault = initialSelectedCard.getAttribute('data-default') === 'true';
+
+        if (id && address) {
+            currentSelectedAddress = { id, name, phone, address, note, isDefault };
+        }
+    }
 
     // Khởi tạo listeners cho dropdown địa chỉ hành chính
     setupCheckoutAddressSelectListeners();
