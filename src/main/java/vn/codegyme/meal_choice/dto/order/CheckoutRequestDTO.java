@@ -39,6 +39,13 @@ public class CheckoutRequestDTO {
     @NotBlank(message = "Địa chỉ nhận hàng không được để trống")
     private String deliveryAddress;
 
+    /**
+     * ID địa chỉ đã lưu (Address entity). Nếu có, backend dùng tọa độ lat/lon
+     * đã lưu trong DB (giống DeliveryQuoteService) để tính phí ship chính xác,
+     * thay vì phải geocode lại từ text gây ra sự chênh lệch.
+     */
+    private Long addressId;
+
     private String note;
 
     @NotNull(message = "Phương thức thanh toán không được để trống")
@@ -53,4 +60,4 @@ public class CheckoutRequestDTO {
      */
     @Valid
     private List<CheckoutItemDTO> items;
-}
+}

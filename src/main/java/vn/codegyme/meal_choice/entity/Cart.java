@@ -31,7 +31,12 @@ public class Cart {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            unique = true,
+            columnDefinition = "VARCHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    )
     private User user;
 
     /**
@@ -39,7 +44,10 @@ public class Cart {
      * NULL khi giỏ hàng rỗng.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "merchant_id")
+    @JoinColumn(
+            name = "merchant_id",
+            columnDefinition = "VARCHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    )
     private Merchant merchant;
 
     @OneToMany(

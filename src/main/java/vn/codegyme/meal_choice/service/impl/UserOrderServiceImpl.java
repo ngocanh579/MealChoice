@@ -36,12 +36,14 @@ public class UserOrderServiceImpl implements UserOrderService {
     private final OrderMapper orderMapper;
     private final DeliveryPartnerRepository deliveryPartnerRepository;
     private final MerchantAddressRepository merchantAddressRepository;
+    private final AddressRepository addressRepository;
     private final ShippingFeeService shippingFeeService;
     private final DistanceService distanceService;
     private final GeocodingService geocodingService;
 
     private final CartService cartService;
     private final CartMapper cartMapper;
+    private final CouponRepository couponRepository;
 
     /** Phí giao hàng cố định dự phòng: 15.000 đ */
     private static final BigDecimal DEFAULT_SHIPPING_FEE = BigDecimal.valueOf(15000);
@@ -179,15 +181,28 @@ public class UserOrderServiceImpl implements UserOrderService {
                 List<MerchantAddress> merchantAddrs =
                         merchantAddressRepository.findByMerchantId(merchant.getId());
 
-                if (!merchantAddrs.isEmpty() && request.getDeliveryAddress() != null) {
+                if (!merchantAddrs.isEmpty()) {
                     MerchantAddress mAddr = merchantAddrs.get(0);
 
                     GeoPoint mPoint = (mAddr.getLatitude() != null && mAddr.getLongitude() != null)
                             ? new GeoPoint(mAddr.getLatitude(), mAddr.getLongitude())
                             : geocodingService.geocode(mAddr.getMerchantAddress() + ", Việt Nam");
 
-                    GeoPoint uPoint =
-                            geocodingService.geocode(request.getDeliveryAddress() + ", Việt Nam");
+                    // Ưu tiên dùng tọa độ đã lưu trong DB (cùng nguồn với DeliveryQuoteService)
+                    // để tránh geocode lại từ text gây ra khoảng cách khác nhau
+                    GeoPoint uPoint = null;
+                    if (request.getAddressId() != null) {
+                        Address savedAddr =
+                                addressRepository.findById(request.getAddressId()).orElse(null);
+                        if (savedAddr != null && savedAddr.getLatitude() != null && savedAddr.getLongitude() != null) {
+                            uPoint = new GeoPoint(savedAddr.getLatitude(), savedAddr.getLongitude());
+                        }
+                    }
+
+                    // Fallback: geocode từ text nếu không có addressId hoặc chưa có tọa độ
+                    if (uPoint == null && request.getDeliveryAddress() != null) {
+                        uPoint = geocodingService.geocode(request.getDeliveryAddress() + ", Việt Nam");
+                    }
 
                     if (mPoint != null && uPoint != null) {
                         distanceKm = clampDistance(
@@ -208,7 +223,7 @@ public class UserOrderServiceImpl implements UserOrderService {
         // ---------- BƯỚC 5: Phí dịch vụ, voucher, tổng tiền ----------
         BigDecimal serviceFee = maxServiceFee;
         BigDecimal discountAmount = calculateVoucherDiscount(
-                request.getVoucherCode(), subtotal, shippingFee);
+                request.getVoucherCode(), merchant.getId(), orderItems, subtotal, shippingFee);
 
         BigDecimal totalAmount = subtotal
                 .add(shippingFee)
@@ -490,11 +505,11 @@ public class UserOrderServiceImpl implements UserOrderService {
     }
 
     /**
-     * Tính số tiền giảm theo mã voucher.
-     *
-     * Mã không nằm trong danh sách hợp lệ sẽ KHÔNG được giảm giá.
+     * Tính số tiền giảm theo mã voucher của Merchant áp dụng cho các món ăn trong đơn hàng.
      */
     private BigDecimal calculateVoucherDiscount(String voucherCode,
+                                                UUID merchantId,
+                                                List<OrderItem> orderItems,
                                                 BigDecimal subtotal,
                                                 BigDecimal shippingFee) {
 
@@ -507,31 +522,67 @@ public class UserOrderServiceImpl implements UserOrderService {
 
         String code = voucherCode.trim().toUpperCase();
 
-        BigDecimal discount = switch (code) {
-            case "GIAM10K" -> BigDecimal.valueOf(10000);
-            case "GIAM20K" -> BigDecimal.valueOf(20000);
-            case "GIAM50K" -> BigDecimal.valueOf(50000);
+        // 1. Tìm coupon của quán trong cơ sở dữ liệu
+        Optional<Coupon> couponOpt = couponRepository.findByMerchant_IdAndCouponCode(merchantId, code);
+        if (couponOpt.isEmpty()) {
+            if ("FREESHIP".equalsIgnoreCase(code)) {
+                return shippingFee != null ? shippingFee : BigDecimal.ZERO;
+            }
+            return BigDecimal.ZERO;
+        }
 
-            case "GIAM10%", "GIAM10PT" -> percentOf(subtotal, 10);
-            case "GIAM20%", "GIAM20PT" -> percentOf(subtotal, 20);
-            case "GIAM50%", "GIAM50PT" -> percentOf(subtotal, 50);
+        Coupon coupon = couponOpt.get();
+        if (!Boolean.TRUE.equals(coupon.getIsActive())) {
+            return BigDecimal.ZERO;
+        }
 
-            case "FREESHIP" -> shippingFee != null ? shippingFee : BigDecimal.ZERO;
+        LocalDateTime now = LocalDateTime.now();
+        if (coupon.getStartAt() != null && now.isBefore(coupon.getStartAt())) {
+            return BigDecimal.ZERO;
+        }
+        if (coupon.getEndAt() != null && now.isAfter(coupon.getEndAt())) {
+            return BigDecimal.ZERO;
+        }
+        if (coupon.getUsageLimit() != null && coupon.getUsedCount() != null
+                && coupon.getUsedCount() >= coupon.getUsageLimit()) {
+            return BigDecimal.ZERO;
+        }
 
-            // Mã không hợp lệ: không giảm giá
-            default -> BigDecimal.ZERO;
-        };
+        // 2. Tìm xem coupon này áp dụng cho những món ăn nào trong đơn hàng
+        List<Food> couponFoods = coupon.getFoods();
+        BigDecimal eligibleSubtotal = BigDecimal.ZERO;
 
-        // Không cho giảm quá tiền món + phí ship
+        if (couponFoods == null || couponFoods.isEmpty()) {
+            // Không giới hạn món cụ thể -> Áp dụng toàn quán
+            eligibleSubtotal = subtotal;
+        } else {
+            Set<Long> allowedFoodIds = couponFoods.stream()
+                    .map(Food::getId)
+                    .collect(Collectors.toSet());
+
+            for (OrderItem item : orderItems) {
+                if (item.getFood() != null && allowedFoodIds.contains(item.getFood().getId())) {
+                    eligibleSubtotal = eligibleSubtotal.add(item.getSubtotal());
+                }
+            }
+        }
+
+        // Nếu không có món nào trong đơn hàng đủ điều kiện
+        if (eligibleSubtotal.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal discount = BigDecimal.ZERO;
+        if (coupon.getDiscountType() == DiscountType.PERCENT) {
+            discount = eligibleSubtotal
+                    .multiply(coupon.getDiscountValue())
+                    .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+        } else if (coupon.getDiscountType() == DiscountType.FIXED) {
+            discount = coupon.getDiscountValue().min(eligibleSubtotal);
+        }
+
         BigDecimal ceiling = subtotal.add(shippingFee != null ? shippingFee : BigDecimal.ZERO);
-
         return discount.min(ceiling);
-    }
-
-    private BigDecimal percentOf(BigDecimal amount, int percent) {
-        return amount
-                .multiply(BigDecimal.valueOf(percent))
-                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
     }
 
     /**
